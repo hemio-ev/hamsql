@@ -1,0 +1,105 @@
+body {
+    font-family: sans-serif;
+}
+
+h1::before {
+    font-style: normal;
+    content: 'Module ';
+}
+
+td, th {
+    max-width: 30em;
+    min-width: 7em;
+    padding: 0.3em 0.6em;
+    vertical-align: top;
+    border-collapse: collapse;
+}
+
+:target {
+    animation: hint 3s;
+}
+
+@keyframes hint {
+    50% {
+        background-color: yellow; 
+        border-radius: 0.5em;
+    }
+} 
+
+table {
+    background-color: lightblue;
+    border-radius: 0.4em;
+    padding: 0.1em;
+}
+
+h1, h3 {
+    font-style: italic;
+}
+
+h1 {
+    background-color: grey;
+    color: white;
+    padding: 0.3em;
+    margin-top: 2em;
+}
+
+
+/* level of element definitions like table */
+
+section section section {
+    border-color: gray;
+    border-width: 1px 1px 1px 0.5em;
+    border-style: solid;
+    padding-left: 0.5em;
+    margin-left: 0.5em;
+    border-radius: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+h3 {
+    margin: 0;
+    padding: 0.5em 0 0 0;
+}
+
+section section section:nth-of-type(2n) {
+    border-color: lightgray;
+}
+
+/* level of single definitions like columns */
+
+section section section section {
+    border-width: 0;
+    font-size: 0.9em;
+    background-color: lightblue;
+    border-radius: 0.5em;
+    padding: 0.5em;
+    margin: 0.5em;
+}
+
+section section section section:nth-of-type(2n+1) {
+    background-color: lightgray;
+}
+
+h4 {
+    display: inline;
+}
+
+h4::after {
+    content: ':';
+}
+
+section section section section p {
+    display: inline;
+}
+
+ul {
+    margin: 0.3em;
+    margin-top: 0.7em;
+    list-style: square;
+    padding-left: 1.5em;
+}
+
+ul ul {
+    margin: 0;
+    list-style: circle;
+}

@@ -1,0 +1,135 @@
+<html>
+<body>
+
+$for(modules)$
+
+<h1 id="MODULE-$modules.name$">
+    $modules.name$
+</h1>
+
+$modules.description$ (module sources: <tt>$modules.internal.load_path$</tt>)
+
+    <h2>Tables</h2>
+    $for(modules.tables)$
+
+        <h3 id="TABLE-$modules.name$.$modules.tables.name$">
+            $modules.tables.name$
+        </h3>
+
+        $modules.tables.description$ (table source: <tt>$modules.tables.internal.load_path$</tt>)
+
+        $for(modules.tables.columns)$
+
+            <h4 id="COLUMN-$modules.name$.$modules.tables.name$.$modules.tables.columns.name$">$modules.tables.columns.name$</h4> 
+            $modules.tables.columns.description$
+
+            <ul>
+                <li>Type: $modules.tables.columns.type$</li>
+                $if(modules.tables.columns.null)$
+                <li>Can be <i>NULL</i></li>
+                $endif$
+                $if(modules.tables.columns.default)$
+                <li>Default value: $modules.tables.columns.default$</li>
+                $endif$
+                $if(modules.tables.columns.references)$
+                <li>References: <a href="#COLUMN-$modules.tables.columns.references$">$modules.tables.columns.references$</a>
+                    <ul>
+                        $if(modules.tables.columns.on_ref_delete)$
+                        <li>On delete: $modules.tables.columns.on_ref_delete$</li>
+                        $endif$
+                        $if(modules.tables.columns.on_ref_update)$
+                        <li>On update: $modules.tables.columns.on_ref_update$</li>
+                        $endif$
+                    </ul>
+                </li>
+                $endif$
+            </ul>
+
+        $endfor$
+
+    $endfor$
+
+    <h2>Functions</h2>
+    $for(modules.functions)$
+
+        <h3 id ="FUNCTION-$modules.name$.$modules.functions.name$">
+            $modules.functions.name$
+        </h3>
+
+        $modules.functions.description$ (function source: <tt>$modules.functions.internal.load_path$</tt>)
+
+        <ul>
+
+            <li>Parameters:
+                <ul>
+                    $for(modules.functions.parameters)$
+                    <li>
+                        <b>$modules.functions.parameters.name$</b>
+                        <i>$modules.functions.parameters.type$</i>
+                        $if(modules.functions.variables.default)$
+                        (default: <i>$modules.functions.parameters.default$</i>)
+                        $endif$
+                        $modules.functions.parameters.description$
+                    </li>
+                    $endfor$
+                </ul>
+            </li>
+            $if(modules.functions.language)$
+            <!-- special case: a language is defined -->
+            <li>Language: $modules.functions.language$</li>
+            $else$
+            <li>Variables defined for body:
+                <ul>
+                    $for(modules.functions.variables)$
+                    <li>
+                        <b>$modules.functions.variables.name$</b>
+                        <i>$modules.functions.variables.type$</i>
+                        $if(modules.functions.variables.default)$
+                        (default: <i>$modules.functions.variables.default$</i>)
+                        $endif$
+                        $modules.functions.variables.description$
+                    </li>
+                    $endfor$
+                </ul>
+            </li>
+            $endif$
+
+            <li>
+                Returns: $modules.functions.return$
+            </li>
+
+            $if(modules.functions.return_table)$
+            <li>
+                Returned columns:
+                <ul>
+                    $for(modules.functions.return_columns)$
+                    <li>
+                        <b>$modules.functions.return_columns.name$</b>
+                        <i>$modules.functions.return_columns.type$</i>
+                        $modules.functions.return_columns.description$
+                    </li>
+                    $endfor$
+                </ul>
+            </li>
+            $endif$
+
+        </ul>
+
+        Body:
+        <pre><code>$modules.functions.body$</code></pre>
+
+    $endfor$
+
+    <h2>Domains</h2>
+    $for(modules.domains)$
+
+        <h3 id ="DOMAIN-$modules.name$.$modules.domain.name$">
+            $modules.domains.name$
+        </h3>
+
+    $endfor$
+
+$endfor$
+
+</body>
+</html>
