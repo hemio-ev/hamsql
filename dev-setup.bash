@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ ! -e carnivora/setup.yaml ]; then
+    git clone https://github.com/qua-bla/carnivora
+else
+    echo "Carnivora as example for tests is installed"
+fi
 
 if [ ! -e url/Network/URL.hs ]; then
     git clone https://github.com/qua-bla/url.git

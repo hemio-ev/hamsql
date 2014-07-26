@@ -15,5 +15,6 @@ cabal.config
 Main
 *.sql
 *.json
+*.html
 url/
-
+carnivora/

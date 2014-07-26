@@ -7,10 +7,10 @@ module Load where
 
 import Data.Yaml
 import qualified Data.ByteString.Char8 as B
-import System.FilePath.Posix (combine)
-import Control.Monad (filterM,liftM)
+import System.FilePath.Posix (combine, dropFileName)
+import Control.Monad (filterM, liftM)
 import Text.Regex.Posix
-import System.Directory (doesFileExist,doesDirectoryExist,getDirectoryContents)
+import System.Directory (doesFileExist, doesDirectoryExist, getDirectoryContents)
 
 import Parser
 import Options
@@ -20,7 +20,7 @@ import SQL
 loadSetup :: FilePath -> IO (Setup)
 loadSetup filePath = do
   setup <- loadYamlFile filePath
-  setup' <- loadSetupModules (initSetupInternal setup)
+  setup' <- loadSetupModules (dropFileName filePath) (initSetupInternal setup)
   return $ implementAndApplyTemplates setup'
 
 initSetupInternal s' = s' {
@@ -28,9 +28,9 @@ initSetupInternal s' = s' {
 } 
 
 -- Tries to loads all defined modules from defined module dirs
-loadSetupModules :: Setup -> IO Setup
-loadSetupModules s = do
-  moduleData <- sequence [ loadModule name | name <- setupModules s ]
+loadSetupModules :: FilePath -> Setup -> IO Setup
+loadSetupModules path s = do
+  moduleData <- sequence [ loadModule path name | name <- setupModules s ]
   return s {
           xsetupInternal = Just (setupInternal s) {
             setupModuleData = moduleData
@@ -38,33 +38,35 @@ loadSetupModules s = do
       }
   
   where
-    loadModule :: FilePath -> IO Module
-    loadModule name = do
-      modulePath <- findModulePath name (setupModuleDirs s)
+    loadModule :: FilePath -> String -> IO Module
+    loadModule path name = do
+      modulePath <- findModulePath name moduleDirs
       moduleData <- readModule modulePath
       return moduleData {
           xmoduleInternal = Just ModuleInternal {
             moduleLoadPath = modulePath
           }
         }
+        
+    moduleDirs = map (combine path) (setupModuleDirs s)
     
 findModulePath :: String -> [FilePath] -> IO FilePath
 findModulePath moduleName search = findDir search
   where
     findDir [] =
-      error $ "Module '" ++ moduleName ++ "'not found in " ++ (show search)
+      error $ "Module '" ++ moduleName ++ "' not found in " ++ (show search)
     findDir (d:ds) = do
       let dir = combine d moduleName
       dirExists <- doesDirectoryExist (dir :: FilePath)
       case dirExists of
-	True -> do
-	  fileExists <- doesFileExist (combine dir "module.yaml")
-	  case fileExists of
-	    True -> return dir
-	    False -> error $ "file 'module.yaml' missing in '" ++ dir ++ "'"
-	False -> do
-	  xxx <- findDir ds
-	  return xxx
+        True -> do
+          fileExists <- doesFileExist (combine dir "module.yaml")
+          case fileExists of
+            True -> return dir
+            False -> error $ "file 'module.yaml' missing in '" ++ dir ++ "'"
+        False -> do
+          xxx <- findDir ds
+          return xxx
     
 loadYamlFile:: (FromJSON a0) => FilePath -> IO (a0)
 loadYamlFile filePath = do
@@ -186,5 +188,3 @@ readObjectFromFile file = do
   case decodeEither c of
     Left msg  -> err $ "in file: " ++ file ++ ": " ++ msg
     Right obj -> return obj
-     
-
