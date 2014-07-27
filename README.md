@@ -3,6 +3,8 @@ hamsql
 
 Interpreter for SQL-structure definitions in Yaml (YamSql)
 
+[![Build Status](https://drone.io/github.com/qua-bla/hamsql/status.png)](https://drone.io/github.com/qua-bla/hamsql/latest)
+
 ## Getting started with developement
 
 Install required libraries
@@ -16,8 +18,12 @@ With
 you can install one remaining custom lib and check the install status of the above ones.
 
 Compile with
+
 > ghc Main
+
 or
+
 > ghc -fforce-recomp -Wall Main
+
 or interactive: `ghci` and then `:l Parser.hs` or any other file.
 

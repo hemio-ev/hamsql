@@ -411,13 +411,13 @@ data Function = Function {
     functionDescription     :: String,
     -- return type of the function, TABLE is special (see return_columns)
     functionReturn          :: String,
-    -- later populated depending on the value of functionReturn
+    -- later populated depending on the value of functionReturn TODO: move to xfunctionInternal
     functionReturnTable     :: Maybe Bool,
     -- parameters the function takes
     functionParameters      :: Maybe [Variable],
     -- list of templates, used for this function
     functionTemplates       :: Maybe [SqlName],
-    -- loaded templates, not designed for use via Yaml
+    -- loaded templates, not designed for use via Yaml TODO: move to xfunctionInternal
     functionTemplateData    :: Maybe [FunctionTpl],
     -- if return is TABLE, gives the columns that are returned (see parameter)
     functionReturnColumns   :: Maybe [Parameter],
