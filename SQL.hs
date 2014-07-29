@@ -90,7 +90,8 @@ getTableStatements opts t =
          (join ",\n") (filter (\x -> x/="") (
             (map sqlColumn (tableColumns t)) ++
             (maybeMap sqlCheck (tableChecks t)) ++
-            [ sqlPrimaryKeyConstraint (tablePrimaryKey t) ]
+            [ sqlPrimaryKeyConstraint $ map toSql (tablePrimaryKey t) ] ++
+            maybeMap sqlUniqueConstraint (tableUnique t)
          )) ++
          "\n)"
 
@@ -110,8 +111,14 @@ getTableStatements opts t =
         sqlDefault (Just d)    = "DEFAULT " ++ d
         
         -- constraints
+        sqlPrimaryKeyConstraint :: [String] -> String
         sqlPrimaryKeyConstraint k =
             "  CONSTRAINT " ++ name (SqlName "primary_key") ++ " PRIMARY KEY (" ++ (join ", " k) ++ ")"
+
+        -- TODO: Make the constraint name unique
+        sqlUniqueConstraint :: [SqlName] -> String
+        sqlUniqueConstraint k =
+            "  CONSTRAINT " ++ name (SqlName "unique") ++ " UNIQUE (" ++ (join ", " (map toSql k)) ++ ")"
 
         sqlCheck c =
             "  CONSTRAINT " ++ name (checkName c) ++ " CHECK (" ++ checkCheck c ++ ")"
