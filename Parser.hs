@@ -579,7 +579,7 @@ instance ToJSON TypeElement where toJSON = genericToJSON myOpt
 
 -- Roles
 data Role = Role {
-    roleName        :: String,
+    roleName        :: SqlName,
     roleDescription :: String,
     roleLogin       :: Maybe Bool,
     rolePassword    :: Maybe String,
