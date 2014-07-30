@@ -9,9 +9,10 @@ $for(modules)$
 
 $modules.description$ (module sources: <tt>$modules.internal.load_path$</tt>)
 
+    $if(modules.tables)$
     <h2>Tables</h2>
+    
     $for(modules.tables)$
-
         <h3 id="TABLE-$modules.name$.$modules.tables.name$">
             $modules.tables.name$
         </h3>
@@ -48,7 +49,9 @@ $modules.description$ (module sources: <tt>$modules.internal.load_path$</tt>)
         $endfor$
 
     $endfor$
+    $endif$
 
+    $if(modules.functions)$
     <h2>Functions</h2>
     $for(modules.functions)$
 
@@ -119,7 +122,9 @@ $modules.description$ (module sources: <tt>$modules.internal.load_path$</tt>)
         <pre><code>$modules.functions.body$</code></pre>
 
     $endfor$
+    $endif$
 
+    $if(modules.domains)$
     <h2>Domains</h2>
     $for(modules.domains)$
 
@@ -128,6 +133,7 @@ $modules.description$ (module sources: <tt>$modules.internal.load_path$</tt>)
         </h3>
 
     $endfor$
+    $endif$
 
 $endfor$
 
