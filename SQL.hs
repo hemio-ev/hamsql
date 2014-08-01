@@ -156,7 +156,7 @@ getFunctionStatements :: Opt -> Function -> [SqlStatement]
 getFunctionStatements opts f =
     SqlStmt sqlCreateFunction:
     SqlStmtPriv (sqlSetOwner (functionOwner f)):
-    (maybeMap sqlStmtGrantExecute (functionPrivExecute f))
+    (map sqlStmtGrantExecute (maybeMap toSql $ functionPrivExecute f))
 
     where
         sqlStmtGrantExecute u = SqlStmt $ sqlGrantExecute u
@@ -282,7 +282,7 @@ getRoleStatements opts r =
     []
 
     where
-        sqlCreateRole = "CREATE ROLE " ++ roleName r ++
+        sqlCreateRole = "CREATE ROLE " ++ (toSql $ roleName r) ++
             " " ++ sqlLogin (roleLogin r) ++
             sqlPassword (rolePassword r) ++
             sqlMembers (roleMembers r)
@@ -295,5 +295,5 @@ getRoleStatements opts r =
             
         sqlMembers Nothing = ""
         sqlMembers (Just []) = ""
-        sqlMembers (Just ms) = " ROLE " ++ join ", " ms
+        sqlMembers (Just ms) = " ROLE " ++ join ", " (map toSql ms)
 

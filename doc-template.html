@@ -64,6 +64,7 @@ $modules.description$ (module sources: <tt>$modules.internal.load_path$</tt>)
         <ul>
 
             <li>Parameters:
+                $if(modules.functions.parameters)$
                 <ul>
                     $for(modules.functions.parameters)$
                     <li>
@@ -76,11 +77,17 @@ $modules.description$ (module sources: <tt>$modules.internal.load_path$</tt>)
                     </li>
                     $endfor$
                 </ul>
+                $else$
+                <i>non</i>
+                $endif$
             </li>
+
             $if(modules.functions.language)$
             <!-- special case: a language is defined -->
             <li>Language: $modules.functions.language$</li>
-            $else$
+            $endif$
+
+            $if(modules.functions.variables)$
             <li>Variables defined for body:
                 <ul>
                     $for(modules.functions.variables)$
@@ -116,6 +123,18 @@ $modules.description$ (module sources: <tt>$modules.internal.load_path$</tt>)
             </li>
             $endif$
 
+            $if(modules.functions.priv_execute)$
+            <li>
+                Execute privilege:
+                <ul>
+                    $for(modules.functions.priv_execute)$
+                    <li><a href="#ROLE-$modules.functions.priv_execute$">
+                        $modules.functions.priv_execute$</a></li>
+                    $endfor$
+                </ul>
+            </li>
+            $endif$
+
         </ul>
 
         Body:
@@ -131,6 +150,21 @@ $modules.description$ (module sources: <tt>$modules.internal.load_path$</tt>)
         <h3 id ="DOMAIN-$modules.name$.$modules.domain.name$">
             $modules.domains.name$
         </h3>
+
+    $endfor$
+    $endif$
+
+    $if(modules.roles)$
+    <h2>Roles</h2>
+    $for(modules.roles)$
+
+        <h3 id ="ROLE-$modules.roles.name$">
+            $modules.roles.name$
+        </h3>
+        $modules.roles.description$
+        <ul>
+            <li>Login: $modules.roles.login$</li>
+        </ul>
 
     $endfor$
     $endif$

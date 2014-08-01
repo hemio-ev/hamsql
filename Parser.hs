@@ -425,7 +425,7 @@ data Function = Function {
     -- variables that are defined (ignored if language is given)
     functionVariables       :: Maybe [Variable],
     -- Role that has the privilege to execute the function
-    functionPrivExecute     :: Maybe [String],
+    functionPrivExecute     :: Maybe [SqlName],
     -- If true, the function is executed with the privileges of the owner!
     -- Owner has to be given, if this is true (not implemented yet!)
     functionSecurityDefiner :: Maybe Bool,
@@ -481,7 +481,7 @@ data FunctionTpl = FunctionTpl {
     -- variables are appended to the functions variables
     functiontplVariables       :: Maybe [Variable],
     -- defines priv_execute, can be overwritten by function definition
-    functiontplPrivExecute     :: Maybe [String],
+    functiontplPrivExecute     :: Maybe [SqlName],
     -- defines security_definer, can be overwritten by function definition
     functiontplSecurityDefiner :: Maybe Bool,
     -- defines owner, can be overwritten by function definition
@@ -503,28 +503,32 @@ applyFunctionTemplates f = foldr deriveFunctionFromTemplate f' (maybeList (funct
 
 deriveFunctionFromTemplate :: FunctionTpl -> Function -> Function
 deriveFunctionFromTemplate t f =
-    appendVariables$replaceOwner$replaceSecurityDefiner$replacePrivExecute f
+  f {
+    functionPrivExecute =
+      maybeRight (functiontplPrivExecute t) (functionPrivExecute f),
 
-    where
-        replacePrivExecute f' = f' {
-            functionPrivExecute =
-                maybeRight (functiontplPrivExecute t) (functionPrivExecute f')
-        }
+    functionSecurityDefiner =
+      maybeRight (functiontplSecurityDefiner t) (functionSecurityDefiner f),
 
-        replaceSecurityDefiner f' = f' {
-            functionSecurityDefiner =
-                maybeRight (functiontplSecurityDefiner t) (functionSecurityDefiner f')
-        }
+    functionOwner =
+      maybeRight (functiontplOwner t) (functionOwner f),
 
-        replaceOwner f' = f' {
-            functionOwner =
-                maybeRight (functiontplOwner t) (functionOwner f')
-        }
-
-        appendVariables f' = f' {
-            functionVariables = maybeJoin (functionVariables f) (functiontplVariables t)
-        }
-
+    functionVariables =
+      maybeJoin (functionVariables f) (functiontplVariables t),
+        
+    functionBody =
+      (maybeStringL $ functiontplBodyPrelude t) ++
+      functionBody f ++
+      (maybeStringR $ functiontplBodyPostlude t)
+        
+  }
+  
+  where
+    maybeStringL (Just xs) = xs ++ "\n"
+    maybeStringL Nothing = ""
+    maybeStringR (Just xs) = "\n" ++ xs
+    maybeStringR Nothing = ""
+    
 -- Domains
 data Domain = Domain {
     domainName :: SqlName,
@@ -583,7 +587,7 @@ data Role = Role {
     roleDescription :: String,
     roleLogin       :: Maybe Bool,
     rolePassword    :: Maybe String,
-    roleMembers     :: Maybe [String]
+    roleMembers     :: Maybe [SqlName]
 } deriving (Generic, Show)
 instance FromJSON Role where parseJSON = genericParseJSON myOpt
 instance ToJSON Role where toJSON = genericToJSON myOpt
