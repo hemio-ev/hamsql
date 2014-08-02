@@ -61,6 +61,12 @@ instance ToJSON SetupInternal where toJSON = genericToJSON myOpt
 setupInternal :: Setup -> SetupInternal
 setupInternal s = fromJust $ xsetupInternal s
 
+setupAllModules :: Setup -> [Module]
+setupAllModules = setupModuleData . setupInternal
+
+setupAllTables :: Setup -> [Table]
+setupAllTables s = concat $ map (maybeList . moduleTables) (setupAllModules s)
+
 outJson :: Setup -> String
 outJson s = show $ toJSON s
 
@@ -281,6 +287,7 @@ data Table = Table {
     tablePrimaryKey   :: [SqlName],
     tableUnique       :: Maybe [[SqlName]],
     tableChecks       :: Maybe [Check],
+    tableInherits     :: Maybe [SqlName],
     tablePrivSelect   :: Maybe [String],
     tablePrivInsert   :: Maybe [String],
     tablePrivUpdate   :: Maybe [String],

@@ -21,6 +21,7 @@ data SqlStatement =
   SqlStmtTypeDef String |
   SqlStmtRoleDef String |
   SqlStmt String |
+  SqlStmtInherit String |
   SqlStmtConstr String |
   SqlStmtPriv String |
   SqlStmtEmpty
@@ -33,6 +34,7 @@ instance SqlCode SqlStatement where
   toSql (SqlStmtTypeDef x) = x ++ statementTermin
   toSql (SqlStmtRoleDef x) = x ++ statementTermin
   toSql (SqlStmt x) = x ++ statementTermin
+  toSql (SqlStmtInherit x) = x ++ statementTermin
   toSql (SqlStmtConstr x) = x ++ statementTermin
   toSql (SqlStmtPriv x) = x ++ statementTermin
   (//) _ _ = undefined
@@ -82,7 +84,8 @@ getTableStatements opts t =
     maybeMap (sqlGrant "UPDATE") (tablePrivUpdate t) ++
     maybeMap (sqlGrant "INSERT") (tablePrivInsert t) ++
     maybeMap (sqlGrant "DELETE") (tablePrivDelete t) ++
-    map sqlAddForeignKey (tableColumns t)
+    map sqlAddForeignKey (tableColumns t) ++
+    maybeMap sqlAddInheritance (tableInherits t)
 
     where
         sqlTable =
@@ -144,6 +147,11 @@ getTableStatements opts t =
 
         sqlGrant right user = SqlStmtConstr ("GRANT " ++ right ++ " ON TABLE " ++
             toSql (tableName t) ++ " TO " ++ user)
+
+        sqlAddInheritance :: SqlName -> SqlStatement
+        sqlAddInheritance n = 
+                SqlStmtInherit $ "ALTER TABLE " ++ toSql [ moduleName' t, tableName t ] ++
+                 " INHERIT " ++ toSql n
 
         name a = toSql ((SqlName "TABLE_") // tableName t // (SqlName "__") // a)
 

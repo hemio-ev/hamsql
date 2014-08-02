@@ -19,6 +19,19 @@ $modules.description$ (module sources: <tt>$modules.internal.load_path$</tt>)
 
         $modules.tables.description$ (table source: <tt>$modules.tables.internal.load_path$</tt>)
 
+        <ul>
+            $if(modules.tables.inherits)$
+            <li>
+            Inherits:
+            <ul>
+            $for(modules.tables.inherits)$
+            <li><a href="#TABLE-$modules.tables.inherits$">$modules.tables.inherits$</a></li>
+            $endfor$
+            </ul>
+            </li>
+            $endif$
+        </ul>
+
         $for(modules.tables.columns)$
 
             <h4 id="COLUMN-$modules.name$.$modules.tables.name$.$modules.tables.columns.name$">$modules.tables.columns.name$</h4> 
