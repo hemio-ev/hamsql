@@ -160,7 +160,8 @@ functionPopulateInternal m path f = f {
     xfunctionInternal = Just FunctionInternal {
       functionParentModule = m,
       functionLoadPath = path,
-      functionOriginal = f
+      functionOriginal = f,
+      functionReturnTable = (functionReturn f == "TABLE")
     }
   }
   

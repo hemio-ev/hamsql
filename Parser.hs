@@ -256,8 +256,6 @@ data Function = Function {
     functionDescription     :: String,
     -- return type of the function, TABLE is special (see return_columns)
     functionReturn          :: String,
-    -- later populated depending on the value of functionReturn TODO: move to xfunctionInternal
-    functionReturnTable     :: Maybe Bool,
     -- parameters the function takes
     functionParameters      :: Maybe [Variable],
     -- list of templates, used for this function
@@ -293,7 +291,9 @@ functionInternal = (fromJustReason "FunctionInternal") . xfunctionInternal
 data FunctionInternal = FunctionInternal {
   functionParentModule  :: Module,
   functionLoadPath      :: FilePath,
-  functionOriginal      :: Function
+  functionOriginal      :: Function,
+  -- populated depending on the value of functionReturn
+  functionReturnTable   :: Bool
 } deriving (Generic,Show)
 instance FromJSON FunctionInternal where parseJSON = genericParseJSON myOpt
 instance ToJSON FunctionInternal where toJSON = genericToJSON myOpt
@@ -364,15 +364,6 @@ applyFunctionTpl t f = f {
     maybeStringL Nothing = ""
     maybeStringR (Just xs) = "\n" ++ xs
     maybeStringR Nothing = ""
-
--- TODO: no longer implemented but needed
--- applyFunctionTemplates :: Function -> Function
--- applyFunctionTemplates f = foldr deriveFunctionFromTemplate f' (maybeList (functionTemplateData f))
---     where
---     f'
---      | (functionReturn f == "TABLE") = f { functionReturnTable = Just True }
---      | otherwise = f { functionReturnTable = Just False }
---   
 
 -- Domains --
 
@@ -497,7 +488,10 @@ applyTpl s = s {
     applyModule m = m {
         moduleTables =  Just $
           map applyColumnTemplates
-          $ maybeMap applyTableTemplates (moduleTables m)
+          $ maybeMap applyTableTemplates (moduleTables m),
+            
+        moduleFunctions = Just $
+          maybeMap applyFunctionTemplates (moduleFunctions m)
       }
       
     applyTableTemplates :: Table -> Table 
@@ -515,10 +509,10 @@ applyTpl s = s {
     applyColumnTemplates :: Table -> Table
     applyColumnTemplates t = t { tableColumns = map f (tableColumns t) }
      where
-       f x@(ColumnTpl{}) = applyColumnTpl (columnTemplate x) x
+       f x@(ColumnTpl{}) = applyColumnTpl (columnTpl x) x
        f x = x
 
-    columnTemplate :: Column -> TableColumnTpl
-    columnTemplate c@(ColumnTpl{}) = selectTemplate (columntplTemplate c) (setupAllColumnTemplates s)
-    columnTemplate _ = undefined
+    columnTpl :: Column -> TableColumnTpl
+    columnTpl c@(ColumnTpl{}) = selectTemplate (columntplTemplate c) (setupAllColumnTemplates s)
+    columnTpl _ = undefined
     
