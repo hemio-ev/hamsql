@@ -40,43 +40,52 @@ myOpt :: Options
 myOpt = defaultOptions { fieldLabelModifier     = snakeify . removeFirstPart
                        , constructorTagModifier = drop 1 . snakeify}
 
-data WithModule a = WithModule Module a
+outJson :: Setup -> String
+outJson s = show $ toJSON s
+
+-- SqlCode (right now only SqlName)
                        
---name :: WithModule Show -> String
-class Bla a where
- name :: a -> String
+instance SqlCode SqlName
+    where
+        toSql n = toSql (expSqlName n)
+        (//) (SqlName s) (SqlName t) = SqlName (s ++ t)
+        
+instance SqlCode [SqlName]
+  where
+    toSql [] = error "Not allowed: [SqlName]=[]"
+    toSql xs = join "." (map getSql xs)
+      where
+        -- TODO: if quotes involved, do something
+        getSql (SqlName s) = "\"" ++ s ++ "\""
+    (//) a b = a ++ b
 
-instance Bla (WithModule TableTpl) where
- name (WithModule m t) = toSql [Parser.moduleName m, tabletplTemplate t]
+expSqlName :: SqlName -> [SqlName]
+expSqlName n = map SqlName (split "." (getStr n))
+  where
+    getStr (SqlName n') = n'
 
-instance Bla (WithModule FunctionTpl) where
- name (WithModule m f) = toSql [Parser.moduleName m, functiontplTemplate f]
+contSqlName :: [SqlName] -> SqlName
+contSqlName ns = SqlName $ (join ".") $ map getStr ns
+  where
+    getStr (SqlName n') = n'
+    
+class SqlCode a where
+  toSql :: a -> String
+  (//) :: a -> a -> a
 
-instance Bla (WithModule TableColumnTpl) where
- name (WithModule m f) = toSql [Parser.moduleName m, tablecolumntplTemplate f]
---withoutModule :: (WithModule a) -> a
-withoutModule (WithModule _ t) = t
-
---selectTemplates :: [SqlName] -> [WithModule a] -> [a]
-selectTemplates xs ts = map withoutModule $ filter (\x -> (name x) `elem` templateNames) ts
- where
-  templateNames = map toSql $ maybeList xs
- 
---selectTemplate :: a -> b -> TableColumnTpl
---selectTemplate :: t -> [WithModule a] -> a
-selectTemplate x ts = h $ map withoutModule $ filter (\y -> (name y) == toSql x) ts
- where
-  h [] = error $ "missing something: " ++ toSql x ++ show (map name ts)
-  h zs = head zs
-
--- Setup
+-- SqlName
+newtype SqlName = SqlName String deriving (Generic,Show,Eq)
+instance FromJSON SqlName where parseJSON = genericParseJSON myOpt
+instance ToJSON SqlName where toJSON = genericToJSON myOpt
+  
+-- Setup --
 
 data Setup = Setup {
-    setupModules    :: [String],
-    setupModuleDirs :: [FilePath],
-    setupPreCode    :: Maybe String,
-    setupPostCode   :: Maybe String,
-    xsetupInternal  :: Maybe SetupInternal
+  setupModules    :: [String],
+  setupModuleDirs :: [FilePath],
+  setupPreCode    :: Maybe String,
+  setupPostCode   :: Maybe String,
+  xsetupInternal  :: Maybe SetupInternal
 } deriving (Generic,Show)
 instance FromJSON Setup where parseJSON = genericParseJSON myOpt
 instance ToJSON Setup where toJSON = genericToJSON myOpt
@@ -90,143 +99,7 @@ instance ToJSON SetupInternal where toJSON = genericToJSON myOpt
 setupInternal :: Setup -> SetupInternal
 setupInternal s = fromJust $ xsetupInternal s
 
--- get things from Setup
-
-setupAllModules :: Setup -> [Module]
-setupAllModules = setupModuleData . setupInternal
-
-setupAllTables :: Setup -> [Table]
-setupAllTables s = concat $ map (maybeList . moduleTables) (setupAllModules s)
-
-setupAllFunctions :: Setup -> [Function]
-setupAllFunctions s = concat $ map (maybeList . moduleFunctions) (setupAllModules s)
-
-setupAllFunctionTemplates :: Setup -> [WithModule FunctionTpl]
-setupAllFunctionTemplates s = concat $ [
-  maybeMap (\x -> (WithModule m x)) (moduleFunctionTemplates m) | m <- (setupAllModules s) ]
-
-setupAllTableTemplates    :: Setup -> [WithModule TableTpl]
-setupAllTableTemplates s = concat $ [
-  maybeMap (\x -> (WithModule m x)) (moduleTableTemplates m) | m <- (setupAllModules s) ]
-
-setupAllColumnTemplates   :: Setup -> [WithModule TableColumnTpl]
-setupAllColumnTemplates s = concat $ [
-  maybeMap (\x -> (WithModule m x)) (moduleColumnTemplates m) | m <- (setupAllModules s) ]
-
-setupAllRoles             :: Setup -> [Role]
-setupAllRoles s = setupAll s moduleRoles
-
-setupAllDomains           :: Setup -> [Domain]
-setupAllDomains s = setupAll s moduleDomains
-
-setupAllTypes             :: Setup -> [Type]
-setupAllTypes s = setupAll s moduleTypes
-
-setupAll :: Setup -> (Module -> Maybe [a]) -> [a]
-setupAll s f = concat $ map (maybeList . f) (setupAllModules s)
-
--- end things
-
-outJson :: Setup -> String
-outJson s = show $ toJSON s
-
-getModuleByName :: SqlName -> Setup -> Module
-getModuleByName name s = get 
-    where
-    g (SqlName n) = n
-    -- oh, we need something to compare SqlNames!
-    list = filter (\x -> (Parser.moduleName x) == name) modules
-    
-    modules = setupModuleData $ setupInternal s
-
-    get
-     | length list == 1 = head list
-     | length list == 0 = error ("Module not found " ++ toSql name)
-     | otherwise       = error ("Found more then one module " ++ toSql name)
-
-
--- new implementation
-applyTpl :: Setup -> Setup
-applyTpl s = s {
-    -- TODO: possible overwrite here!
-    xsetupInternal = Just SetupInternal {
-      setupModuleData =
-        map mo (setupModuleData $ setupInternal s)
-    }
-  }
-  
-  where
-    
-    mo m = m {
-        moduleTables =  Just $
-          map applyColumnTemplates
-          $ maybeMap applyTableTemplates (moduleTables m)
-      }
-      
-    applyTableTemplates :: Table -> Table 
-    applyTableTemplates t = foldr applyTableTpl t (tableTpls t)
-
-    tableTpls :: Table -> [TableTpl]
-    tableTpls t = selectTemplates (tableTemplates t) (setupAllTableTemplates s)
-    
-    applyFunctionTemplates :: Function -> Function 
-    applyFunctionTemplates f = foldr applyFunctionTpl f (functionTpls f)
-
-    functionTpls :: Function -> [FunctionTpl]
-    functionTpls f = selectTemplates (functionTemplates f) (setupAllFunctionTemplates s)
-
-    applyColumnTemplates :: Table -> Table
-    applyColumnTemplates t = t { tableColumns = map f (tableColumns t) }
-     where
-       f x@(ColumnTpl{}) = applyColumnTpl (columnTemplate x) x
-       f x = x
-
-    columnTemplate :: Column -> TableColumnTpl
-    columnTemplate c@(ColumnTpl{}) = selectTemplate (columntplTemplate c) (setupAllColumnTemplates s)
-    columnTemplate _ = undefined
-    
--- end new
-     
--- name is outdated
-implementAndApplyTemplates :: Setup -> Setup
-implementAndApplyTemplates s =
-  applySetup $ implementSetup s
-
-  where
-    
-    implementSetup :: Setup -> Setup
-    implementSetup s' = s' {
-      xsetupInternal = Just (setupInternal s') {
-        setupModuleData =
-          map implementModule (setupModuleData $ setupInternal s')
-      }
-    }
-     
-    implementModule :: Module -> Module
-    implementModule m = m {
-      moduleTables = Just $
-          maybeMap (implementTableTemplates s m) (moduleTables m),
-      moduleFunctions = Just $
-          maybeMap (implementFunctionTemplates s m) (moduleFunctions m)
-    }
-    
-    applySetup :: Setup -> Setup
-    applySetup s' = s' {
-      xsetupInternal = Just (setupInternal s') {
-        setupModuleData =
-          map applyModule (setupModuleData $ setupInternal s')
-      }
-    }
-    
-    applyModule :: Module -> Module
-    applyModule m = m {
-      moduleTables = Just $
-          maybeMap applyTableTemplates (moduleTables m),
-      moduleFunctions = Just $
-          maybeMap applyFunctionTemplates (moduleFunctions m)
-    }
-
--- Module
+-- Module --
 
 data Module = Module {
     moduleName              :: SqlName,
@@ -253,150 +126,24 @@ data ModuleInternal = ModuleInternal {
 } deriving (Generic,Show)
 instance FromJSON ModuleInternal where parseJSON = genericParseJSON myOpt
 instance ToJSON ModuleInternal where toJSON = genericToJSON myOpt
-    
-implementFunctionTemplates :: Setup -> Module -> Function -> Function
-implementFunctionTemplates s m f = foldr implementFunctionTpl f templateNames
-    where
-      
-    templateNames = maybeList $ functionTemplates f
 
-    implementFunctionTpl :: SqlName -> Function -> Function
-    implementFunctionTpl name f' = f' {
-        functionTemplateData = 
-            Just $ getFunctionTpl name : (maybeList $ functionTemplateData f')
-    }
-   
-    getFunctionTpl :: SqlName -> FunctionTpl
-    getFunctionTpl name = selectUnique getTemplates
-        where
-        getTemplates =
-            filter
-            (\x -> functiontplTemplate x == tplName name)
-            (maybeList$moduleFunctionTemplates$tplModule name)
-        selectUnique (x:[]) = x
-        selectUnique _ = error $ "Module: " ++ (toSql $ Parser.moduleName m) ++ ". Not exactly one function template " ++ toSql name ++ "."
-    
-    -- resolve the {tplModule}.tplName syntax
-    tplName :: SqlName -> SqlName
-    tplName name = last (expSqlName name)
-    
-    tplModule :: SqlName -> Module
-    tplModule name
-      -- if no module is given, take current module
-      | length (expSqlName name) == 1 = m
-      -- otherwise extract module name
-      | otherwise =
-        getModuleByName (contSqlName $ init $ expSqlName name) s
-
-
-implementTableTemplates :: Setup -> Module -> Table -> Table
-implementTableTemplates s m t = implementColumnTpl $ foldr implementTableTpl t templateNames
-    where
-      
-    templateNames = maybeList $ tableTemplates t
-
-    implementTableTpl :: SqlName -> Table -> Table
-    implementTableTpl name t' = t' {
-        tableTemplateData = 
-            Just $ getTableTpl name : (maybeList $ tableTemplateData t')
-    }
-    
-    implementColumnTpl :: Table -> Table
-    implementColumnTpl t' = t' {
-      tableColumns = map getColumnTpl (tableColumns t')
-    }
-   
-    getTableTpl :: SqlName -> TableTpl
-    getTableTpl name = selectUnique getTemplates
-        where
-        getTemplates =
-            filter
-            (\x -> tabletplTemplate x == tplName name)
-            (maybeList$moduleTableTemplates$tplModule name)
-        selectUnique (x:[]) = x
-        selectUnique _ = error $ "Module: " ++ (toSql $ Parser.moduleName m) ++ ". Not exactly one table template '" ++ toSql name ++ "'."
-    
-    
-    getColumnTpl :: Column -> Column
-    getColumnTpl c@(ColumnTpl {}) =
-      c {
-        columntplTemplateData = Just $ getColumnTplByName $ columntplTemplate c
-      }
-    getColumnTpl c = c
-
-      
-    getColumnTplByName :: SqlName -> TableColumnTpl
-    getColumnTplByName name = selectUnique getTemplates
-      where
-        getTemplates =
-            filter
-            (\x -> tablecolumntplTemplate x == tplName name)
-            (maybeList $ moduleColumnTemplates $ tplModule name)
-        selectUnique (x:[]) = x
-        selectUnique _ = error $ "Module: " ++ (toSql$Parser.moduleName m) ++ ". Not exactly one column template '" ++ toSql name ++ "'."
-    
-    -- resolve the {tplModule}.tplName syntax
-    tplName :: SqlName -> SqlName
-    tplName name = last (expSqlName name)
-    
-    tplModule :: SqlName -> Module
-    tplModule name
-      -- if no module is given, take current module
-      | length (expSqlName name) == 1 = m
-      -- otherwise extract module name
-      | otherwise =
-        getModuleByName (contSqlName $ init $ expSqlName name) s
-
--- Table
-newtype SqlName = SqlName String deriving (Generic,Show,Eq)
-instance FromJSON SqlName where parseJSON = genericParseJSON myOpt
-instance ToJSON SqlName where toJSON = genericToJSON myOpt
---instance Show SqlName where show (SqlName s) = s
-
--- SqlName
-instance SqlCode SqlName
-    where
-        toSql n = toSql (expSqlName n)
-        (//) (SqlName s) (SqlName t) = SqlName (s ++ t)
-        
-instance SqlCode [SqlName]
-  where
-    toSql [] = error "Not allowed: [SqlName]=[]"
-    toSql xs = join "." (map getSql xs)
-      where
-        -- todo: if quotes involved, do something
-        getSql (SqlName s) = "\"" ++ s ++ "\""
-    (//) a b = a ++ b
-
-expSqlName :: SqlName -> [SqlName]
-expSqlName n = map SqlName (split "." (getStr n))
-  where
-    getStr (SqlName n') = n'
-
-contSqlName :: [SqlName] -> SqlName
-contSqlName ns = SqlName $ (join ".") $ map getStr ns
-  where
-    getStr (SqlName n') = n'
-    
-class SqlCode a where
-    toSql :: a -> String
-    (//) :: a -> a -> a
+-- Table --
 
 data Table = Table {
-    tableName         :: SqlName,
-    tableDescription  :: String,
-    tableColumns      :: [Column],
-    tablePrimaryKey   :: [SqlName],
-    tableUnique       :: Maybe [[SqlName]],
-    tableChecks       :: Maybe [Check],
-    tableInherits     :: Maybe [SqlName],
-    tablePrivSelect   :: Maybe [String],
-    tablePrivInsert   :: Maybe [String],
-    tablePrivUpdate   :: Maybe [String],
-    tablePrivDelete   :: Maybe [String],
-    tableTemplates    :: Maybe [SqlName],
-    tableTemplateData :: Maybe [TableTpl],
-    xtableInternal :: Maybe TableInternal
+  tableName         :: SqlName,
+  tableDescription  :: String,
+  tableColumns      :: [Column],
+  tablePrimaryKey   :: [SqlName],
+  tableUnique       :: Maybe [[SqlName]],
+  tableChecks       :: Maybe [Check],
+  tableInherits     :: Maybe [SqlName],
+  tablePrivSelect   :: Maybe [String],
+  tablePrivInsert   :: Maybe [String],
+  tablePrivUpdate   :: Maybe [String],
+  tablePrivDelete   :: Maybe [String],
+  tableTemplates    :: Maybe [SqlName],
+  tableTemplateData :: Maybe [TableTpl],
+  xtableInternal :: Maybe TableInternal
 } deriving (Generic, Show)
 instance FromJSON Table where parseJSON = genericParseJSON myOpt
 instance ToJSON Table where toJSON = genericToJSON myOpt
@@ -411,7 +158,6 @@ data TableInternal = TableInternal {
 }deriving (Generic, Show)
 instance FromJSON TableInternal where parseJSON = genericParseJSON myOpt
 instance ToJSON TableInternal where toJSON = genericToJSON myOpt
-
 
 data Column = Column {
     columnName            :: SqlName,
@@ -486,65 +232,20 @@ applyTableTpl tpl t = t {
 
 applyColumnTpl :: TableColumnTpl -> Column -> Column
 applyColumnTpl tmp c = Column {
-        columnName        = maybeRight' (tablecolumntplName tmp) (columntplName c),
-        columnType        = maybeRight' (tablecolumntplType tmp) (columntplType c),
-        columnDescription = maybeRight' (tablecolumntplDescription tmp) (columntplDescription c),
-        columnDefault     = maybeRight (tablecolumntplDefault tmp) (columntplDefault c),
-        columnNull        = maybeRight (tablecolumntplNull tmp) (columntplNull c),
-        columnReferences  = maybeRight (tablecolumntplReferences tmp) (columntplReferences c),
-        columnOnRefDelete = maybeRight (tablecolumntplOnRefDelete tmp) (columntplOnRefDelete c),
-        columnOnRefUpdate = maybeRight (tablecolumntplOnRefUpdate tmp) (columntplOnRefUpdate c),
-        columnUnique      = maybeRight (tablecolumntplUnique tmp) (columntplUnique c)
-    }
-    where
-        maybeRight' :: a -> Maybe a -> a
-        maybeRight' x Nothing = x
-        maybeRight' _ (Just y) = y
-
-applyTableTemplates :: Table -> Table
-applyTableTemplates t =
-        applyColumnTemplates applyTemplates
-    where
-    applyTemplates :: Table
-    applyTemplates = foldr applyTableTpl t (maybeList (tableTemplateData t))
-    
-    applyColumnTemplates :: Table -> Table
-    applyColumnTemplates t'' = t'' {
-            tableColumns = map applyTableColumnTpl (tableColumns t'')
-        }
-
-    applyTableTpl :: TableTpl -> Table -> Table 
-    applyTableTpl tpl t' = t' {
-            tableColumns    = (maybeList $ tabletplColumns tpl) ++ (tableColumns t'),
-            tableInherits   = maybeJoin (tabletplInherits tpl) (tableInherits t'),
-            tablePrivSelect = maybeJoin (tabletplPrivSelect tpl) (tablePrivSelect t'),
-            tablePrivInsert = maybeJoin (tabletplPrivInsert tpl) (tablePrivInsert t'),
-            tablePrivUpdate = maybeJoin (tabletplPrivUpdate tpl) (tablePrivUpdate t'),
-            tablePrivDelete = maybeJoin (tabletplPrivDelete tpl) (tablePrivDelete t')
-        }
-
-    applyTableColumnTpl :: Column -> Column
-    applyTableColumnTpl c@(Column {}) = c
-    applyTableColumnTpl c@(ColumnTpl {}) = Column {
-            columnName        = maybeRight' (tablecolumntplName tmp) (columntplName c),
-            columnType        = maybeRight' (tablecolumntplType tmp) (columntplType c),
-            columnDescription = maybeRight' (tablecolumntplDescription tmp) (columntplDescription c),
-            columnDefault     = maybeRight (tablecolumntplDefault tmp) (columntplDefault c),
-            columnNull        = maybeRight (tablecolumntplNull tmp) (columntplNull c),
-            columnReferences  = maybeRight (tablecolumntplReferences tmp) (columntplReferences c),
-            columnOnRefDelete = maybeRight (tablecolumntplOnRefDelete tmp) (columntplOnRefDelete c),
-            columnOnRefUpdate = maybeRight (tablecolumntplOnRefUpdate tmp) (columntplOnRefUpdate c),
-            columnUnique      = maybeRight (tablecolumntplUnique tmp) (columntplUnique c)
-        }
-        where
-            tmp :: TableColumnTpl
-            tmp = fromJustReason
-                    ("Table '" ++ toSql (tableName t) ++ "': Getting column tpl failed: " ++ (show c))
-                    (columntplTemplateData c)
-
-            maybeRight' :: a -> Maybe a -> a
-            maybeRight' x Nothing = x
-            maybeRight' _ (Just y) = y
+    columnName        = maybeRight' (tablecolumntplName tmp) (columntplName c),
+    columnType        = maybeRight' (tablecolumntplType tmp) (columntplType c),
+    columnDescription = maybeRight' (tablecolumntplDescription tmp) (columntplDescription c),
+    columnDefault     = maybeRight (tablecolumntplDefault tmp) (columntplDefault c),
+    columnNull        = maybeRight (tablecolumntplNull tmp) (columntplNull c),
+    columnReferences  = maybeRight (tablecolumntplReferences tmp) (columntplReferences c),
+    columnOnRefDelete = maybeRight (tablecolumntplOnRefDelete tmp) (columntplOnRefDelete c),
+    columnOnRefUpdate = maybeRight (tablecolumntplOnRefUpdate tmp) (columntplOnRefUpdate c),
+    columnUnique      = maybeRight (tablecolumntplUnique tmp) (columntplUnique c)
+  }
+  where
+    maybeRight' :: a -> Maybe a -> a
+    maybeRight' x Nothing = x
+    maybeRight' _ (Just y) = y
 
 -- Function
 
@@ -561,7 +262,8 @@ data Function = Function {
     functionParameters      :: Maybe [Variable],
     -- list of templates, used for this function
     functionTemplates       :: Maybe [SqlName],
-    -- loaded templates, not designed for use via Yaml TODO: move to xfunctionInternal
+    -- loaded templates, not designed for use via Yaml
+    -- TODO: move to xfunctionInternal
     functionTemplateData    :: Maybe [FunctionTpl],
     -- if return is TABLE, gives the columns that are returned (see parameter)
     functionReturnColumns   :: Maybe [Parameter],
@@ -638,8 +340,7 @@ instance FromJSON FunctionTpl where parseJSON = genericParseJSON myOpt
 instance ToJSON FunctionTpl where toJSON = genericToJSON myOpt
 
 applyFunctionTpl :: FunctionTpl -> Function -> Function
-applyFunctionTpl t f =
-  f {
+applyFunctionTpl t f = f {
     functionPrivExecute =
       maybeRight (functiontplPrivExecute t) (functionPrivExecute f),
 
@@ -664,42 +365,17 @@ applyFunctionTpl t f =
     maybeStringR (Just xs) = "\n" ++ xs
     maybeStringR Nothing = ""
 
-applyFunctionTemplates :: Function -> Function
-applyFunctionTemplates f = foldr deriveFunctionFromTemplate f' (maybeList (functionTemplateData f))
-    where
-    f'
-     | (functionReturn f == "TABLE") = f { functionReturnTable = Just True }
-     | otherwise = f { functionReturnTable = Just False }
+-- TODO: no longer implemented but needed
+-- applyFunctionTemplates :: Function -> Function
+-- applyFunctionTemplates f = foldr deriveFunctionFromTemplate f' (maybeList (functionTemplateData f))
+--     where
+--     f'
+--      | (functionReturn f == "TABLE") = f { functionReturnTable = Just True }
+--      | otherwise = f { functionReturnTable = Just False }
+--   
 
-deriveFunctionFromTemplate :: FunctionTpl -> Function -> Function
-deriveFunctionFromTemplate t f =
-  f {
-    functionPrivExecute =
-      maybeRight (functiontplPrivExecute t) (functionPrivExecute f),
+-- Domains --
 
-    functionSecurityDefiner =
-      maybeRight (functiontplSecurityDefiner t) (functionSecurityDefiner f),
-
-    functionOwner =
-      maybeRight (functiontplOwner t) (functionOwner f),
-
-    functionVariables =
-      maybeJoin (functionVariables f) (functiontplVariables t),
-        
-    functionBody =
-      (maybeStringL $ functiontplBodyPrelude t) ++
-      functionBody f ++
-      (maybeStringR $ functiontplBodyPostlude t)
-        
-  }
-  
-  where
-    maybeStringL (Just xs) = xs ++ "\n"
-    maybeStringL Nothing = ""
-    maybeStringR (Just xs) = "\n" ++ xs
-    maybeStringR Nothing = ""
-    
--- Domains
 data Domain = Domain {
     domainName :: SqlName,
     domainDescription :: String,
@@ -722,7 +398,8 @@ data DomainInternal = DomainInternal {
 instance FromJSON DomainInternal where parseJSON = genericParseJSON myOpt
 instance ToJSON DomainInternal where toJSON = genericToJSON myOpt
 
--- Types
+-- Types --
+
 data Type = Type {
     typeName :: SqlName,
     typeDescription :: String,
@@ -750,8 +427,8 @@ data TypeElement = TypeElement {
 instance FromJSON TypeElement where parseJSON = genericParseJSON myOpt
 instance ToJSON TypeElement where toJSON = genericToJSON myOpt
 
+-- Roles --
 
--- Roles
 data Role = Role {
     roleName        :: SqlName,
     roleDescription :: String,
@@ -762,3 +439,86 @@ data Role = Role {
 instance FromJSON Role where parseJSON = genericParseJSON myOpt
 instance ToJSON Role where toJSON = genericToJSON myOpt
 
+-- Template handling and applyTemplate
+
+data WithModule a = WithModule Module a
+           
+class WithName a where
+ name :: a -> String
+
+instance WithName (WithModule TableTpl) where
+ name (WithModule m t) = toSql [Parser.moduleName m, tabletplTemplate t]
+
+instance WithName (WithModule FunctionTpl) where
+ name (WithModule m f) = toSql [Parser.moduleName m, functiontplTemplate f]
+
+instance WithName (WithModule TableColumnTpl) where
+ name (WithModule m f) = toSql [Parser.moduleName m, tablecolumntplTemplate f]
+
+withoutModule (WithModule _ t) = t
+
+selectTemplates xs ts = map withoutModule $ filter (\x -> (name x) `elem` templateNames) ts
+  where
+    templateNames = map toSql $ maybeList xs
+ 
+selectTemplate x ts = head' $ map withoutModule $ filter (\y -> (name y) == toSql x) ts
+  where
+    head' [] = error $ "Could not find column template " ++ toSql x
+    head' zs = head zs
+    
+-- get things from Setup
+
+setupAllModules :: Setup -> [Module]
+setupAllModules = setupModuleData . setupInternal
+
+setupAllFunctionTemplates :: Setup -> [WithModule FunctionTpl]
+setupAllFunctionTemplates s = concat $ [
+  maybeMap (\x -> (WithModule m x)) (moduleFunctionTemplates m) | m <- (setupAllModules s) ]
+
+setupAllTableTemplates    :: Setup -> [WithModule TableTpl]
+setupAllTableTemplates s = concat $ [
+  maybeMap (\x -> (WithModule m x)) (moduleTableTemplates m) | m <- (setupAllModules s) ]
+
+setupAllColumnTemplates   :: Setup -> [WithModule TableColumnTpl]
+setupAllColumnTemplates s = concat $ [
+  maybeMap (\x -> (WithModule m x)) (moduleColumnTemplates m) | m <- (setupAllModules s) ]
+
+applyTpl :: Setup -> Setup
+applyTpl s = s {
+    -- TODO: possible overwrite here!
+    xsetupInternal = Just SetupInternal {
+      setupModuleData =
+        map applyModule (setupModuleData $ setupInternal s)
+    }
+  }
+  
+  where
+    
+    applyModule m = m {
+        moduleTables =  Just $
+          map applyColumnTemplates
+          $ maybeMap applyTableTemplates (moduleTables m)
+      }
+      
+    applyTableTemplates :: Table -> Table 
+    applyTableTemplates t = foldr applyTableTpl t (tableTpls t)
+
+    tableTpls :: Table -> [TableTpl]
+    tableTpls t = selectTemplates (tableTemplates t) (setupAllTableTemplates s)
+    
+    applyFunctionTemplates :: Function -> Function 
+    applyFunctionTemplates f = foldr applyFunctionTpl f (functionTpls f)
+
+    functionTpls :: Function -> [FunctionTpl]
+    functionTpls f = selectTemplates (functionTemplates f) (setupAllFunctionTemplates s)
+
+    applyColumnTemplates :: Table -> Table
+    applyColumnTemplates t = t { tableColumns = map f (tableColumns t) }
+     where
+       f x@(ColumnTpl{}) = applyColumnTpl (columnTemplate x) x
+       f x = x
+
+    columnTemplate :: Column -> TableColumnTpl
+    columnTemplate c@(ColumnTpl{}) = selectTemplate (columntplTemplate c) (setupAllColumnTemplates s)
+    columnTemplate _ = undefined
+    
