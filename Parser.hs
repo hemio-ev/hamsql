@@ -135,6 +135,7 @@ data Table = Table {
   tableColumns      :: [Column],
   tablePrimaryKey   :: [SqlName],
   tableUnique       :: Maybe [[SqlName]],
+  tableForeignKeys  :: Maybe [ForeignKey],
   tableChecks       :: Maybe [Check],
   tableInherits     :: Maybe [SqlName],
   tablePrivSelect   :: Maybe [String],
@@ -246,6 +247,17 @@ applyColumnTpl tmp c = Column {
     maybeRight' :: a -> Maybe a -> a
     maybeRight' x Nothing = x
     maybeRight' _ (Just y) = y
+    
+data ForeignKey = ForeignKey {
+  foreignkeyName        :: SqlName,
+  foreignkeyColumns :: [SqlName],
+  foreignkeyRefTable    :: SqlName,
+  foreignkeyRefColumns  :: [SqlName],
+  foreignkeyOnDelete    :: Maybe String,
+  foreignkeyOnUpdate    :: Maybe String
+} deriving (Generic, Show)
+instance FromJSON ForeignKey where parseJSON = genericParseJSON myOpt
+instance ToJSON ForeignKey where toJSON = genericToJSON myOpt
 
 -- Function
 

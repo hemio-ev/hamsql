@@ -86,7 +86,8 @@ getTableStatements opts t =
     maybeMap (sqlGrant "DELETE") (tablePrivDelete t) ++
     map sqlAddForeignKey (tableColumns t) ++
     maybeMap sqlAddInheritance (tableInherits t) ++
-    map sqlColumnUnique (tableColumns t)
+    map sqlColumnUnique (tableColumns t) ++
+    maybeMap sqlAddForeignKey' (tableForeignKeys t)
 
     where
         sqlTable =
@@ -139,7 +140,16 @@ getTableStatements opts t =
             " (" ++ (toSql $ last $ expSqlName ref) ++ ")" ++
             sqlOnRefUpdate (columnOnRefUpdate c) ++
             sqlOnRefDelete (columnOnRefDelete c)
-               
+            
+        sqlAddForeignKey' :: ForeignKey -> SqlStatement
+        sqlAddForeignKey' fk = SqlStmtConstr $
+            "ALTER TABLE " ++ toSql [ moduleName' t, tableName t ] ++
+            " ADD CONSTRAINT " ++ name ((tableName t) // (foreignkeyName fk)) ++
+            " FOREIGN KEY (" ++ join ", " (map toSql (foreignkeyColumns fk)) ++ ")" ++
+            " REFERENCES " ++ (toSql $ foreignkeyRefTable fk) ++
+            " (" ++ join ", " (map toSql $ foreignkeyRefColumns fk) ++ ")" ++
+            sqlOnRefUpdate (foreignkeyOnDelete fk) ++
+            sqlOnRefDelete (foreignkeyOnUpdate fk)              
                 
         sqlOnRefUpdate Nothing = ""
         sqlOnRefUpdate (Just a) = " ON UPDATE " ++ a
@@ -154,10 +164,11 @@ getTableStatements opts t =
                 SqlStmtInherit $ "ALTER TABLE " ++ toSql [ moduleName' t, tableName t ] ++
                  " INHERIT " ++ toSql n
                 
-        sqlColumnUnique c@(Column{}) = SqlStmtConstr $
+        sqlColumnUnique c@(Column{ columnUnique = (Just True) }) = SqlStmtConstr $
           "ALTER TABLE " ++ toSql [ moduleName' t, tableName t ] ++
             " ADD CONSTRAINT " ++ name (columnName c) ++ 
             " UNIQUE (" ++ toSql (columnName c) ++ ")"
+        sqlColumnUnique _ = SqlStmtEmpty
         
         -- tools
 
