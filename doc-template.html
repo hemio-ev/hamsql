@@ -28,6 +28,32 @@ $modules.description$ (module sources: <tt>$modules.internal.load_path$</tt>)
             </ul>
             </li>
 
+            $if(modules.tables.foreign_keys)$
+            <li>Foreign keys:
+                <ol>
+                $for(modules.tables.foreign_keys)$
+                <li><b>$modules.tables.foreign_keys.name$</b>
+                <ul>
+                <li>Columns:
+                    <ol>
+                    $for(modules.tables.foreign_keys.columns)$
+                    <li>$modules.tables.foreign_keys.columns$ →</li>
+                    $endfor$
+                    </ol>
+                </li>
+                <li>Referenced columns:
+                    <ol>
+                    $for(modules.tables.foreign_keys.ref_columns)$
+                    <li><a href="#COLUMN-$modules.tables.foreign_keys.ref_table$.$modules.tables.foreign_keys.ref_columns$">$modules.tables.foreign_keys.ref_table$.$modules.tables.foreign_keys.ref_columns$</a></li>
+                    $endfor$
+                    </ol>
+                </li>
+                </ul>
+                $endfor$
+                </ol>
+            </li>
+            $endif$
+
             $if(modules.tables.inherits)$
             <li>
             Inherits:

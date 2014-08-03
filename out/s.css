@@ -93,14 +93,22 @@ section section section section p {
     display: inline;
 }
 
-ul {
+ul, ol {
     margin: 0.3em;
     margin-top: 0.7em;
-    list-style: square;
     padding-left: 1.5em;
 }
 
-ul ul {
+ul {
+    list-style: square;
+}
+
+
+ul ul, ol ol {
     margin: 0;
+}
+
+ul ul {
     list-style: circle;
 }
+
