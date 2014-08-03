@@ -56,4 +56,9 @@ fromJustReason :: String -> Maybe a -> a
 fromJustReason _ (Just x) = x
 fromJustReason reason Nothing = error $ "fromJust failed: " ++ reason
 
+selectUniqueReason :: String -> [a] -> a
+selectUniqueReason _ (x:[]) = x
+selectUniqueReason msg [] = error $ "No element found while trying to find exactly one: " ++ msg
+selectUniqueReason msg _ = error $ "More then one element found while trying to extrac one: " ++ msg
+
 tr x = trace (show x) x

@@ -448,14 +448,15 @@ instance WithName (WithModule TableColumnTpl) where
 
 withoutModule (WithModule _ t) = t
 
-selectTemplates xs ts = map withoutModule $ filter (\x -> (name x) `elem` templateNames) ts
-  where
-    templateNames = map toSql $ maybeList xs
+selectTemplates ns ts = 
+  -- TODO: error handling here should be done using exceptions
+  [ withoutModule $ selectUniqueReason ("table or function tpl " ++ n) $
+    filter (\t -> n == (name t)) ts 
+    | n <- map toSql $ maybeList ns ]
  
 selectTemplate x ts = head' $ map withoutModule $ filter (\y -> (name y) == toSql x) ts
   where
-    head' [] = error $ "Could not find column template " ++ toSql x
-    head' zs = head zs
+    head' zs = selectUniqueReason ("Column template " ++ toSql x) zs
     
 -- get things from Setup
 
