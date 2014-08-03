@@ -21,7 +21,7 @@ loadSetup :: FilePath -> IO (Setup)
 loadSetup filePath = do
   setup <- loadYamlFile filePath
   setup' <- loadSetupModules (dropFileName filePath) (initSetupInternal setup)
-  return $ implementAndApplyTemplates setup'
+  return $ applyTpl setup'
 
 initSetupInternal s' = s' {
   xsetupInternal = Just SetupInternal { setupModuleData = [] }

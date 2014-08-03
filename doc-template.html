@@ -20,6 +20,14 @@ $modules.description$ (module sources: <tt>$modules.internal.load_path$</tt>)
         $modules.tables.description$ (table source: <tt>$modules.tables.internal.load_path$</tt>)
 
         <ul>
+            <li>Primary key:
+            <ul>
+                $for(modules.tables.primary_key)$
+                <li>$modules.tables.primary_key$</li>
+                $endfor$
+            </ul>
+            </li>
+
             $if(modules.tables.inherits)$
             <li>
             Inherits:

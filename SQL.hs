@@ -85,7 +85,8 @@ getTableStatements opts t =
     maybeMap (sqlGrant "INSERT") (tablePrivInsert t) ++
     maybeMap (sqlGrant "DELETE") (tablePrivDelete t) ++
     map sqlAddForeignKey (tableColumns t) ++
-    maybeMap sqlAddInheritance (tableInherits t)
+    maybeMap sqlAddInheritance (tableInherits t) ++
+    map sqlColumnUnique (tableColumns t)
 
     where
         sqlTable =
@@ -138,8 +139,8 @@ getTableStatements opts t =
             " (" ++ (toSql $ last $ expSqlName ref) ++ ")" ++
             sqlOnRefUpdate (columnOnRefUpdate c) ++
             sqlOnRefDelete (columnOnRefDelete c)
+               
                 
-
         sqlOnRefUpdate Nothing = ""
         sqlOnRefUpdate (Just a) = " ON UPDATE " ++ a
         sqlOnRefDelete Nothing = ""
@@ -152,6 +153,13 @@ getTableStatements opts t =
         sqlAddInheritance n = 
                 SqlStmtInherit $ "ALTER TABLE " ++ toSql [ moduleName' t, tableName t ] ++
                  " INHERIT " ++ toSql n
+                
+        sqlColumnUnique c@(Column{}) = SqlStmtConstr $
+          "ALTER TABLE " ++ toSql [ moduleName' t, tableName t ] ++
+            " ADD CONSTRAINT " ++ name (columnName c) ++ 
+            " UNIQUE (" ++ toSql (columnName c) ++ ")"
+        
+        -- tools
 
         name a = toSql ((SqlName "TABLE_") // tableName t // (SqlName "__") // a)
 
