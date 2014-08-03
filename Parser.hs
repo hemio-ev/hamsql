@@ -160,6 +160,20 @@ data TableInternal = TableInternal {
 instance FromJSON TableInternal where parseJSON = genericParseJSON myOpt
 instance ToJSON TableInternal where toJSON = genericToJSON myOpt
 
+
+data TableTpl = TableTpl {
+    tabletplTemplate    :: SqlName,
+    tabletplForeignKeys :: Maybe [ForeignKey],
+    tabletplInherits    :: Maybe [SqlName],
+    tabletplColumns     :: Maybe [Column],
+    tabletplPrivSelect  :: Maybe [String],
+    tabletplPrivInsert  :: Maybe [String], 
+    tabletplPrivUpdate  :: Maybe [String],
+    tabletplPrivDelete  :: Maybe [String]
+} deriving (Generic, Show)
+instance FromJSON TableTpl where parseJSON = genericParseJSON myOpt
+instance ToJSON TableTpl where toJSON = genericToJSON myOpt
+
 data Column = Column {
     columnName            :: SqlName,
     columnType            :: String,
@@ -185,26 +199,6 @@ data Column = Column {
 } deriving (Generic, Show)
 instance FromJSON Column where parseJSON = genericParseJSON myOpt
 instance ToJSON Column where toJSON = genericToJSON myOpt
-      
-data Check = Check {
-    checkName        :: SqlName,
-    checkDescription :: String,
-    checkCheck       :: String
-} deriving (Generic, Show)
-instance FromJSON Check where parseJSON = genericParseJSON myOpt
-instance ToJSON Check where toJSON = genericToJSON myOpt
-
-data TableTpl = TableTpl {
-    tabletplTemplate   :: SqlName,
-    tabletplInherits   :: Maybe [SqlName],
-    tabletplColumns    :: Maybe [Column],
-    tabletplPrivSelect :: Maybe [String],
-    tabletplPrivInsert :: Maybe [String], 
-    tabletplPrivUpdate :: Maybe [String],
-    tabletplPrivDelete :: Maybe [String]
-} deriving (Generic, Show)
-instance FromJSON TableTpl where parseJSON = genericParseJSON myOpt
-instance ToJSON TableTpl where toJSON = genericToJSON myOpt
 
 data TableColumnTpl = TableColumnTpl {
     tablecolumntplTemplate     :: SqlName,
@@ -223,12 +217,13 @@ instance ToJSON TableColumnTpl where toJSON = genericToJSON myOpt
 
 applyTableTpl :: TableTpl -> Table -> Table
 applyTableTpl tpl t = t {
-    tableColumns    = (maybeList $ tabletplColumns tpl) ++ (tableColumns t),
-    tableInherits   = maybeJoin (tabletplInherits tpl) (tableInherits t),
-    tablePrivSelect = maybeJoin (tabletplPrivSelect tpl) (tablePrivSelect t),
-    tablePrivInsert = maybeJoin (tabletplPrivInsert tpl) (tablePrivInsert t),
-    tablePrivUpdate = maybeJoin (tabletplPrivUpdate tpl) (tablePrivUpdate t),
-    tablePrivDelete = maybeJoin (tabletplPrivDelete tpl) (tablePrivDelete t)
+    tableColumns     = (maybeList $ tabletplColumns tpl) ++ (tableColumns t),
+    tableForeignKeys = maybeJoin (tabletplForeignKeys tpl) (tableForeignKeys t),
+    tableInherits    = maybeJoin (tabletplInherits tpl) (tableInherits t),
+    tablePrivSelect  = maybeJoin (tabletplPrivSelect tpl) (tablePrivSelect t),
+    tablePrivInsert  = maybeJoin (tabletplPrivInsert tpl) (tablePrivInsert t),
+    tablePrivUpdate  = maybeJoin (tabletplPrivUpdate tpl) (tablePrivUpdate t),
+    tablePrivDelete  = maybeJoin (tabletplPrivDelete tpl) (tablePrivDelete t)
   }
 
 applyColumnTpl :: TableColumnTpl -> Column -> Column
@@ -247,7 +242,15 @@ applyColumnTpl tmp c = Column {
     maybeRight' :: a -> Maybe a -> a
     maybeRight' x Nothing = x
     maybeRight' _ (Just y) = y
-    
+      
+data Check = Check {
+    checkName        :: SqlName,
+    checkDescription :: String,
+    checkCheck       :: String
+} deriving (Generic, Show)
+instance FromJSON Check where parseJSON = genericParseJSON myOpt
+instance ToJSON Check where toJSON = genericToJSON myOpt
+      
 data ForeignKey = ForeignKey {
   foreignkeyName        :: SqlName,
   foreignkeyColumns :: [SqlName],
