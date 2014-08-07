@@ -106,7 +106,7 @@ getTableStatements opts t =
             columnType c ++ " " ++
             sqlNull (columnNull c) ++ " " ++
             sqlDefault (columnDefault c)
-        sqlColumn _ = error "ColumnTemplates should not be present in SQL parsing"
+        sqlColumn _ = err "ColumnTemplates should not be present in SQL parsing"
 
         sqlNull Nothing        = "NOT NULL"
         sqlNull (Just True)    = "NULL"

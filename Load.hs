@@ -54,7 +54,7 @@ findModulePath :: String -> [FilePath] -> IO FilePath
 findModulePath moduleName search = findDir search
   where
     findDir [] =
-      error $ "Module '" ++ moduleName ++ "' not found in " ++ (show search)
+      err $ "Module '" ++ moduleName ++ "' not found in " ++ (show search)
     findDir (d:ds) = do
       let dir = combine d moduleName
       dirExists <- doesDirectoryExist (dir :: FilePath)
@@ -63,7 +63,7 @@ findModulePath moduleName search = findDir search
           fileExists <- doesFileExist (combine dir "module.yaml")
           case fileExists of
             True -> return dir
-            False -> error $ "file 'module.yaml' missing in '" ++ dir ++ "'"
+            False -> err $ "file 'module.yaml' missing in '" ++ dir ++ "'"
         False -> do
           xxx <- findDir ds
           return xxx
@@ -72,7 +72,7 @@ loadYamlFile:: (FromJSON a0) => FilePath -> IO (a0)
 loadYamlFile filePath = do
   fileContent <- B.readFile filePath
   case decodeEither fileContent of
-    Left msg -> error $
+    Left msg -> err $
       "Error while decoding '" ++ filePath ++ "'. " ++ msg
     Right decoded -> return decoded
 
@@ -97,7 +97,7 @@ selectFilesInDir ending dir = do
     return $ filter ending files
 
 errorCheck :: String -> Bool -> IO ()
-errorCheck msg False = error msg
+errorCheck msg False = err msg
 errorCheck _   True  = return ()
     
 readModule :: FilePath -> IO Module

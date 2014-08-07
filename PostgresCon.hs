@@ -20,7 +20,7 @@ pgsqlExec connUrl xs = do
 
     let conn = case connResult of
                  Left e@(SqlError{}) ->
-                   error $ "sql connection failed: " ++ seErrorMsg e
+                   err $ "sql connection failed: " ++ seErrorMsg e
                  Right conn' -> conn'
        
     _ <- sequence [ 

@@ -52,7 +52,7 @@ instance SqlCode SqlName
         
 instance SqlCode [SqlName]
   where
-    toSql [] = error "Not allowed: [SqlName]=[]"
+    toSql [] = err "Not allowed: [SqlName]=[]"
     toSql xs = join "." (map getSql xs)
       where
         -- TODO: if quotes involved, do something

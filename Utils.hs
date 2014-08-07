@@ -7,6 +7,7 @@ module Utils where
 
 import System.Exit
 import System.IO
+import System.IO.Unsafe
 import Data.Char
 import Debug.Trace
 
@@ -14,8 +15,8 @@ import Debug.Trace
 -- err :: [Char] -> IO a
 -- err msg = do putStrLn $ "error: "++msg
 --              exitWith $ ExitFailure 1
-
-err xs = do
+err :: String -> a
+err xs = unsafePerformIO $ do
   hPutStrLn stderr ("error: " ++ xs)
   exitWith $ ExitFailure 1
              
@@ -54,11 +55,11 @@ upper xs = map toUpper xs
 
 fromJustReason :: String -> Maybe a -> a
 fromJustReason _ (Just x) = x
-fromJustReason reason Nothing = error $ "fromJust failed: " ++ reason
+fromJustReason reason Nothing = err $ "fromJust failed: " ++ reason
 
 selectUniqueReason :: String -> [a] -> a
 selectUniqueReason _ (x:[]) = x
-selectUniqueReason msg [] = error $ "No element found while trying to find exactly one: " ++ msg
-selectUniqueReason msg _ = error $ "More then one element found while trying to extrac one: " ++ msg
+selectUniqueReason msg [] = err $ "No element found while trying to find exactly one: " ++ msg
+selectUniqueReason msg _ = err $ "More then one element found while trying to extrac one: " ++ msg
 
 tr x = trace (show x) x
