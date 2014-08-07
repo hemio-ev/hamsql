@@ -1,6 +1,7 @@
 body {
     font-family: sans-serif;
     font-size: 0.9em;
+    max-width: 65em;
 }
 
 h1::before {
@@ -48,7 +49,6 @@ h1 {
 /* level of element definitions like table */
 
 section section section {
-    border-color: gray;
     border-width: 1px 1px 1px 0.5em;
     border-style: solid;
     padding-left: 0.5em;
@@ -62,8 +62,28 @@ h3 {
     padding: 0.5em 0 0 0;
 }
 
+section section section {
+    border-color: #41ab5d;
+}
+
 section section section:nth-of-type(2n) {
-    border-color: lightgray;
+    border-color: #78c679;
+}
+
+section section section[id^='TABLE-'] {
+    border-color: #74a9cf;
+}
+
+section section section[id^='TABLE-']:nth-of-type(2n) {
+    border-color: #3690c0;
+}
+
+section section section[id^='FUNCTION-'] {
+    border-color: #feb24c;
+}
+
+section section section[id^='FUNCTION-']:nth-of-type(2n) {
+    border-color: #fd8d3c;
 }
 
 /* level of single definitions like columns */
@@ -71,14 +91,14 @@ section section section:nth-of-type(2n) {
 section section section section {
     border-width: 0;
     font-size: 0.9em;
-    background-color: lightblue;
-    border-radius: 0.5em;
+    background-color: #bdbdbd;
+    border-radius: 0.3em;
     padding: 0.5em;
     margin: 0.5em;
 }
 
 section section section section:nth-of-type(2n+1) {
-    background-color: lightgray;
+    background-color: #d9d9d9;
 }
 
 h4 {
