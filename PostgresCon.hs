@@ -29,7 +29,7 @@ pgsqlExec connUrl xs = do
         execResult <- try (runRaw conn code)
 
         case execResult of
-                  Left e@(SqlError{}) -> do
+                  Left e@(SqlError{}) -> 
                     err $
                       "sql error in following statement:\n" ++
                       code ++ "\n" ++

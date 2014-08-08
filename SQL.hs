@@ -41,7 +41,7 @@ instance SqlCode SqlStatement where
 
 
 sqlPrinter :: [SqlStatement] -> String
-sqlPrinter xs = (join "") $ map toSql xs
+sqlPrinter xs = join "" $ map toSql xs
 
 sqlAddTransact :: [SqlStatement] -> [SqlStatement]
 sqlAddTransact xs = 
@@ -59,7 +59,7 @@ getSetupStatements opts s =
   [ getStmt $ setupPreCode s ] ++ moduleStatements ++ [ getStmt $ setupPostCode s ]
   where
     moduleStatements = 
-      sort $ concat $ map (getModuleStatements opts) (setupModuleData $ setupInternal s)
+      sort $ concatMap (getModuleStatements opts) (setupModuleData $ setupInternal s)
     getStmt (Just code) = SqlStmt code
     getStmt Nothing = SqlStmtEmpty
   
@@ -68,11 +68,11 @@ getSetupStatements opts s =
 getModuleStatements :: Opt -> Module -> [SqlStatement]
 getModuleStatements opts m =
   [ SqlStmtSchema $ "CREATE SCHEMA " ++ toSql (moduleName m) ] ++
-  (concat $ maybeMap (getDomainStatements opts) (moduleDomains m)) ++
-  (concat $ maybeMap (getTypeStatements opts) (moduleTypes m)) ++
-  (concat $ maybeMap (getRoleStatements opts) (moduleRoles m)) ++
-  (concat $ maybeMap (getFunctionStatements opts) (moduleFunctions m)) ++
-  (concat $ maybeMap (getTableStatements opts) (moduleTables m))
+  concat (maybeMap (getDomainStatements opts) (moduleDomains m)) ++
+  concat (maybeMap (getTypeStatements opts) (moduleTypes m)) ++
+  concat (maybeMap (getRoleStatements opts) (moduleRoles m)) ++
+  concat (maybeMap (getFunctionStatements opts) (moduleFunctions m)) ++
+  concat (maybeMap (getTableStatements opts) (moduleTables m))
 
 
 -- Table
@@ -92,9 +92,9 @@ getTableStatements opts t =
     where
         sqlTable =
          "CREATE TABLE " ++ toSql [ moduleName' t, tableName t ] ++ " (\n" ++
-         (join ",\n") (filter (\x -> x/="") (
-            (map sqlColumn (tableColumns t)) ++
-            (maybeMap sqlCheck (tableChecks t)) ++
+         join ",\n" (filter (/= "") (
+            map sqlColumn (tableColumns t) ++
+            maybeMap sqlCheck (tableChecks t) ++
             [ sqlPrimaryKeyConstraint $ map toSql (tablePrimaryKey t) ] ++
             maybeMap sqlUniqueConstraint (tableUnique t)
          )) ++
@@ -118,12 +118,12 @@ getTableStatements opts t =
         -- constraints
         sqlPrimaryKeyConstraint :: [String] -> String
         sqlPrimaryKeyConstraint k =
-            "  CONSTRAINT " ++ name (SqlName "primary_key") ++ " PRIMARY KEY (" ++ (join ", " k) ++ ")"
+            "  CONSTRAINT " ++ name (SqlName "primary_key") ++ " PRIMARY KEY (" ++ join ", " k ++ ")"
 
         -- TODO: Make the constraint name unique
         sqlUniqueConstraint :: [SqlName] -> String
         sqlUniqueConstraint k =
-            "  CONSTRAINT " ++ name (SqlName "unique") ++ " UNIQUE (" ++ (join ", " (map toSql k)) ++ ")"
+            "  CONSTRAINT " ++ name (SqlName "unique") ++ " UNIQUE (" ++ join ", " (map toSql k) ++ ")"
 
         sqlCheck c =
             "  CONSTRAINT " ++ name (checkName c) ++ " CHECK (" ++ checkCheck c ++ ")"
@@ -136,17 +136,17 @@ getTableStatements opts t =
             "ALTER TABLE " ++ toSql [ moduleName' t, tableName t ] ++
             " ADD CONSTRAINT " ++ name (columnName c) ++
             " FOREIGN KEY (" ++ toSql (columnName c) ++ ")" ++
-            " REFERENCES " ++ (toSql $ init $ expSqlName ref) ++
-            " (" ++ (toSql $ last $ expSqlName ref) ++ ")" ++
+            " REFERENCES " ++ toSql (init $ expSqlName ref) ++
+            " (" ++ toSql (last $ expSqlName ref) ++ ")" ++
             sqlOnRefUpdate (columnOnRefUpdate c) ++
             sqlOnRefDelete (columnOnRefDelete c)
             
         sqlAddForeignKey' :: ForeignKey -> SqlStatement
         sqlAddForeignKey' fk = SqlStmtConstr $
             "ALTER TABLE " ++ toSql [ moduleName' t, tableName t ] ++
-            " ADD CONSTRAINT " ++ name ((tableName t) // (foreignkeyName fk)) ++
+            " ADD CONSTRAINT " ++ name (tableName t // foreignkeyName fk) ++
             " FOREIGN KEY (" ++ join ", " (map toSql (foreignkeyColumns fk)) ++ ")" ++
-            " REFERENCES " ++ (toSql $ foreignkeyRefTable fk) ++
+            " REFERENCES " ++ toSql (foreignkeyRefTable fk) ++
             " (" ++ join ", " (map toSql $ foreignkeyRefColumns fk) ++ ")" ++
             sqlOnRefUpdate (foreignkeyOnDelete fk) ++
             sqlOnRefDelete (foreignkeyOnUpdate fk)              
@@ -172,7 +172,7 @@ getTableStatements opts t =
         
         -- tools
 
-        name a = toSql ((SqlName "TABLE_") // tableName t // (SqlName "__") // a)
+        name a = toSql (SqlName "TABLE_" // tableName t // SqlName "__" // a)
 
         moduleName' :: Table -> SqlName
         moduleName' t' = moduleName $ tableParentModule $ tableInternal t'
@@ -183,7 +183,7 @@ getFunctionStatements :: Opt -> Function -> [SqlStatement]
 getFunctionStatements opts f =
     SqlStmt sqlCreateFunction:
     SqlStmtPriv (sqlSetOwner (functionOwner f)):
-    (map sqlStmtGrantExecute (maybeMap toSql $ functionPrivExecute f))
+    map sqlStmtGrantExecute (maybeMap toSql $ functionPrivExecute f)
 
     where
         sqlStmtGrantExecute u = SqlStmt $ sqlGrantExecute u
@@ -210,18 +210,19 @@ getFunctionStatements opts f =
             toSql [moduleName $ functionParentModule $ functionInternal f ,
               functionName f]
                 ++ "(\n" ++
-                (join ",\n") (maybeMap sqlParameter (functionParameters f)) ++
+                join ",\n" (maybeMap sqlParameter (functionParameters f)) ++
                 "\n)"
 
         -- function parameter
         sqlParameter p = " " ++ toSql(variableName p) ++ " " ++ variableType p
        
         -- If function returns a table, use service for field definition 
-        sqlReturnColumns cs | upper (functionReturn f) == "TABLE" = 
+        sqlReturnColumns cs
+         | upper (functionReturn f) == "TABLE" = 
             " (\n" ++
-            (join ",\n") (maybeMap sqlReturnColumn cs) ++
+            join ",\n" (maybeMap sqlReturnColumn cs) ++
             ") "
-        sqlReturnColumns _ | otherwise = ""
+         | otherwise = ""
 
         sqlReturnColumn c = toSql (parameterName c) ++ " " ++ parameterType c
 
@@ -237,9 +238,9 @@ getFunctionStatements opts f =
                 body
             where
                 body =
-                    (join "\n") preludes ++
+                    join "\n" preludes ++
                     functionBody f ++
-                    (join "\n") postludes
+                    join "\n" postludes
 
                 preludes :: [String]
                 preludes = catMaybes$maybeMap functiontplBodyPrelude (functionTemplateData f)
@@ -250,8 +251,7 @@ getFunctionStatements opts f =
     
         -- Service for variable definitions
         sqlVariables Nothing = ""
-        sqlVariables (Just vs) =
-            (join "") (map sqlVariable vs)
+        sqlVariables (Just vs) = join "" (map sqlVariable vs)
 
         sqlVariable v =
             toSql (variableName v) ++ " " ++ variableType v ++
@@ -271,13 +271,13 @@ getFunctionStatements opts f =
 -- Domains
 
 getDomainStatements :: Opt -> Domain -> [SqlStatement]
-getDomainStatements opt d = SqlStmtTypeDef (
+getDomainStatements opt d = [SqlStmtTypeDef $
     "CREATE DOMAIN " ++
     toSql [ moduleName $ domainParentModule $ domainInternal d , domainName d ]
     ++ " AS " ++ domainType d ++
     sqlDefault (domainDefault d) ++
-    (join "\n") (maybeMap sqlCheck (domainChecks d))
-    ):[]
+    join "\n" (maybeMap sqlCheck (domainChecks d))
+    ]
 
     where
     sqlCheck c =
@@ -286,17 +286,17 @@ getDomainStatements opt d = SqlStmtTypeDef (
     sqlDefault Nothing = ""
     sqlDefault (Just def) = " DEFAULT " ++ def
 
-    name a = (SqlName "DOMAIN_") // domainName d // (SqlName "__") // a
+    name a = SqlName "DOMAIN_" // domainName d // SqlName "__" // a
 
 -- Types
 
 getTypeStatements :: Opt -> Type -> [SqlStatement]
-getTypeStatements opt t = SqlStmtTypeDef (
+getTypeStatements opt t = [SqlStmtTypeDef $
     "CREATE TYPE " ++ 
     toSql [ moduleName $ typeParentModule $ typeInternal t , typeName t ]  
     ++ " AS (" ++
-    (join ", ") (map sqlElement (typeElements t))
-    ):[]
+    join ", " (map sqlElement (typeElements t))
+    ]
 
     where
     sqlElement e = toSql (typeelementName e) ++ " " ++ typeelementType e
@@ -304,12 +304,9 @@ getTypeStatements opt t = SqlStmtTypeDef (
 -- Role
 
 getRoleStatements :: Opt -> Role -> [SqlStatement]
-getRoleStatements opts r =
-    SqlStmtRoleDef sqlCreateRole:
-    []
-
+getRoleStatements opts r = [SqlStmtRoleDef sqlCreateRole]
     where
-        sqlCreateRole = "CREATE ROLE " ++ (toSql $ roleName r) ++
+        sqlCreateRole = "CREATE ROLE " ++ toSql (roleName r) ++
             " " ++ sqlLogin (roleLogin r) ++
             sqlPassword (rolePassword r) ++
             sqlMembers (roleMembers r)

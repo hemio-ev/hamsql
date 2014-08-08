@@ -51,7 +51,7 @@ maybeMap _ Nothing = []
 maybeMap f (Just xs) = map f xs
 
 upper :: String -> String
-upper xs = map toUpper xs
+upper = map toUpper
 
 fromJustReason :: String -> Maybe a -> a
 fromJustReason _ (Just x) = x

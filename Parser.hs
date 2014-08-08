@@ -33,8 +33,9 @@ removeFirstPart xs = lowerStr rest
 -- makes camelCaseSpelling to camel_case_spelling
 snakeify :: String -> String
 snakeify [] = []
-snakeify (x:xs) | isUpper x = '_' : toLower x : snakeify xs
-snakeify (x:xs) | otherwise =               x : snakeify xs
+snakeify (x:xs)
+ | isUpper x = '_' : toLower x : snakeify xs
+ | otherwise =               x : snakeify xs
 
 myOpt :: Options
 myOpt = defaultOptions { fieldLabelModifier     = snakeify . removeFirstPart
@@ -65,7 +66,7 @@ expSqlName n = map SqlName (split "." (getStr n))
     getStr (SqlName n') = n'
 
 contSqlName :: [SqlName] -> SqlName
-contSqlName ns = SqlName $ (join ".") $ map getStr ns
+contSqlName ns = SqlName $ join "." $ map getStr ns
   where
     getStr (SqlName n') = n'
     
@@ -119,7 +120,7 @@ instance FromJSON Module where parseJSON = genericParseJSON myOpt
 instance ToJSON Module where toJSON = genericToJSON myOpt
     
 moduleInternal :: Module -> ModuleInternal
-moduleInternal = (fromJustReason "moduleInternal") . xmoduleInternal
+moduleInternal = fromJustReason "moduleInternal" . xmoduleInternal
     
 data ModuleInternal = ModuleInternal {
   moduleLoadPath :: FilePath
@@ -150,7 +151,7 @@ instance FromJSON Table where parseJSON = genericParseJSON myOpt
 instance ToJSON Table where toJSON = genericToJSON myOpt
 
 tableInternal :: Table -> TableInternal
-tableInternal = (fromJustReason "tableInternal") . xtableInternal
+tableInternal = fromJustReason "tableInternal" . xtableInternal
 
 data TableInternal = TableInternal {
   tableParentModule :: Module,
@@ -217,7 +218,7 @@ instance ToJSON TableColumnTpl where toJSON = genericToJSON myOpt
 
 applyTableTpl :: TableTpl -> Table -> Table
 applyTableTpl tpl t = t {
-    tableColumns     = (maybeList $ tabletplColumns tpl) ++ (tableColumns t),
+    tableColumns     = maybeList (tabletplColumns tpl) ++ tableColumns t,
     tableForeignKeys = maybeJoin (tabletplForeignKeys tpl) (tableForeignKeys t),
     tableInherits    = maybeJoin (tabletplInherits tpl) (tableInherits t),
     tablePrivSelect  = maybeJoin (tabletplPrivSelect tpl) (tablePrivSelect t),
@@ -301,7 +302,7 @@ instance FromJSON Function where parseJSON = genericParseJSON myOpt
 instance ToJSON Function where toJSON = genericToJSON myOpt
 
 functionInternal :: Function -> FunctionInternal
-functionInternal = (fromJustReason "FunctionInternal") . xfunctionInternal
+functionInternal = fromJustReason "FunctionInternal" . xfunctionInternal
 
 data FunctionInternal = FunctionInternal {
   functionParentModule  :: Module,
@@ -369,9 +370,9 @@ applyFunctionTpl t f = f {
       maybeJoin (functionVariables f) (functiontplVariables t),
         
     functionBody =
-      (maybeStringL $ functiontplBodyPrelude t) ++
+      maybeStringL (functiontplBodyPrelude t) ++
       functionBody f ++
-      (maybeStringR $ functiontplBodyPostlude t)
+      maybeStringR (functiontplBodyPostlude t)
         
   }
   where
@@ -394,7 +395,7 @@ instance FromJSON Domain where parseJSON = genericParseJSON myOpt
 instance ToJSON Domain where toJSON = genericToJSON myOpt
 
 domainInternal :: Domain -> DomainInternal
-domainInternal = (fromJustReason "DomainInternal") . xdomainInternal
+domainInternal = fromJustReason "DomainInternal" . xdomainInternal
 
 data DomainInternal = DomainInternal {
   domainParentModule  :: Module,
@@ -416,7 +417,7 @@ instance FromJSON Type where parseJSON = genericParseJSON myOpt
 instance ToJSON Type where toJSON = genericToJSON myOpt
       
 typeInternal :: Type -> TypeInternal
-typeInternal = (fromJustReason "TypeInternal") . xtypeInternal
+typeInternal = fromJustReason "TypeInternal" . xtypeInternal
 
 data TypeInternal = TypeInternal {
   typeParentModule  :: Module,
@@ -466,12 +467,12 @@ withoutModule (WithModule _ t) = t
 selectTemplates ns ts = 
   -- TODO: error handling here should be done using exceptions
   [ withoutModule $ selectUniqueReason ("table or function tpl " ++ n) $
-    filter (\t -> n == (name t)) ts 
+    filter (\t -> n == name t) ts 
     | n <- map toSql $ maybeList ns ]
  
-selectTemplate x ts = head' $ map withoutModule $ filter (\y -> (name y) == toSql x) ts
+selectTemplate x ts = head' $ map withoutModule $ filter (\y -> name y == toSql x) ts
   where
-    head' zs = selectUniqueReason ("Column template " ++ toSql x) zs
+    head' = selectUniqueReason ("Column template " ++ toSql x)
     
 -- get things from Setup
 
@@ -479,16 +480,16 @@ setupAllModules :: Setup -> [Module]
 setupAllModules = setupModuleData . setupInternal
 
 setupAllFunctionTemplates :: Setup -> [WithModule FunctionTpl]
-setupAllFunctionTemplates s = concat $ [
-  maybeMap (\x -> (WithModule m x)) (moduleFunctionTemplates m) | m <- (setupAllModules s) ]
+setupAllFunctionTemplates s = concat [
+  maybeMap (WithModule m) (moduleFunctionTemplates m) | m <- setupAllModules s ]
 
 setupAllTableTemplates    :: Setup -> [WithModule TableTpl]
-setupAllTableTemplates s = concat $ [
-  maybeMap (\x -> (WithModule m x)) (moduleTableTemplates m) | m <- (setupAllModules s) ]
+setupAllTableTemplates s = concat [
+  maybeMap (WithModule m) (moduleTableTemplates m) | m <- setupAllModules s ]
 
 setupAllColumnTemplates   :: Setup -> [WithModule TableColumnTpl]
-setupAllColumnTemplates s = concat $ [
-  maybeMap (\x -> (WithModule m x)) (moduleColumnTemplates m) | m <- (setupAllModules s) ]
+setupAllColumnTemplates s = concat [
+  maybeMap (WithModule m) (moduleColumnTemplates m) | m <- setupAllModules s ]
 
 applyTpl :: Setup -> Setup
 applyTpl s = s {

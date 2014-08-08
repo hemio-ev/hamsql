@@ -32,7 +32,7 @@ main' opts args
   | optPrintDoc opts = do
     setup <- loadSetup (optSetupFile opts)
     u <- toSetupDoc setup
-    putStrLn $ getDoc $ unpack $ u
+    putStrLn $ getDoc $ unpack u
     
   | optExecuteSql opts = do
     setup <- loadSetup (optSetupFile opts)
@@ -60,7 +60,7 @@ main' opts args
     putStrLn $ sqlPrinter $ sqlAddTransact statements
     putStrLn "-- end of SQL code"
  
- | optShowVersion opts = do
+ | optShowVersion opts = 
     print "YamSql v0.0001"
 
   | otherwise = putStrLn $ usageInfo usageHeader options

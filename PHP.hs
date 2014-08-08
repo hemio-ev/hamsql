@@ -19,17 +19,17 @@ data PhpCode = PhpCode {
 -- Setup
 
 getSetupPhpClasses :: Opt -> Setup -> String
-getSetupPhpClasses opts s = concat (map getStr (map (getModulePhpClass opts) (setupModuleData $ setupInternal s)))
+getSetupPhpClasses opts s = concatMap (getStr . getModulePhpClass opts) (setupModuleData $ setupInternal s)
   where
-    getStr x = (phpCode x)
+    getStr = phpCode
 -- Module
 
 getModulePhpClass :: Opt -> Module -> PhpCode
 getModulePhpClass opts m =
-    PhpCode
-    (classPrelude ++
-    (concat $ maybeMap (getFunctionPhpCode opts) (moduleFunctions m)) ++
-    classPostlude)
+    PhpCode $
+    classPrelude ++
+    concat (maybeMap (getFunctionPhpCode opts) (moduleFunctions m)) ++
+    classPostlude
 
     where
         classPrelude =
@@ -46,10 +46,10 @@ getFunctionPhpCode opts f = code
     where
     code =
         sep ++ "\nfunction " ++ str (functionName f) ++ "(" ++
-        (join ", ") (maybeMap phpDefParam (functionParameters f)) ++
+        join ", " (maybeMap phpDefParam (functionParameters f)) ++
         ") {\n" ++
         sep ++ sep ++ "$this->call('" ++ str (functionName f) ++ ", [" ++
-        (join ", ") (maybeMap phpArrParam (functionParameters f)) ++
+        join ", " (maybeMap phpArrParam (functionParameters f)) ++
         "]);\n" ++
         sep ++ "}\n"
     

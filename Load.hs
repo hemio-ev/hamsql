@@ -17,7 +17,7 @@ import Options
 import Utils
 import SQL
 
-loadSetup :: FilePath -> IO (Setup)
+loadSetup :: FilePath -> IO Setup
 loadSetup filePath = do
   setup <- loadYamlFile filePath
   setup' <- loadSetupModules (dropFileName filePath) (initSetupInternal setup)
@@ -54,21 +54,20 @@ findModulePath :: String -> [FilePath] -> IO FilePath
 findModulePath moduleName search = findDir search
   where
     findDir [] =
-      err $ "Module '" ++ moduleName ++ "' not found in " ++ (show search)
+      err $ "Module '" ++ moduleName ++ "' not found in " ++ show search
     findDir (d:ds) = do
       let dir = combine d moduleName
       dirExists <- doesDirectoryExist (dir :: FilePath)
-      case dirExists of
-        True -> do
+      if dirExists
+        then do
           fileExists <- doesFileExist (combine dir "module.yaml")
-          case fileExists of
-            True -> return dir
-            False -> err $ "file 'module.yaml' missing in '" ++ dir ++ "'"
-        False -> do
-          xxx <- findDir ds
-          return xxx
+          if fileExists
+            then return dir
+            else err $ "file 'module.yaml' missing in '" ++ dir ++ "'"
+        else
+          findDir ds
     
-loadYamlFile:: (FromJSON a0) => FilePath -> IO (a0)
+loadYamlFile:: (FromJSON a0) => FilePath -> IO a0
 loadYamlFile filePath = do
   fileContent <- B.readFile filePath
   case decodeEither fileContent of
@@ -102,32 +101,30 @@ errorCheck _   True  = return ()
     
 readModule :: FilePath -> IO Module
 readModule md = do
-    doesDirectoryExist md >>= (errorCheck $ "module dir does not exist: "++md)
+    doesDirectoryExist md >>= errorCheck ("module dir does not exist: " ++ md)
     
-    doesFileExist (moduleConfig) >>=
-      (errorCheck $ "module file does not exist: " ++ moduleConfig)
-    moduleFile <- B.readFile (moduleConfig)
+    doesFileExist moduleConfig >>=
+      errorCheck ("module file does not exist: " ++ moduleConfig)
+    moduleFile <- B.readFile moduleConfig
     moduleData <- case decodeEither moduleFile of
             Left msg -> err $ "in file " ++ moduleConfig ++ ": " ++ msg
             Right m  -> return m
             
     tables <- do
       files <- selectFilesInDir yamlEnding (combine md "tables.d")
-      tables' <- sequence [
+      sequence [
         do
           t <- readObjectFromFile f
           return $ tablePopulateInternal moduleData f t
         | f <- files ]
-      return tables'
     
     functions <- do
       files <- selectFilesInDir pgsqlEnding (combine md "functions.d")
-      functions' <- sequence [
+      sequence [
         do
           t <- readObjectFromFile f
           return $ functionPopulateInternal moduleData f t
         | f <- files ]
-      return functions'
     
     let moduleData' = moduleData {
       moduleTables = maybeLeftJoin (moduleTables moduleData) tables,
@@ -161,7 +158,7 @@ functionPopulateInternal m path f = f {
       functionParentModule = m,
       functionLoadPath = path,
       functionOriginal = f,
-      functionReturnTable = (functionReturn f == "TABLE")
+      functionReturnTable = functionReturn f == "TABLE"
     }
   }
   
