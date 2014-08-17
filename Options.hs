@@ -25,6 +25,7 @@ data Opt = Opt
  , optPrintSql    :: Bool
  , optPrintPhp    :: Bool
  , optPrintDoc    :: Bool
+ , optPrintGraph  :: Bool
  , optPrintJson   :: Bool
  , optSetupFile   :: FilePath
  , optServerConnectionUrl :: URL
@@ -41,6 +42,7 @@ defaultOpts = Opt
  , optPrintPhp	  = False
  , optPrintJson   = False
  , optPrintDoc    = False
+ , optPrintGraph  = False
  , optSetupFile   = "setup.yaml"
  , optServerConnectionUrl = defaultServerConnectionUrl
  }
@@ -64,6 +66,9 @@ options =
   , Option ['e']     ["execute-sql"]
     (NoArg (\opts -> opts { optExecuteSql = True }))
     "executes sql code on sql server"
+  , Option ['g']     ["print-graph"]
+    (NoArg (\opts -> opts { optPrintGraph = True }))
+    "prints relations graph"
   , Option ['p']     ["print-sql"]
     (NoArg (\opts -> opts { optPrintSql = True }))
     "dumps the generated sql code to stdout"

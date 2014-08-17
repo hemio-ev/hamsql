@@ -47,3 +47,13 @@ markdownToRST =
     }) . readHtml def
 
 getDoc d = markdownToRST d
+
+getGraphDoc :: Setup -> IO (Text)
+getGraphDoc s = do
+    template <- Data.Text.IO.readFile "doc-template.dot"
+    let t = either error id $ compileTemplate template
+    return $ renderTemplate t $ object [
+        "modules" .= (setupModuleData $ setupInternal s),
+        "setup" .= s
+        ]
+

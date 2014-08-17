@@ -2,6 +2,7 @@ body {
     font-family: sans-serif;
     font-size: 0.9em;
     max-width: 65em;
+    margin: auto;
 }
 
 h1::before {
@@ -45,6 +46,43 @@ h1 {
     margin-top: 2em;
 }
 
+
+/* navi */
+
+body > ul {
+    left: 0;
+    top: 0;
+    margin: 0;
+    padding: 0;
+    position: fixed;
+    background-color: blue;
+    width: 4em; 
+    height: 4em;
+    border-radius: 0.5em;
+    display: block;
+}
+
+body > ul li {
+    display: none;
+}
+
+body > ul:hover {
+    background-color: white;
+    width: auto;
+    height: auto;
+    max-height: 90%;
+    background-color: #EEE;
+    overflow: auto;
+    padding: 0.5em 2em;
+}
+
+body > ul:hover li {
+    display: inherit;
+}
+
+body > section {
+    padding-left: 5em;
+}
 
 /* level of element definitions like table */
 

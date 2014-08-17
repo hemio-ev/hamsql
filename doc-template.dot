@@ -1,0 +1,65 @@
+digraph G {
+rankdir="LR";
+node [shape=component];
+$for(modules)$
+
+    subgraph cluster_$modules.name$ {
+    label = <Module <i>$modules.name$</i>>;
+    style = filled;
+    color = lightgray;
+
+        $for(modules.tables)$
+
+            subgraph cluster_$modules.name$_$modules.tables.name$ {
+                label = <Table <i>$modules.name$.$modules.tables.name$</i>>;
+                style = filled;
+                color = white;
+
+                $for(modules.tables.primary_key)$
+                    "$modules.name$.$modules.tables.name$.$modules.tables.primary_key$"
+                        [label=<<b>$modules.name$.$modules.tables.name$.$modules.tables.primary_key$</b>>];
+                $endfor$
+
+                $for(modules.tables.columns)$
+                    $if(modules.tables.columns.references)$ 
+                        "$modules.name$.$modules.tables.name$.$modules.tables.columns.name$";
+                    $endif$
+                $endfor$
+
+                $for(modules.tables.foreign_keys)$
+                    $for(modules.tables.foreign_keys.columns)$
+                        "$modules.name$.$modules.tables.name$.$modules.tables.foreign_keys.columns$";
+                    $endfor$
+                $endfor$
+            }
+        $endfor$
+    }
+$endfor$
+
+$for(modules)$
+    $for(modules.tables)$
+        $for(modules.tables.columns)$
+            $if(modules.tables.columns.references)$ 
+                "$modules.name$.$modules.tables.name$.$modules.tables.columns.name$"
+                    -> "$modules.tables.columns.references$";
+            $endif$
+        $endfor$
+
+        $for(modules.tables.foreign_keys)$
+            "$modules.name$.$modules.tables.name$.$modules.tables.foreign_keys.name$"
+                [shape="cds"];
+            $for(modules.tables.foreign_keys.columns)$
+                "$modules.name$.$modules.tables.name$.$modules.tables.foreign_keys.columns$"
+                -> "$modules.name$.$modules.tables.name$.$modules.tables.foreign_keys.name$";
+            $endfor$
+
+            $for(modules.tables.foreign_keys.ref_columns)$
+                "$modules.name$.$modules.tables.name$.$modules.tables.foreign_keys.name$"
+                -> "$modules.tables.foreign_keys.ref_table$.$modules.tables.foreign_keys.ref_columns$";
+            $endfor$
+        $endfor$
+    $endfor$
+$endfor$
+
+// end graph
+}

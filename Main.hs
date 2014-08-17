@@ -29,6 +29,11 @@ main = do
 
 main' :: Opt -> [String] -> IO ()
 main' opts args
+  | optPrintGraph opts = do
+    setup <- loadSetup (optSetupFile opts)
+    u <- getGraphDoc setup
+    putStrLn $ unpack u
+    
   | optPrintDoc opts = do
     setup <- loadSetup (optSetupFile opts)
     u <- toSetupDoc setup

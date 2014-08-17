@@ -79,7 +79,7 @@ yamlEnding :: String -> Bool
 yamlEnding xs = xs =~ "\\.yaml$"
 
 pgsqlEnding :: String -> Bool
-pgsqlEnding xs = xs =~ "\\.pgsql$"
+pgsqlEnding xs = xs =~ "\\.sql$"
 
 getFilesInDir :: FilePath -> IO [FilePath]
 getFilesInDir path = do conts <- getDirectoryContents path
