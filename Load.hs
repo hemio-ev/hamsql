@@ -1,6 +1,6 @@
 -- This file is part of HamSql
 --
--- Copyright 2014 by it's authors. 
+-- Copyright 2014 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 
 module Load where
@@ -25,7 +25,7 @@ loadSetup filePath = do
 
 initSetupInternal s' = s' {
   xsetupInternal = Just SetupInternal { setupModuleData = [] }
-} 
+}
 
 -- Tries to loads all defined modules from defined module dirs
 loadSetupModules :: FilePath -> Setup -> IO Setup
@@ -36,7 +36,7 @@ loadSetupModules path s = do
             setupModuleData = moduleData
           }
       }
-  
+
   where
     loadModule :: FilePath -> String -> IO Module
     loadModule path name = do
@@ -47,9 +47,9 @@ loadSetupModules path s = do
             moduleLoadPath = modulePath
           }
         }
-        
+
     moduleDirs = map (combine path) (setupModuleDirs s)
-    
+
 findModulePath :: String -> [FilePath] -> IO FilePath
 findModulePath moduleName search = findDir search
   where
@@ -66,7 +66,7 @@ findModulePath moduleName search = findDir search
             else err $ "file 'module.yaml' missing in '" ++ dir ++ "'"
         else
           findDir ds
-    
+
 loadYamlFile:: (FromJSON a0) => FilePath -> IO a0
 loadYamlFile filePath = do
   fileContent <- B.readFile filePath
@@ -92,24 +92,24 @@ selectFilesInDir ending dir = do
   if not dirExists then
     return []
   else do
-    files <- getFilesInDir dir  
+    files <- getFilesInDir dir
     return $ filter ending files
 
 errorCheck :: String -> Bool -> IO ()
 errorCheck msg False = err msg
 errorCheck _   True  = return ()
-    
+
 readModule :: FilePath -> IO Module
 readModule md = do
     doesDirectoryExist md >>= errorCheck ("module dir does not exist: " ++ md)
-    
+
     doesFileExist moduleConfig >>=
       errorCheck ("module file does not exist: " ++ moduleConfig)
     moduleFile <- B.readFile moduleConfig
     moduleData <- case decodeEither moduleFile of
             Left msg -> err $ "in file " ++ moduleConfig ++ ": " ++ msg
             Right m  -> return m
-            
+
     tables <- do
       files <- selectFilesInDir yamlEnding (combine md "tables.d")
       sequence [
@@ -117,7 +117,7 @@ readModule md = do
           t <- readObjectFromFile f
           return $ tablePopulateInternal moduleData f t
         | f <- files ]
-    
+
     functions <- do
       files <- selectFilesInDir pgsqlEnding (combine md "functions.d")
       sequence [
@@ -125,14 +125,14 @@ readModule md = do
           t <- readObjectFromFile f
           return $ functionPopulateInternal moduleData f t
         | f <- files ]
-    
+
     let moduleData' = moduleData {
       moduleTables = maybeLeftJoin (moduleTables moduleData) tables,
       moduleFunctions = maybeLeftJoin (moduleFunctions moduleData) functions,
       moduleTypes = Just $ maybeMap (typePopulateInternal moduleData md) (moduleTypes moduleData),
       moduleDomains = Just $ maybeMap (domainPopulateInternal moduleData md) (moduleDomains moduleData)
     }
-            
+
     return moduleData'
 
     where
@@ -161,7 +161,7 @@ functionPopulateInternal m path f = f {
       functionReturnTable = functionReturn f == "TABLE"
     }
   }
-  
+
 typePopulateInternal :: Module -> FilePath -> Type -> Type
 typePopulateInternal m path t = t {
     xtypeInternal = Just TypeInternal {
@@ -170,7 +170,7 @@ typePopulateInternal m path t = t {
       typeOriginal = t
     }
   }
-  
+
 domainPopulateInternal :: Module -> FilePath -> Domain -> Domain
 domainPopulateInternal m path d = d {
     xdomainInternal = Just DomainInternal {
@@ -183,6 +183,6 @@ domainPopulateInternal m path d = d {
 readObjectFromFile :: FromJSON a => FilePath -> IO a
 readObjectFromFile file = do
   c <- B.readFile file
-  case decodeEither c of
-    Left msg  -> err $ "in file: " ++ file ++ ": " ++ msg
+  case decodeEither' c of
+    Left msg  -> err $ "in yaml-file: " ++ file ++ ": " ++ (show msg)
     Right obj -> return obj

@@ -15,7 +15,7 @@ import Data.Char
 import Data.Maybe (fromJust)
 import GHC.Generics
 import Data.String.Utils
-import Data.List
+import Data.HashMap.Strict (member,insert)
 
 import qualified Data.ByteString.Char8 as B
 
@@ -198,8 +198,19 @@ data Column = Column {
     columntplOnRefUpdate  :: Maybe String,
     columntplUnique       :: Maybe Bool
 } deriving (Generic, Show)
-instance FromJSON Column where parseJSON = genericParseJSON myOpt
 instance ToJSON Column where toJSON = genericToJSON myOpt
+instance FromJSON Column where parseJSON = (genericParseJSON myOpt).addColumnDefaultTag 
+
+addColumnDefaultTag :: Value -> Value
+addColumnDefaultTag (Object o) = Object $ 
+ if member "tag" o then
+  o
+ else
+  if member "template" o then
+   insert "tag" "column_tpl" o
+  else
+   insert "tag" "column" o
+
 
 data TableColumnTpl = TableColumnTpl {
     tablecolumntplTemplate     :: SqlName,
