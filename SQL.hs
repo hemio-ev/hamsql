@@ -10,7 +10,6 @@ import Parser
 import Utils
 
 import Data.Maybe
-import Data.String.Utils
 import Data.List
 
 

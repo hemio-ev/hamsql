@@ -14,7 +14,7 @@ import Data.Aeson.Types
 import Data.Char
 import Data.Maybe (fromJust)
 import GHC.Generics
-import Data.String.Utils
+import Data.List.Split (splitOn)
 import Data.HashMap.Strict (member,insert)
 
 import qualified Data.ByteString.Char8 as B
@@ -61,7 +61,7 @@ instance SqlCode [SqlName]
     (//) a b = a ++ b
 
 expSqlName :: SqlName -> [SqlName]
-expSqlName n = map SqlName (split "." (getStr n))
+expSqlName n = map SqlName (splitOn "." (getStr n))
   where
     getStr (SqlName n') = n'
 

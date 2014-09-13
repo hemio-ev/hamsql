@@ -20,6 +20,6 @@ executable hamsql
   main-is:             Main.hs
   -- other-modules:       
   other-extensions:    DeriveGeneric, OverloadedStrings, FlexibleInstances
-  build-depends:       base >=4.6, yaml >=0.8, bytestring >=0.10, filepath >=1.3, regex-posix >=0.95, directory >=1.2, aeson >=0.7, MissingH >=1.2, HDBC >=2.4, HDBC-postgresql >=2.3, text >=0.11, pandoc >=1.12, utf8-string >=0.3, unordered-containers >=0.2.5.0
+  build-depends:       base >=4.6, yaml >=0.8, bytestring, filepath, regex-posix, directory, aeson >=0.7, HDBC >=2.4, HDBC-postgresql >=2.3, text, pandoc >=1.12, utf8-string, unordered-containers, split
   -- hs-source-dirs:      
   default-language:    Haskell2010

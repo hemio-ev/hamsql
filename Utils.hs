@@ -10,7 +10,9 @@ import System.IO
 import System.IO.Unsafe
 import Data.Char
 import Debug.Trace
+import Data.List (intercalate)
 
+join = intercalate
 
 -- err :: [Char] -> IO a
 -- err msg = do putStrLn $ "error: "++msg
