@@ -32,10 +32,7 @@ removeFirstPart xs = lowerStr rest
 
 -- makes camelCaseSpelling to camel_case_spelling
 snakeify :: String -> String
-snakeify [] = []
-snakeify (x:xs)
- | isUpper x = '_' : toLower x : snakeify xs
- | otherwise =               x : snakeify xs
+snakeify = camelTo '_'
 
 myOpt :: Options
 myOpt = defaultOptions { fieldLabelModifier     = snakeify . removeFirstPart
