@@ -6,6 +6,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 
 module Parser where
 
@@ -13,9 +14,12 @@ import Data.Yaml
 import Data.Aeson.Types
 import Data.Char
 import Data.Maybe (fromJust)
+import Data.Data
+import Data.Text (unpack)
+import Data.List.Ordered (subset,minus,sort)
 import GHC.Generics
 import Data.List.Split (splitOn)
-import Data.HashMap.Strict (member,insert)
+import Data.HashMap.Strict (member,insert,keys)
 
 import qualified Data.ByteString.Char8 as B
 
@@ -32,7 +36,10 @@ removeFirstPart xs = lowerStr rest
 
 -- makes camelCaseSpelling to camel_case_spelling
 snakeify :: String -> String
-snakeify = camelTo '_'
+snakeify [] = []
+snakeify (x:xs)
+ | isUpper x = '_' : toLower x : snakeify xs
+ | otherwise =               x : snakeify xs
 
 myOpt :: Options
 myOpt = defaultOptions { fieldLabelModifier     = snakeify . removeFirstPart
@@ -72,7 +79,7 @@ class SqlCode a where
   (//) :: a -> a -> a
 
 -- SqlName
-newtype SqlName = SqlName String deriving (Generic,Show,Eq)
+newtype SqlName = SqlName String deriving (Generic,Show,Eq, Typeable, Data)
 instance FromJSON SqlName where parseJSON = genericParseJSON myOpt
 instance ToJSON SqlName where toJSON = genericToJSON myOpt
   
@@ -90,7 +97,7 @@ instance ToJSON Setup where toJSON = genericToJSON myOpt
 
 data SetupInternal = SetupInternal {
   setupModuleData :: [Module]
-} deriving (Generic,Show)
+} deriving (Generic,Show, Data, Typeable)
 instance FromJSON SetupInternal where parseJSON = genericParseJSON myOpt
 instance ToJSON SetupInternal where toJSON = genericToJSON myOpt
 
@@ -112,7 +119,7 @@ data Module = Module {
     moduleDomains           :: Maybe [Domain],
     moduleTypes             :: Maybe [Type],
     xmoduleInternal         :: Maybe ModuleInternal
-} deriving (Generic,Show)
+} deriving (Generic,Show, Data, Typeable)
 instance FromJSON Module where parseJSON = genericParseJSON myOpt
 instance ToJSON Module where toJSON = genericToJSON myOpt
     
@@ -121,7 +128,7 @@ moduleInternal = fromJustReason "moduleInternal" . xmoduleInternal
     
 data ModuleInternal = ModuleInternal {
   moduleLoadPath :: FilePath
-} deriving (Generic,Show)
+} deriving (Data, Generic, Show, Typeable)
 instance FromJSON ModuleInternal where parseJSON = genericParseJSON myOpt
 instance ToJSON ModuleInternal where toJSON = genericToJSON myOpt
 
@@ -143,9 +150,26 @@ data Table = Table {
   tableTemplates    :: Maybe [SqlName],
   tableTemplateData :: Maybe [TableTpl],
   xtableInternal :: Maybe TableInternal
-} deriving (Generic, Show)
-instance FromJSON Table where parseJSON = genericParseJSON myOpt
+} deriving (Data, Generic, Show, Typeable)
+instance FromJSON Table where parseJSON = strictParseYaml 
 instance ToJSON Table where toJSON = genericToJSON myOpt
+
+class (Generic a, Show a, Typeable a, Data a) => ParserData a
+
+strictParseYaml xs =
+ do
+  parsed <- genericParseJSON myOpt xs
+  let diff = minus (keysOfValue xs) (keysOfData parsed)
+  return $
+   if diff == [] then
+    parsed
+   else
+    err $ "Found unknown keys: " ++ show diff
+ where
+  keysOfData u = sort $ map (snakeify.removeFirstPart) (constrFields (toConstr u))
+  
+  keysOfValue :: Value -> [String]
+  keysOfValue (Object xs) = sort $ map unpack $ keys xs
 
 tableInternal :: Table -> TableInternal
 tableInternal = fromJustReason "tableInternal" . xtableInternal
@@ -154,7 +178,7 @@ data TableInternal = TableInternal {
   tableParentModule :: Module,
   tableLoadPath     :: FilePath,
   tableOriginal     :: Table
-}deriving (Generic, Show)
+}deriving (Generic, Show, Typeable, Data)
 instance FromJSON TableInternal where parseJSON = genericParseJSON myOpt
 instance ToJSON TableInternal where toJSON = genericToJSON myOpt
 
@@ -168,7 +192,7 @@ data TableTpl = TableTpl {
     tabletplPrivInsert  :: Maybe [String], 
     tabletplPrivUpdate  :: Maybe [String],
     tabletplPrivDelete  :: Maybe [String]
-} deriving (Generic, Show)
+} deriving (Generic, Show, Typeable, Data)
 instance FromJSON TableTpl where parseJSON = genericParseJSON myOpt
 instance ToJSON TableTpl where toJSON = genericToJSON myOpt
 
@@ -194,7 +218,7 @@ data Column = Column {
     columntplOnRefDelete  :: Maybe String,
     columntplOnRefUpdate  :: Maybe String,
     columntplUnique       :: Maybe Bool
-} deriving (Generic, Show)
+} deriving (Generic, Show, Typeable, Data)
 instance ToJSON Column where toJSON = genericToJSON myOpt
 instance FromJSON Column where parseJSON = (genericParseJSON myOpt).addColumnDefaultTag 
 
@@ -220,7 +244,7 @@ data TableColumnTpl = TableColumnTpl {
     tablecolumntplOnRefDelete  :: Maybe String,
     tablecolumntplOnRefUpdate  :: Maybe String,
     tablecolumntplUnique       :: Maybe Bool
-} deriving (Generic, Show)
+} deriving (Generic, Show, Typeable, Data)
 instance FromJSON TableColumnTpl where parseJSON = genericParseJSON myOpt
 instance ToJSON TableColumnTpl where toJSON = genericToJSON myOpt
 
@@ -256,7 +280,7 @@ data Check = Check {
     checkName        :: SqlName,
     checkDescription :: String,
     checkCheck       :: String
-} deriving (Generic, Show)
+} deriving (Generic, Show, Typeable, Data)
 instance FromJSON Check where parseJSON = genericParseJSON myOpt
 instance ToJSON Check where toJSON = genericToJSON myOpt
       
@@ -267,7 +291,7 @@ data ForeignKey = ForeignKey {
   foreignkeyRefColumns  :: [SqlName],
   foreignkeyOnDelete    :: Maybe String,
   foreignkeyOnUpdate    :: Maybe String
-} deriving (Generic, Show)
+} deriving (Generic, Show, Typeable, Data)
 instance FromJSON ForeignKey where parseJSON = genericParseJSON myOpt
 instance ToJSON ForeignKey where toJSON = genericToJSON myOpt
 
@@ -305,7 +329,7 @@ data Function = Function {
     -- the code of the function (body)
     functionBody            :: String,
     xfunctionInternal       :: Maybe FunctionInternal
-} deriving (Generic,Show)
+} deriving (Generic,Show, Data, Typeable)
 instance FromJSON Function where parseJSON = genericParseJSON myOpt
 instance ToJSON Function where toJSON = genericToJSON myOpt
 
@@ -318,7 +342,7 @@ data FunctionInternal = FunctionInternal {
   functionOriginal      :: Function,
   -- populated depending on the value of functionReturn
   functionReturnTable   :: Bool
-} deriving (Generic,Show)
+} deriving (Generic,Show, Data, Typeable)
 instance FromJSON FunctionInternal where parseJSON = genericParseJSON myOpt
 instance ToJSON FunctionInternal where toJSON = genericToJSON myOpt
 
@@ -327,7 +351,7 @@ data Variable = Variable {
     variableDescription   :: Maybe String,
     variableType          :: String,
     variableDefault       :: Maybe String
-} deriving (Generic,Show)
+} deriving (Generic,Show, Data, Typeable)
 instance FromJSON Variable where parseJSON = genericParseJSON myOpt
 instance ToJSON Variable where toJSON = genericToJSON myOpt
 
@@ -335,7 +359,7 @@ data Parameter = Parameter {
     parameterName          :: SqlName,
     parameterDescription   :: Maybe String,
     parameterType          :: String
-} deriving (Generic,Show)
+} deriving (Generic,Show, Data, Typeable)
 instance FromJSON Parameter where parseJSON = genericParseJSON myOpt
 instance ToJSON Parameter where toJSON = genericToJSON myOpt
 
@@ -359,7 +383,7 @@ data FunctionTpl = FunctionTpl {
     functiontplBodyPrelude     :: Maybe String,
     -- code added after the body of the function
     functiontplBodyPostlude    :: Maybe String
-} deriving (Generic,Show)
+} deriving (Generic,Show, Data, Typeable)
 instance FromJSON FunctionTpl where parseJSON = genericParseJSON myOpt
 instance ToJSON FunctionTpl where toJSON = genericToJSON myOpt
 
@@ -398,7 +422,7 @@ data Domain = Domain {
     domainDefault :: Maybe String,
     domainChecks :: Maybe [Check],
     xdomainInternal :: Maybe DomainInternal
-} deriving (Generic, Show)
+} deriving (Generic, Show, Data, Typeable)
 instance FromJSON Domain where parseJSON = genericParseJSON myOpt
 instance ToJSON Domain where toJSON = genericToJSON myOpt
 
@@ -409,7 +433,7 @@ data DomainInternal = DomainInternal {
   domainParentModule  :: Module,
   domainLoadPath      :: FilePath,
   domainOriginal      :: Domain
-} deriving (Generic, Show)
+} deriving (Generic, Show, Data, Typeable)
 instance FromJSON DomainInternal where parseJSON = genericParseJSON myOpt
 instance ToJSON DomainInternal where toJSON = genericToJSON myOpt
 
@@ -420,7 +444,7 @@ data Type = Type {
     typeDescription :: String,
     typeElements :: [TypeElement],
     xtypeInternal :: Maybe TypeInternal
-} deriving (Generic, Show)
+} deriving (Generic, Show, Data, Typeable)
 instance FromJSON Type where parseJSON = genericParseJSON myOpt
 instance ToJSON Type where toJSON = genericToJSON myOpt
       
@@ -431,14 +455,14 @@ data TypeInternal = TypeInternal {
   typeParentModule  :: Module,
   typeLoadPath      :: FilePath,
   typeOriginal      :: Type
-} deriving (Generic, Show)
+} deriving (Generic, Show, Data, Typeable)
 instance FromJSON TypeInternal where parseJSON = genericParseJSON myOpt
 instance ToJSON TypeInternal where toJSON = genericToJSON myOpt
 
 data TypeElement = TypeElement {
     typeelementName :: SqlName,
     typeelementType :: String
-} deriving (Generic, Show)
+} deriving (Generic, Show, Data, Typeable)
 instance FromJSON TypeElement where parseJSON = genericParseJSON myOpt
 instance ToJSON TypeElement where toJSON = genericToJSON myOpt
 
@@ -450,7 +474,7 @@ data Role = Role {
     roleLogin       :: Maybe Bool,
     rolePassword    :: Maybe String,
     roleMembers     :: Maybe [SqlName]
-} deriving (Generic, Show)
+} deriving (Generic, Show, Data, Typeable)
 instance FromJSON Role where parseJSON = genericParseJSON myOpt
 instance ToJSON Role where toJSON = genericToJSON myOpt
 
