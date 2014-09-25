@@ -118,6 +118,7 @@ data Module = Module {
     moduleRoles             :: Maybe [Role],
     moduleDomains           :: Maybe [Domain],
     moduleTypes             :: Maybe [Type],
+    moduleExecPostInstall   :: Maybe String,
     xmoduleInternal         :: Maybe ModuleInternal
 } deriving (Generic,Show, Data, Typeable)
 instance FromJSON Module where parseJSON = genericParseJSON myOpt

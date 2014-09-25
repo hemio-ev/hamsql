@@ -7,5 +7,3 @@
   error messages for unkown keys to warnings
 - Maybe a flag for sloppy parsing. Erronouse objects
   are ignored and the next object is parsed
-- Post-Install code for modules, that is executed
-  after all other install steps are done

@@ -23,6 +23,7 @@ data SqlStatement =
   SqlStmtInherit String |
   SqlStmtConstr String |
   SqlStmtPriv String |
+  SqlStmtPostInstall String |
   SqlStmtEmpty
     deriving (Eq, Ord, Show)
 
@@ -36,6 +37,7 @@ instance SqlCode SqlStatement where
   toSql (SqlStmtInherit x) = x ++ statementTermin
   toSql (SqlStmtConstr x) = x ++ statementTermin
   toSql (SqlStmtPriv x) = x ++ statementTermin
+  toSql (SqlStmtPostInstall x) = x ++ statementTermin
   (//) _ _ = undefined
 
 
@@ -67,6 +69,7 @@ getSetupStatements opts s =
 getModuleStatements :: Opt -> Module -> [SqlStatement]
 getModuleStatements opts m =
   [ SqlStmtSchema $ "CREATE SCHEMA " ++ toSql (moduleName m) ] ++
+  [ SqlStmtPostInstall . maybeList $ moduleExecPostInstall m ] ++
   concat (maybeMap (getDomainStatements opts) (moduleDomains m)) ++
   concat (maybeMap (getTypeStatements opts) (moduleTypes m)) ++
   concat (maybeMap (getRoleStatements opts) (moduleRoles m)) ++
