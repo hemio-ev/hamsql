@@ -3,7 +3,7 @@
 database="postgres://postgres@localhost/test1"
 params="-s carnivora/setup.yaml"
 
-ghc Main
+ghc -W Main
 ./Main ${params} -d > out/documentation.html
 ./Main ${params} -g > out/documentation.dot
 ./Main ${params} -p > out/installation.sql

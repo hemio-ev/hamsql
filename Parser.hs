@@ -8,8 +8,11 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 
+
 module Parser where
 
+import Control.Exception
+import Data.Typeable
 import Data.Yaml
 import Data.Aeson.Types
 import Data.Char
@@ -24,6 +27,13 @@ import Data.HashMap.Strict (member,insert,keys)
 import qualified Data.ByteString.Char8 as B
 
 import Utils
+
+-- EXCEPTIONS
+
+data YamsqlException = YamsqlException String
+ deriving (Show, Typeable)
+
+instance Exception YamsqlException
 
 -- removes first part of camel case. e.g.:
 -- columnDescriptionField |-> descriptionField
@@ -165,7 +175,7 @@ strictParseYaml xs =
    if diff == [] then
     parsed
    else
-    err $ "Found unknown keys: " ++ show diff
+    throw $ YamsqlException $ "Found unknown keys: " ++ show diff
  where
   keysOfData u = sort $ map (snakeify.removeFirstPart) (constrFields (toConstr u))
   

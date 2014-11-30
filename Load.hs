@@ -5,6 +5,7 @@
 
 module Load where
 
+import Control.Exception
 import Data.Yaml
 import qualified Data.ByteString.Char8 as B
 import System.FilePath.Posix (combine, dropFileName)
@@ -70,10 +71,19 @@ findModulePath moduleName search = findDir search
 loadYamlFile:: (FromJSON a0) => FilePath -> IO a0
 loadYamlFile filePath = do
   fileContent <- B.readFile filePath
-  case decodeEither fileContent of
-    Left msg -> err $
+  catchErrors filePath $
+   case decodeEither fileContent of
+     Left msg -> err $
       "Error while decoding '" ++ filePath ++ "'. " ++ msg
-    Right decoded -> return decoded
+     Right decoded -> decoded
+
+catchErrors filePath x = do
+ y <- try (evaluate x)
+ return $
+  case y of
+   Left (YamsqlException exc) -> err $
+    "In file `" ++ filePath ++ "`: " ++ exc
+   Right a -> a
 
 yamlEnding :: String -> Bool
 yamlEnding xs = xs =~ "\\.yaml$"
@@ -106,9 +116,9 @@ readModule md = do
     doesFileExist moduleConfig >>=
       errorCheck ("module file does not exist: " ++ moduleConfig)
     moduleFile <- B.readFile moduleConfig
-    moduleData <- case decodeEither moduleFile of
+    moduleData <- catchErrors md $ case decodeEither moduleFile of
             Left msg -> err $ "in file " ++ moduleConfig ++ ": " ++ msg
-            Right m  -> return m
+            Right m  -> m
 
     tables <- do
       files <- selectFilesInDir yamlEnding (combine md "tables.d")
@@ -183,6 +193,7 @@ domainPopulateInternal m path d = d {
 readObjectFromFile :: FromJSON a => FilePath -> IO a
 readObjectFromFile file = do
   c <- B.readFile file
-  case decodeEither' c of
+  catchErrors file $
+   case decodeEither' c of
     Left msg  -> err $ "in yaml-file: " ++ file ++ ": " ++ (show msg)
-    Right obj -> return obj
+    Right obj -> obj
