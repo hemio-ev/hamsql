@@ -69,3 +69,4 @@ main' opts args
     print "YamSql v0.0001"
 
   | otherwise = putStrLn $ usageInfo usageHeader options
+

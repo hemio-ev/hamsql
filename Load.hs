@@ -82,7 +82,7 @@ catchErrors filePath x = do
  return $
   case y of
    Left (YamsqlException exc) -> err $
-    "In file `" ++ filePath ++ "`: " ++ exc
+    "In file '" ++ filePath ++ "': " ++ exc
    Right a -> a
 
 yamlEnding :: String -> Bool

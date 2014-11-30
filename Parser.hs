@@ -67,7 +67,7 @@ instance SqlCode SqlName
         
 instance SqlCode [SqlName]
   where
-    toSql [] = err "Not allowed: [SqlName]=[]"
+    toSql [] = throw $ YamsqlException "Not allowed: [SqlName]=[]"
     toSql xs = join "." (map getSql xs)
       where
         -- TODO: if quotes involved, do something

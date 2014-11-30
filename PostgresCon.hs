@@ -13,7 +13,7 @@ import Network.URL
 import SQL
 import Parser
 import Utils
-  
+ 
 pgsqlExec :: URL -> [SqlStatement] -> IO ()
 pgsqlExec connUrl xs = do
     connResult <- try $ connectPostgreSQL $ exportURL connUrl
@@ -40,3 +40,4 @@ pgsqlExec connUrl xs = do
       | stmt <- xs ]
 
     commit conn
+

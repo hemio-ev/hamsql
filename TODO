@@ -1,8 +1,6 @@
 - Reverse membership for roles
   roles hould be able to join roles
   not the other way round
-- Useful error messages if unknown keys appear
-  -> include file name
 - Maybe a flag for strict parsing. Non-scrict turns
   error messages for unkown keys to warnings
 - Maybe a flag for sloppy parsing. Erronouse objects
