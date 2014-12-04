@@ -223,7 +223,7 @@ data Column = Column {
     columnOnRefDelete     :: Maybe String,
     columnOnRefUpdate     :: Maybe String,
     columnUnique          :: Maybe Bool,
-    columnCheck           :: Maybe String
+    columnChecks          :: Maybe [Check]
 } | ColumnTpl {
     columntplTemplate     :: SqlName,
     columntplTemplateData :: Maybe TableColumnTpl,
@@ -236,7 +236,7 @@ data Column = Column {
     columntplOnRefDelete  :: Maybe String,
     columntplOnRefUpdate  :: Maybe String,
     columntplUnique       :: Maybe Bool,
-    columntplCheck        :: Maybe String
+    columntplChecks       :: Maybe [Check]
 } deriving (Generic, Show, Typeable, Data)
 instance FromJSON Column where parseJSON = strictParseYaml.addColumnDefaultTag 
 instance ToJSON Column where toJSON = genericToJSON myOpt
@@ -263,7 +263,7 @@ data TableColumnTpl = TableColumnTpl {
     tablecolumntplOnRefDelete  :: Maybe String,
     tablecolumntplOnRefUpdate  :: Maybe String,
     tablecolumntplUnique       :: Maybe Bool,
-    tablecolumntplCheck        :: Maybe String
+    tablecolumntplChecks       :: Maybe [Check]
 } deriving (Generic, Show, Typeable, Data)
 instance FromJSON TableColumnTpl where parseJSON = strictParseYaml
 instance ToJSON TableColumnTpl where toJSON = genericToJSON myOpt
@@ -290,7 +290,7 @@ applyColumnTpl tmp c = Column {
     columnOnRefDelete = maybeRight (tablecolumntplOnRefDelete tmp) (columntplOnRefDelete c),
     columnOnRefUpdate = maybeRight (tablecolumntplOnRefUpdate tmp) (columntplOnRefUpdate c),
     columnUnique      = maybeRight (tablecolumntplUnique tmp) (columntplUnique c),
-    columnCheck       = maybeRight (tablecolumntplCheck tmp) (columntplCheck c)
+    columnChecks      = maybeRight (tablecolumntplChecks tmp) (columntplChecks c)
   }
   where
     maybeRight' :: a -> Maybe a -> a
