@@ -12,16 +12,18 @@ import System.FilePath.Posix (combine, dropFileName)
 import Control.Monad (filterM, liftM)
 import Text.Regex.Posix
 import System.Directory (doesFileExist, doesDirectoryExist, getDirectoryContents)
+import Data.Yaml
+import Control.Monad
 
 import Parser
 import Options
 import Utils
 import SQL
 
-loadSetup :: FilePath -> IO Setup
-loadSetup filePath = do
-  setup <- loadYamlFile filePath
-  setup' <- loadSetupModules (dropFileName filePath) (initSetupInternal setup)
+loadSetup :: Opt -> FilePath -> IO Setup
+loadSetup opts filePath = do
+  setup <- readObjectFromFile opts filePath
+  setup' <- loadSetupModules opts (dropFileName filePath) (initSetupInternal setup)
   return $ applyTpl setup'
 
 initSetupInternal s' = s' {
@@ -29,8 +31,8 @@ initSetupInternal s' = s' {
 }
 
 -- Tries to loads all defined modules from defined module dirs
-loadSetupModules :: FilePath -> Setup -> IO Setup
-loadSetupModules path s = do
+loadSetupModules :: Opt -> FilePath -> Setup -> IO Setup
+loadSetupModules opts path s = do
   moduleData <- sequence [ loadModule path name | name <- setupModules s ]
   return s {
           xsetupInternal = Just (setupInternal s) {
@@ -42,7 +44,7 @@ loadSetupModules path s = do
     loadModule :: FilePath -> String -> IO Module
     loadModule path name = do
       modulePath <- findModulePath name moduleDirs
-      moduleData <- readModule modulePath
+      moduleData <- readModule opts modulePath
       return moduleData {
           xmoduleInternal = Just ModuleInternal {
             moduleLoadPath = modulePath
@@ -59,31 +61,19 @@ findModulePath moduleName search = findDir search
     findDir (d:ds) = do
       let dir = combine d moduleName
       dirExists <- doesDirectoryExist (dir :: FilePath)
-      if dirExists
-        then do
-          fileExists <- doesFileExist (combine dir "module.yaml")
-          if fileExists
-            then return dir
-            else err $ "file 'module.yaml' missing in '" ++ dir ++ "'"
-        else
-          findDir ds
+      if dirExists then
+         return dir
+      else
+         findDir ds
 
-loadYamlFile:: (FromJSON a0) => FilePath -> IO a0
-loadYamlFile filePath = do
-  fileContent <- B.readFile filePath
-  catchErrors filePath $
-   case decodeEither fileContent of
-     Left msg -> err $
-      "Error while decoding '" ++ filePath ++ "'. " ++ msg
-     Right decoded -> decoded
-
+catchErrors :: (FromJSON a, ToJSON a) => FilePath -> a -> IO a
 catchErrors filePath x = do
- y <- try (evaluate x)
+ y <- try (forceToJson x)
  return $
   case y of
    Left (YamsqlException exc) -> err $
     "In file '" ++ filePath ++ "': " ++ exc
-   Right a -> a
+   Right _ -> x
 
 yamlEnding :: String -> Bool
 yamlEnding xs = xs =~ "\\.yaml$"
@@ -92,9 +82,11 @@ pgsqlEnding :: String -> Bool
 pgsqlEnding xs = xs =~ "\\.sql$"
 
 getFilesInDir :: FilePath -> IO [FilePath]
-getFilesInDir path = do conts <- getDirectoryContents path
-                        liftM (map ((path++"/")++)) (filterM doesFileExist' conts)
- where doesFileExist' relName = doesFileExist (path++"/"++relName)
+getFilesInDir path = do
+    conts <- getDirectoryContents path
+    liftM (map (combine path)) (filterM doesFileExist' conts)
+ where
+  doesFileExist' relName = doesFileExist (combine path relName)
 
 selectFilesInDir :: (FilePath -> Bool) -> FilePath -> IO [FilePath]
 selectFilesInDir ending dir = do
@@ -109,22 +101,17 @@ errorCheck :: String -> Bool -> IO ()
 errorCheck msg False = err msg
 errorCheck _   True  = return ()
 
-readModule :: FilePath -> IO Module
-readModule md = do
+readModule :: Opt -> FilePath -> IO Module
+readModule opts md = do
     doesDirectoryExist md >>= errorCheck ("module dir does not exist: " ++ md)
 
-    doesFileExist moduleConfig >>=
-      errorCheck ("module file does not exist: " ++ moduleConfig)
-    moduleFile <- B.readFile moduleConfig
-    moduleData <- catchErrors md $ case decodeEither moduleFile of
-            Left msg -> err $ "in file " ++ moduleConfig ++ ": " ++ msg
-            Right m  -> m
+    moduleData <- readObjectFromFile opts moduleConfig
 
     tables <- do
       files <- selectFilesInDir yamlEnding (combine md "tables.d")
       sequence [
         do
-          t <- readObjectFromFile f
+          t <- readObjectFromFile opts f
           return $ tablePopulateInternal moduleData f t
         | f <- files ]
 
@@ -132,7 +119,7 @@ readModule md = do
       files <- selectFilesInDir pgsqlEnding (combine md "functions.d")
       sequence [
         do
-          t <- readObjectFromFile f
+          t <- readObjectFromFile opts f
           return $ functionPopulateInternal moduleData f t
         | f <- files ]
 
@@ -190,10 +177,17 @@ domainPopulateInternal m path d = d {
     }
   }
 
-readObjectFromFile :: FromJSON a => FilePath -> IO a
-readObjectFromFile file = do
+readObjectFromFile :: (FromJSON a, ToJSON a) => Opt -> FilePath -> IO a
+readObjectFromFile opts file = do
+  info opts $ "Reading and parsing yaml-file '" ++ file ++ "'"
+
+  fileExists <- doesFileExist file
+  unless fileExists $
+    err $ "Expected file existance: '" ++ file ++ "'"
+
   c <- B.readFile file
   catchErrors file $
    case decodeEither' c of
     Left msg  -> err $ "in yaml-file: " ++ file ++ ": " ++ (show msg)
     Right obj -> obj
+  

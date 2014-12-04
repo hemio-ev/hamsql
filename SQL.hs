@@ -19,6 +19,7 @@ data SqlStatement =
   SqlStmtSchema String |
   SqlStmtTypeDef String |
   SqlStmtRoleDef String |
+  SqlStmtRoleMembership String |
   SqlStmt String |
   SqlStmtInherit String |
   SqlStmtConstr String |
@@ -33,6 +34,7 @@ instance SqlCode SqlStatement where
   toSql (SqlStmtSchema x) = x ++ statementTermin
   toSql (SqlStmtTypeDef x) = x ++ statementTermin
   toSql (SqlStmtRoleDef x) = x ++ statementTermin
+  toSql (SqlStmtRoleMembership x) = x ++ statementTermin
   toSql (SqlStmt x) = x ++ statementTermin
   toSql (SqlStmtInherit x) = x ++ statementTermin
   toSql (SqlStmtConstr x) = x ++ statementTermin
@@ -306,12 +308,18 @@ getTypeStatements opt t = [SqlStmtTypeDef $
 -- Role
 
 getRoleStatements :: Opt -> Role -> [SqlStatement]
-getRoleStatements opts r = [SqlStmtRoleDef sqlCreateRole]
+getRoleStatements opts r =
+    [SqlStmtRoleDef sqlCreateRole] ++
+    maybeMap sqlRoleMembership (roleMemberIn r)
+
     where
         sqlCreateRole = "CREATE ROLE " ++ toSql (roleName r) ++
             " " ++ sqlLogin (roleLogin r) ++
-            sqlPassword (rolePassword r) ++
-            sqlMembers (roleMembers r)
+            sqlPassword (rolePassword r)
+
+        sqlRoleMembership group = 
+            SqlStmtRoleMembership $
+            "GRANT " ++ toSql group ++ " TO " ++ toSql (roleName r);
             
         sqlLogin (Just True) = "LOGIN"
         sqlLogin _           = "NOLOGIN"
@@ -319,7 +327,3 @@ getRoleStatements opts r = [SqlStmtRoleDef sqlCreateRole]
         sqlPassword Nothing = ""
         sqlPassword (Just p) = " ENCRYPTED PASSWORD '" ++ p ++ "' "
             
-        sqlMembers Nothing = ""
-        sqlMembers (Just []) = ""
-        sqlMembers (Just ms) = " ROLE " ++ join ", " (map toSql ms)
-

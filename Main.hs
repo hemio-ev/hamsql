@@ -30,17 +30,17 @@ main = do
 main' :: Opt -> [String] -> IO ()
 main' opts args
   | optPrintGraph opts = do
-    setup <- loadSetup (optSetupFile opts)
+    setup <- loadSetup opts (optSetupFile opts)
     u <- getGraphDoc setup
     putStrLn $ unpack u
     
   | optPrintDoc opts = do
-    setup <- loadSetup (optSetupFile opts)
+    setup <- loadSetup opts (optSetupFile opts)
     u <- toSetupDoc setup
     putStrLn $ getDoc $ unpack u
     
   | optExecuteSql opts = do
-    setup <- loadSetup (optSetupFile opts)
+    setup <- loadSetup opts (optSetupFile opts)
     
     -- CREATE DATABASE part disabled, see bug <https://github.com/hdbc/hdbc/issues/25>
     --pgsqlExec
@@ -51,16 +51,16 @@ main' opts args
     pgsqlExec (optServerConnectionUrl opts) statements
 
   | optPrintPhp opts = do
-    setup <- loadSetup (optSetupFile opts)
+    setup <- loadSetup opts (optSetupFile opts)
     let statements = getSetupPhpClasses opts setup
     putStrLn statements
 
   | optPrintJson opts = do
-    setup <- loadSetup (optSetupFile opts)
+    setup <- loadSetup opts (optSetupFile opts)
     putStrLn $ outJson setup
 
   | optPrintSql opts = do
-    setup <- loadSetup (optSetupFile opts)
+    setup <- loadSetup opts (optSetupFile opts)
     let statements = getSetupStatements opts setup
     putStrLn $ sqlPrinter $ sqlAddTransact statements
     putStrLn "-- end of SQL code"

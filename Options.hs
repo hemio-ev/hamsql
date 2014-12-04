@@ -12,10 +12,10 @@ import Data.Yaml
 import Data.Aeson.Types
 import GHC.Generics
 import Network.URL
+import System.IO
 --import URL
 import Data.Maybe
 
-import Parser
 import Utils
 
 data Opt = Opt
@@ -103,3 +103,13 @@ processOpts argv =
     (_,_,errs) -> ioError (userError (concat errs ++ usageInfo usageHeader options))
       
 usageHeader = "Usage: yamsql [OPTION...]"
+
+
+
+info :: Opt -> String -> IO ()
+info opts xs = do
+  if optVerbose opts then
+    hPutStrLn stderr ("info: " ++ xs)
+  else
+    return ()
+

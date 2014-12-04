@@ -62,6 +62,8 @@ fromJustReason reason Nothing = err $ "fromJust failed: " ++ reason
 selectUniqueReason :: String -> [a] -> a
 selectUniqueReason _ (x:[]) = x
 selectUniqueReason msg [] = err $ "No element found while trying to find exactly one: " ++ msg
-selectUniqueReason msg _ = err $ "More then one element found while trying to extrac one: " ++ msg
+selectUniqueReason msg xs = err $
+  "More then one element (" ++ show (length xs) ++") found while trying to extrac one: " ++ msg
 
-tr x = trace (show x) x
+tr x = trace (show x ++ "\n") x
+
