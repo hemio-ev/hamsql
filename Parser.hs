@@ -16,7 +16,7 @@ import Data.Typeable
 import Data.Yaml
 import Data.Aeson.Types
 import Data.Char
-import Data.Maybe (fromJust)
+import Data.Maybe (fromJust,fromMaybe)
 import Data.Data
 import Data.Text (unpack)
 import Data.List.Ordered (subset,minus,sort)
@@ -104,6 +104,7 @@ instance ToJSON SqlName where toJSON = genericToJSON myOpt
 data Setup = Setup {
   setupModules    :: [String],
   setupModuleDirs :: [FilePath],
+  setupRolePrefix :: Maybe SqlName,
   setupPreCode    :: Maybe String,
   setupPostCode   :: Maybe String,
   xsetupInternal  :: Maybe SetupInternal
@@ -119,6 +120,8 @@ instance ToJSON SetupInternal where toJSON = genericToJSON myOpt
 
 setupInternal :: Setup -> SetupInternal
 setupInternal s = fromJust $ xsetupInternal s
+
+setupRolePrefix' setup = fromMaybe (SqlName "yamsql_") (setupRolePrefix setup)
 
 -- Module --
 
@@ -160,10 +163,10 @@ data Table = Table {
   tableForeignKeys  :: Maybe [ForeignKey],
   tableChecks       :: Maybe [Check],
   tableInherits     :: Maybe [SqlName],
-  tablePrivSelect   :: Maybe [String],
-  tablePrivInsert   :: Maybe [String],
-  tablePrivUpdate   :: Maybe [String],
-  tablePrivDelete   :: Maybe [String],
+  tablePrivSelect   :: Maybe [SqlName],
+  tablePrivInsert   :: Maybe [SqlName],
+  tablePrivUpdate   :: Maybe [SqlName],
+  tablePrivDelete   :: Maybe [SqlName],
   tableTemplates    :: Maybe [SqlName],
   tableTemplateData :: Maybe [TableTpl],
   xtableInternal :: Maybe TableInternal
@@ -205,10 +208,10 @@ data TableTpl = TableTpl {
     tabletplForeignKeys :: Maybe [ForeignKey],
     tabletplInherits    :: Maybe [SqlName],
     tabletplColumns     :: Maybe [Column],
-    tabletplPrivSelect  :: Maybe [String],
-    tabletplPrivInsert  :: Maybe [String], 
-    tabletplPrivUpdate  :: Maybe [String],
-    tabletplPrivDelete  :: Maybe [String]
+    tabletplPrivSelect  :: Maybe [SqlName],
+    tabletplPrivInsert  :: Maybe [SqlName], 
+    tabletplPrivUpdate  :: Maybe [SqlName],
+    tabletplPrivDelete  :: Maybe [SqlName]
 } deriving (Generic, Show, Typeable, Data)
 instance FromJSON TableTpl where parseJSON = strictParseYaml
 instance ToJSON TableTpl where toJSON = genericToJSON myOpt
@@ -342,7 +345,7 @@ data Function = Function {
     -- Owner has to be given, if this is true (not implemented yet!)
     functionSecurityDefiner :: Maybe Bool,
     -- owner of the function
-    functionOwner           :: Maybe String,
+    functionOwner           :: Maybe SqlName,
     -- language in which the body is written
     -- if not defined, pgsql is assumed an variables must be defined via variables
     -- if pgsql is given explicitly, variables are your problem...
@@ -399,7 +402,7 @@ data FunctionTpl = FunctionTpl {
     -- defines security_definer, can be overwritten by function definition
     functiontplSecurityDefiner :: Maybe Bool,
     -- defines owner, can be overwritten by function definition
-    functiontplOwner           :: Maybe String,
+    functiontplOwner           :: Maybe SqlName,
     -- code added before the body of the function
     functiontplBodyPrelude     :: Maybe String,
     -- code added after the body of the function

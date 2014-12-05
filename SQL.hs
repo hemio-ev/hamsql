@@ -18,6 +18,7 @@ import Data.List
 data SqlStatement = 
   SqlStmtSchema String |
   SqlStmtTypeDef String |
+  SqlStmtRoleDelete String |
   SqlStmtRoleDef String |
   SqlStmtRoleMembership String |
   SqlStmt String |
@@ -33,6 +34,7 @@ instance SqlCode SqlStatement where
   toSql (SqlStmtEmpty) = ""
   toSql (SqlStmtSchema x) = x ++ statementTermin
   toSql (SqlStmtTypeDef x) = x ++ statementTermin
+  toSql (SqlStmtRoleDelete x) = x ++ statementTermin
   toSql (SqlStmtRoleDef x) = x ++ statementTermin
   toSql (SqlStmtRoleMembership x) = x ++ statementTermin
   toSql (SqlStmt x) = x ++ statementTermin
@@ -62,27 +64,27 @@ getSetupStatements opts s =
   [ getStmt $ setupPreCode s ] ++ moduleStatements ++ [ getStmt $ setupPostCode s ]
   where
     moduleStatements = 
-      sort $ concatMap (getModuleStatements opts) (setupModuleData $ setupInternal s)
+      sort $ concatMap (getModuleStatements opts s) (setupModuleData $ setupInternal s)
     getStmt (Just code) = SqlStmt code
     getStmt Nothing = SqlStmtEmpty
   
 -- Module
 
-getModuleStatements :: Opt -> Module -> [SqlStatement]
-getModuleStatements opts m =
+getModuleStatements :: Opt -> Setup -> Module -> [SqlStatement]
+getModuleStatements opts s m =
   [ SqlStmtSchema $ "CREATE SCHEMA " ++ toSql (moduleName m) ] ++
   [ SqlStmtPostInstall . maybeList $ moduleExecPostInstall m ] ++
   concat (maybeMap (getDomainStatements opts) (moduleDomains m)) ++
   concat (maybeMap (getTypeStatements opts) (moduleTypes m)) ++
-  concat (maybeMap (getRoleStatements opts) (moduleRoles m)) ++
-  concat (maybeMap (getFunctionStatements opts) (moduleFunctions m)) ++
-  concat (maybeMap (getTableStatements opts) (moduleTables m))
+  concat (maybeMap (getRoleStatements opts s) (moduleRoles m)) ++
+  concat (maybeMap (getFunctionStatements opts s) (moduleFunctions m)) ++
+  concat (maybeMap (getTableStatements opts s) (moduleTables m))
 
 
 -- Table
 
-getTableStatements :: Opt -> Table -> [SqlStatement]
-getTableStatements opts t =
+getTableStatements :: Opt -> Setup -> Table -> [SqlStatement]
+getTableStatements opts setup t =
     SqlStmt sqlTable:
     maybeMap (sqlGrant "SELECT") (tablePrivSelect t) ++
     maybeMap (sqlGrant "UPDATE") (tablePrivUpdate t) ++
@@ -160,8 +162,8 @@ getTableStatements opts t =
         sqlOnRefDelete Nothing = ""
         sqlOnRefDelete (Just a) = " ON UPDATE " ++ a
 
-        sqlGrant right user = SqlStmtConstr ("GRANT " ++ right ++ " ON TABLE " ++
-            toSql (tableName t) ++ " TO " ++ user)
+        sqlGrant right role = SqlStmtConstr ("GRANT " ++ right ++ " ON TABLE " ++
+            toSql (tableName t) ++ " TO " ++ prefixedRole setup role)
 
         sqlAddInheritance :: SqlName -> SqlStatement
         sqlAddInheritance n = 
@@ -183,16 +185,16 @@ getTableStatements opts t =
         
 -- Function
 
-getFunctionStatements :: Opt -> Function -> [SqlStatement]
-getFunctionStatements opts f =
+getFunctionStatements :: Opt -> Setup -> Function -> [SqlStatement]
+getFunctionStatements opts setup f =
     SqlStmt sqlCreateFunction:
     SqlStmtPriv (sqlSetOwner (functionOwner f)):
-    map sqlStmtGrantExecute (maybeMap toSql $ functionPrivExecute f)
+    map sqlStmtGrantExecute (maybeList $ functionPrivExecute f)
 
     where
         sqlStmtGrantExecute u = SqlStmt $ sqlGrantExecute u
         sqlGrantExecute u = "GRANT EXECUTE ON FUNCTION \n" ++
-            sqlFunctionIdentifier ++ "\nTO " ++ u
+            sqlFunctionIdentifier ++ "\nTO " ++ prefixedRole setup u
 
         sqlCreateFunction =
             "CREATE OR REPLACE FUNCTION " ++ sqlFunctionIdentifier ++
@@ -206,7 +208,7 @@ getFunctionStatements opts f =
 
         sqlSetOwner (Just o) =
             "ALTER FUNCTION " ++ sqlFunctionIdentifier ++
-            "OWNER TO " ++ o
+            "OWNER TO " ++ prefixedRole setup o
         sqlSetOwner Nothing =
             ""
 
@@ -307,23 +309,28 @@ getTypeStatements opt t = [SqlStmtTypeDef $
 
 -- Role
 
-getRoleStatements :: Opt -> Role -> [SqlStatement]
-getRoleStatements opts r =
+getRoleStatements :: Opt -> Setup -> Role -> [SqlStatement]
+getRoleStatements opts setup r =
     [SqlStmtRoleDef sqlCreateRole] ++
     maybeMap sqlRoleMembership (roleMemberIn r)
 
     where
-        sqlCreateRole = "CREATE ROLE " ++ toSql (roleName r) ++
+        sqlCreateRole = "CREATE ROLE " ++ prefix (roleName r) ++
             " " ++ sqlLogin (roleLogin r) ++
             sqlPassword (rolePassword r)
 
         sqlRoleMembership group = 
             SqlStmtRoleMembership $
-            "GRANT " ++ toSql group ++ " TO " ++ toSql (roleName r);
+            "GRANT " ++ prefix group ++ " TO " ++ prefix (roleName r);
             
         sqlLogin (Just True) = "LOGIN"
         sqlLogin _           = "NOLOGIN"
 
         sqlPassword Nothing = ""
         sqlPassword (Just p) = " ENCRYPTED PASSWORD '" ++ p ++ "' "
-            
+
+        prefix role = prefixedRole setup role
+
+prefixedRole :: Setup -> SqlName -> String
+prefixedRole setup role = toSql (setupRolePrefix' setup // role)
+

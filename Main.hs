@@ -7,6 +7,7 @@ module Main where
 
 import System.Environment
 import System.Console.GetOpt
+import Data.List
 import Data.Text
 import Network.URL
 
@@ -41,14 +42,9 @@ main' opts args
     
   | optExecuteSql opts = do
     setup <- loadSetup opts (optSetupFile opts)
+    statements <- pgsqlGetFullStatements opts setup
     
-    -- CREATE DATABASE part disabled, see bug <https://github.com/hdbc/hdbc/issues/25>
-    --pgsqlExec
-    --  ((optServerConnectionUrl opts) { url_path = "" })
-    --  (sqlCreateDatabase $ url_path $ optServerConnectionUrl opts)
-    
-    let statements = getSetupStatements opts setup
-    pgsqlExec (optServerConnectionUrl opts) statements
+    pgsqlExec (optServerConnectionUrl opts) (sort statements)
 
   | optPrintPhp opts = do
     setup <- loadSetup opts (optSetupFile opts)
@@ -61,8 +57,8 @@ main' opts args
 
   | optPrintSql opts = do
     setup <- loadSetup opts (optSetupFile opts)
-    let statements = getSetupStatements opts setup
-    putStrLn $ sqlPrinter $ sqlAddTransact statements
+    statements <- pgsqlGetFullStatements opts setup
+    putStrLn $ sqlPrinter $ sqlAddTransact (sort statements)
     putStrLn "-- end of SQL code"
  
  | optShowVersion opts = 
