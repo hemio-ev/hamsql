@@ -11,6 +11,7 @@ import Utils
 
 import Data.Maybe
 import Data.List
+import Data.String.Utils (replace)
 
 
 -- SQL statements
@@ -25,6 +26,7 @@ data SqlStatement =
   SqlStmtInherit String |
   SqlStmtConstr String |
   SqlStmtPriv String |
+  SqlStmtComment String |
   SqlStmtPostInstall String |
   SqlStmtEmpty
     deriving (Eq, Ord, Show)
@@ -32,21 +34,35 @@ data SqlStatement =
 statementTermin = ";\n"
 instance SqlCode SqlStatement where
   toSql (SqlStmtEmpty) = ""
-  toSql (SqlStmtSchema x) = x ++ statementTermin
-  toSql (SqlStmtTypeDef x) = x ++ statementTermin
-  toSql (SqlStmtRoleDelete x) = x ++ statementTermin
-  toSql (SqlStmtRoleDef x) = x ++ statementTermin
-  toSql (SqlStmtRoleMembership x) = x ++ statementTermin
-  toSql (SqlStmt x) = x ++ statementTermin
-  toSql (SqlStmtInherit x) = x ++ statementTermin
-  toSql (SqlStmtConstr x) = x ++ statementTermin
-  toSql (SqlStmtPriv x) = x ++ statementTermin
-  toSql (SqlStmtPostInstall x) = x ++ statementTermin
+  toSql stmt = termin $ sqlFromStmt stmt
+   where
+    termin [] = ""
+    termin xs = xs ++ statementTermin
   (//) _ _ = undefined
+
+sqlFromStmt :: SqlStatement -> String
+sqlFromStmt (SqlStmtSchema x) = x
+sqlFromStmt (SqlStmtTypeDef x) = x
+sqlFromStmt (SqlStmtRoleDelete x) = x
+sqlFromStmt (SqlStmtRoleDef x) = x
+sqlFromStmt (SqlStmtRoleMembership x) = x
+sqlFromStmt (SqlStmt x) = x
+sqlFromStmt (SqlStmtInherit x) = x
+sqlFromStmt (SqlStmtConstr x) = x
+sqlFromStmt (SqlStmtPriv x) = x
+sqlFromStmt (SqlStmtComment x) = x
+sqlFromStmt (SqlStmtPostInstall x) = x
 
 
 sqlPrinter :: [SqlStatement] -> String
 sqlPrinter xs = join "" $ map toSql xs
+
+toSqlString :: String -> String
+toSqlString xs = "'" ++ replace "'" "''" xs ++ "'"
+
+stmtCommentOn :: SqlCode a => String -> a -> String -> SqlStatement
+stmtCommentOn on obj com = SqlStmtComment $
+  "COMMENT ON " ++ on ++ " " ++ toSql obj ++ " IS " ++ toSqlString com
 
 sqlAddTransact :: [SqlStatement] -> [SqlStatement]
 sqlAddTransact xs = 
@@ -72,8 +88,11 @@ getSetupStatements opts s =
 
 getModuleStatements :: Opt -> Setup -> Module -> [SqlStatement]
 getModuleStatements opts s m =
-  [ SqlStmtSchema $ "CREATE SCHEMA " ++ toSql (moduleName m) ] ++
-  [ SqlStmtPostInstall . maybeList $ moduleExecPostInstall m ] ++
+  [
+    SqlStmtSchema $ "CREATE SCHEMA " ++ toSql (moduleName m),
+    SqlStmtPostInstall . maybeList $ moduleExecPostInstall m,
+    stmtCommentOn "schema" (moduleName m) (moduleDescription m)
+  ] ++
   concat (maybeMap (getDomainStatements opts) (moduleDomains m)) ++
   concat (maybeMap (getTypeStatements opts) (moduleTypes m)) ++
   concat (maybeMap (getRoleStatements opts s) (moduleRoles m)) ++
@@ -85,14 +104,28 @@ getModuleStatements opts s m =
 
 getTableStatements :: Opt -> Setup -> Table -> [SqlStatement]
 getTableStatements opts setup t =
-    SqlStmt sqlTable:
+    [
+    -- table with columns
+    SqlStmt sqlTable,
+    -- table comment
+    stmtCommentOn "TABLE" [ moduleName' t, tableName t ] (tableDescription t)
+    ] ++
+    -- column comments
+    map (\c -> stmtCommentOn "COLUMN"
+            [ moduleName' t, tableName t, columnName c] 
+            (columnDescription c)) (tableColumns t) ++
+    -- grant rights to roles
     maybeMap (sqlGrant "SELECT") (tablePrivSelect t) ++
     maybeMap (sqlGrant "UPDATE") (tablePrivUpdate t) ++
     maybeMap (sqlGrant "INSERT") (tablePrivInsert t) ++
     maybeMap (sqlGrant "DELETE") (tablePrivDelete t) ++
+    -- ?
     map sqlAddForeignKey (tableColumns t) ++
+    -- inheritance
     maybeMap sqlAddInheritance (tableInherits t) ++
+    -- multi column unique constraints
     map sqlColumnUnique (tableColumns t) ++
+    -- ? 
     maybeMap sqlAddForeignKey' (tableForeignKeys t)
 
     where
@@ -189,6 +222,8 @@ getFunctionStatements :: Opt -> Setup -> Function -> [SqlStatement]
 getFunctionStatements opts setup f =
     SqlStmt sqlCreateFunction:
     SqlStmtPriv (sqlSetOwner (functionOwner f)):
+    SqlStmtComment ("COMMENT ON FUNCTION " ++ sqlFunctionIdentifier ++
+      " IS " ++ toSqlString (functionDescription f)):
     map sqlStmtGrantExecute (maybeList $ functionPrivExecute f)
 
     where
@@ -277,15 +312,17 @@ getFunctionStatements opts setup f =
 -- Domains
 
 getDomainStatements :: Opt -> Domain -> [SqlStatement]
-getDomainStatements opt d = [SqlStmtTypeDef $
-    "CREATE DOMAIN " ++
-    toSql [ moduleName $ domainParentModule $ domainInternal d , domainName d ]
-    ++ " AS " ++ domainType d ++
+getDomainStatements opt d = 
+  SqlStmtTypeDef (
+    "CREATE DOMAIN " ++ toSql fullName ++ " AS " ++ domainType d ++
     sqlDefault (domainDefault d) ++
     join "\n" (maybeMap sqlCheck (domainChecks d))
-    ]
+  ):
+  stmtCommentOn "DOMAIN" fullName (domainDescription d)
+  :[]
 
     where
+    fullName = [ moduleName $ domainParentModule $ domainInternal d , domainName d ]
     sqlCheck c =
         " CONSTRAINT " ++ toSql (name (checkName c)) ++
         " CHECK (" ++ checkCheck c ++ ")"
@@ -297,21 +334,24 @@ getDomainStatements opt d = [SqlStmtTypeDef $
 -- Types
 
 getTypeStatements :: Opt -> Type -> [SqlStatement]
-getTypeStatements opt t = [SqlStmtTypeDef $
-    "CREATE TYPE " ++ 
-    toSql [ moduleName $ typeParentModule $ typeInternal t , typeName t ]  
-    ++ " AS (" ++
+getTypeStatements opt t =
+  SqlStmtTypeDef (
+    "CREATE TYPE " ++ toSql fullName ++ " AS (" ++
     join ", " (map sqlElement (typeElements t))
-    ]
+  ):
+  stmtCommentOn "TYPE" fullName (typeDescription t)
+  :[]
 
-    where
+  where
+    fullName = [ moduleName $ typeParentModule $ typeInternal t , typeName t ]
     sqlElement e = toSql (typeelementName e) ++ " " ++ typeelementType e
 
 -- Role
 
 getRoleStatements :: Opt -> Setup -> Role -> [SqlStatement]
 getRoleStatements opts setup r =
-    [SqlStmtRoleDef sqlCreateRole] ++
+    SqlStmtRoleDef sqlCreateRole:
+    (stmtCommentOn "ROLE" (setupRolePrefix' setup // roleName r) (roleDescription r)):
     maybeMap sqlRoleMembership (roleMemberIn r)
 
     where
