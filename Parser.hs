@@ -67,16 +67,20 @@ forceToJson s = do
 -- SqlCode (right now only SqlName)
                        
 instance SqlCode SqlName
-    where
-        toSql n = toSql (expSqlName n)
-        (//) (SqlName s) (SqlName t) = SqlName (s ++ t)
+  where
+    toSql (SqlName n) = 
+      if '"' `elem` n then
+        n
+      else
+        toSql $ expSqlName $ SqlName n
+
+    (//) (SqlName s) (SqlName t) = SqlName (s ++ t)
         
 instance SqlCode [SqlName]
   where
     toSql [] = throw $ YamsqlException "Not allowed: [SqlName]=[]"
     toSql xs = join "." (map getSql xs)
       where
-        -- TODO: if quotes involved, do something
         getSql (SqlName s) = "\"" ++ s ++ "\""
     (//) a b = a ++ b
 
@@ -84,6 +88,26 @@ expSqlName :: SqlName -> [SqlName]
 expSqlName n = map SqlName (splitOn "." (getStr n))
   where
     getStr (SqlName n') = n'
+
+instance SqlCode SqlType
+  where
+    toSql (SqlType n) = 
+      if
+        -- if quotes are contained
+        -- assume that user cares for correct enquoting
+        '"' `elem` n ||
+        -- if at least a pair of brakets is found
+        -- assume that a type like varchar(20) is meant
+        ('(' `elem` n && ')' `elem` n) ||
+        -- if not dot is present, assume that buildin type
+        -- like integer is meant
+        not ('.' `elem` n)
+      then
+        n
+      else
+        toSql $ expSqlName $ SqlName n
+
+    (//) (SqlType s) (SqlType t) = SqlType (s ++ t)
 
 contSqlName :: [SqlName] -> SqlName
 contSqlName ns = SqlName $ join "." $ map getStr ns
@@ -98,6 +122,10 @@ class SqlCode a where
 newtype SqlName = SqlName String deriving (Generic,Show,Eq, Typeable, Data)
 instance FromJSON SqlName where parseJSON = genericParseJSON myOpt
 instance ToJSON SqlName where toJSON = genericToJSON myOpt
+
+newtype SqlType = SqlType String deriving (Generic,Show,Eq, Typeable, Data)
+instance FromJSON SqlType where parseJSON = genericParseJSON myOpt
+instance ToJSON SqlType where toJSON = genericToJSON myOpt
   
 -- Setup --
 
@@ -218,7 +246,7 @@ instance ToJSON TableTpl where toJSON = genericToJSON myOpt
 
 data Column = Column {
     columnName            :: SqlName,
-    columnType            :: String,
+    columnType            :: SqlType,
     columnDescription     :: String,
     columnDefault         :: Maybe String,
     columnNull            :: Maybe Bool,
@@ -231,7 +259,7 @@ data Column = Column {
     columntplTemplate     :: SqlName,
     columntplTemplateData :: Maybe TableColumnTpl,
     columntplName         :: Maybe SqlName,
-    columntplType         :: Maybe String,
+    columntplType         :: Maybe SqlType,
     columntplDescription  :: Maybe String,
     columntplDefault      :: Maybe String,
     columntplNull         :: Maybe Bool,
@@ -258,7 +286,7 @@ addColumnDefaultTag (Object o) = Object $
 data TableColumnTpl = TableColumnTpl {
     tablecolumntplTemplate     :: SqlName,
     tablecolumntplName         :: SqlName,
-    tablecolumntplType         :: String,
+    tablecolumntplType         :: SqlType,
     tablecolumntplDescription  :: String,
     tablecolumntplDefault      :: Maybe String,
     tablecolumntplNull         :: Maybe Bool,
@@ -373,7 +401,7 @@ instance ToJSON FunctionInternal where toJSON = genericToJSON myOpt
 data Variable = Variable {
     variableName          :: SqlName,
     variableDescription   :: Maybe String,
-    variableType          :: String,
+    variableType          :: SqlType,
     variableDefault       :: Maybe String
 } deriving (Generic,Show, Data, Typeable)
 instance FromJSON Variable where parseJSON = strictParseYaml
@@ -382,7 +410,7 @@ instance ToJSON Variable where toJSON = genericToJSON myOpt
 data Parameter = Parameter {
     parameterName          :: SqlName,
     parameterDescription   :: Maybe String,
-    parameterType          :: String
+    parameterType          :: SqlType
 } deriving (Generic,Show, Data, Typeable)
 instance FromJSON Parameter where parseJSON = strictParseYaml
 instance ToJSON Parameter where toJSON = genericToJSON myOpt
@@ -442,7 +470,7 @@ applyFunctionTpl t f = f {
 data Domain = Domain {
     domainName :: SqlName,
     domainDescription :: String,
-    domainType  :: String,
+    domainType  :: SqlType,
     domainDefault :: Maybe String,
     domainChecks :: Maybe [Check],
     xdomainInternal :: Maybe DomainInternal
@@ -485,7 +513,7 @@ instance ToJSON TypeInternal where toJSON = genericToJSON myOpt
 
 data TypeElement = TypeElement {
     typeelementName :: SqlName,
-    typeelementType :: String
+    typeelementType :: SqlType
 } deriving (Generic, Show, Data, Typeable)
 instance FromJSON TypeElement where parseJSON = strictParseYaml
 instance ToJSON TypeElement where toJSON = genericToJSON myOpt

@@ -142,7 +142,7 @@ getTableStatements opts setup t =
         -- columns
         sqlColumn c@(Column {}) =
             "  " ++ toSql (columnName c) ++ " " ++
-            columnType c ++ " " ++
+            toSql (columnType c) ++ " " ++
             sqlNull (columnNull c) ++ " " ++
             sqlDefault (columnDefault c)
         sqlColumn _ = err "ColumnTemplates should not be present in SQL parsing"
@@ -255,7 +255,7 @@ getFunctionStatements opts setup f =
                 "\n)"
 
         -- function parameter
-        sqlParameter p = " " ++ toSql(variableName p) ++ " " ++ variableType p
+        sqlParameter p = " " ++ toSql(variableName p) ++ " " ++ toSql(variableType p)
        
         -- If function returns a table, use service for field definition 
         sqlReturnsColumns cs
@@ -265,7 +265,7 @@ getFunctionStatements opts setup f =
             ") "
          | otherwise = ""
 
-        sqlReturnsColumn c = toSql (parameterName c) ++ " " ++ parameterType c
+        sqlReturnsColumn c = toSql (parameterName c) ++ " " ++ toSql(parameterType c)
 
         -- If language not defined, use service for variable definitions
         sqlBody 
@@ -295,7 +295,7 @@ getFunctionStatements opts setup f =
         sqlVariables (Just vs) = join "" (map sqlVariable vs)
 
         sqlVariable v =
-            toSql (variableName v) ++ " " ++ variableType v ++
+            toSql (variableName v) ++ " " ++ toSql(variableType v) ++
             sqlVariableDefault (variableDefault v) ++ ";\n"
 
         sqlVariableDefault Nothing = ""
@@ -314,7 +314,7 @@ getFunctionStatements opts setup f =
 getDomainStatements :: Opt -> Domain -> [SqlStatement]
 getDomainStatements opt d = 
   SqlStmtTypeDef (
-    "CREATE DOMAIN " ++ toSql fullName ++ " AS " ++ domainType d ++
+    "CREATE DOMAIN " ++ toSql fullName ++ " AS " ++ toSql(domainType d) ++
     sqlDefault (domainDefault d) ++
     join "\n" (maybeMap sqlCheck (domainChecks d))
   ):
@@ -344,7 +344,7 @@ getTypeStatements opt t =
 
   where
     fullName = [ moduleName $ typeParentModule $ typeInternal t , typeName t ]
-    sqlElement e = toSql (typeelementName e) ++ " " ++ typeelementType e
+    sqlElement e = toSql (typeelementName e) ++ " " ++ toSql(typeelementType e)
 
 -- Role
 
