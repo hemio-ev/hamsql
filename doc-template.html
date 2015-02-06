@@ -7,7 +7,9 @@ $for(modules)$
     $modules.name$
 </h1>
 
-$modules.description$ (module sources: <tt>$modules.internal.load_path$</tt>)
+<pre>$modules.description$</pre>
+
+<p>Sources: <tt>$modules.internal.load_path$</tt></p>
 
     $if(modules.tables)$
     <h2>Tables</h2>
@@ -17,7 +19,9 @@ $modules.description$ (module sources: <tt>$modules.internal.load_path$</tt>)
             $modules.tables.name$
         </h3>
 
-        $modules.tables.description$ (table source: <tt>$modules.tables.internal.load_path$</tt>)
+        <pre>$modules.tables.description$</pre>
+
+        <p>Source: <tt>$modules.tables.internal.load_path$</tt></p>
 
         <ul>
             <li>Primary key:
@@ -106,7 +110,9 @@ $modules.description$ (module sources: <tt>$modules.internal.load_path$</tt>)
             $modules.functions.name$
         </h3>
 
-        $modules.functions.description$ (function source: <tt>$modules.functions.internal.load_path$</tt>)
+        <pre>$modules.functions.description$</pre>
+       
+        <p>Source: <tt>$modules.functions.internal.load_path$</tt></p>
 
         <ul>
 
@@ -152,18 +158,18 @@ $modules.description$ (module sources: <tt>$modules.internal.load_path$</tt>)
             $endif$
 
             <li>
-                Returns: $modules.functions.return$
+                Returns: $modules.functions.returns$
             </li>
 
-            $if(modules.functions.internal.return_table)$
+            $if(modules.functions.internal.returns_table)$
             <li>
                 Returned columns:
                 <ul>
-                    $for(modules.functions.return_columns)$
+                    $for(modules.functions.returns_columns)$
                     <li>
-                        <b>$modules.functions.return_columns.name$</b>
-                        <i>$modules.functions.return_columns.type$</i>
-                        $modules.functions.return_columns.description$
+                        <b>$modules.functions.returns_columns.name$</b>
+                        <i>$modules.functions.returns_columns.type$</i>
+                        $modules.functions.returns_columns.description$
                     </li>
                     $endfor$
                 </ul>

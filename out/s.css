@@ -1,3 +1,10 @@
+h3 + pre code, h1 + pre code {
+    font-family: sans-serif;
+    font-size: normal;
+    text-align: justify;
+    color: #333;
+}
+
 body {
     font-family: sans-serif;
     font-size: 0.9em;
@@ -57,9 +64,13 @@ body > ul {
     position: fixed;
     background-color: blue;
     width: 4em; 
-    height: 4em;
+    min-height: 4em;
+    max-height: 4em;
     border-radius: 0.5em;
     display: block;
+    font-size: 1.2em;
+    transition-property: width, height, max-height;
+    transition-duration: 400ms;
 }
 
 body > ul li {
@@ -68,9 +79,9 @@ body > ul li {
 
 body > ul:hover {
     background-color: white;
-    width: auto;
+    width: 15em;
     height: auto;
-    max-height: 90%;
+    max-height: 95%;
     background-color: #EEE;
     overflow: auto;
     padding: 0.5em 2em;
@@ -83,6 +94,28 @@ body > ul:hover li {
 body > section {
     padding-left: 5em;
 }
+
+a:link {
+    text-decoration: none;
+    color: darkblue;
+}
+
+a:link:hover {
+    text-decoration: underline;
+}
+
+body > ul > li {
+    border-top: 1px solid gray;
+    margin-top: 0.9em;
+    padding-top: 0.1em;
+    font-weight: bold;
+}
+
+body > ul li li {
+    font-size: 0.9em;
+    font-weight: normal;
+}
+
 
 /* level of element definitions like table */
 
