@@ -14,6 +14,7 @@ import Text.Regex.Posix
 import System.Directory (doesFileExist, doesDirectoryExist, getDirectoryContents)
 import Data.Yaml
 import Control.Monad
+import Data.List
 
 import Parser
 import Options
@@ -84,7 +85,8 @@ pgsqlEnding xs = xs =~ "\\.sql$"
 getFilesInDir :: FilePath -> IO [FilePath]
 getFilesInDir path = do
     conts <- getDirectoryContents path
-    liftM (map (combine path)) (filterM doesFileExist' conts)
+    let ordConts = sort conts
+    liftM (map (combine path)) (filterM doesFileExist' ordConts)
  where
   doesFileExist' relName = doesFileExist (combine path relName)
 
@@ -155,7 +157,7 @@ functionPopulateInternal m path f = f {
       functionParentModule = m,
       functionLoadPath = path,
       functionOriginal = f,
-      functionReturnTable = functionReturn f == "TABLE"
+      functionReturnsTable = functionReturns f == "TABLE"
     }
   }
 

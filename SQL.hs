@@ -234,7 +234,7 @@ getFunctionStatements opts setup f =
         sqlCreateFunction =
             "CREATE OR REPLACE FUNCTION " ++ sqlFunctionIdentifier ++
             "\n" ++
-            "RETURNS " ++ functionReturn f ++ sqlReturnColumns (functionReturnColumns f) ++
+            "RETURNS " ++ functionReturns f ++ sqlReturnsColumns (functionReturnsColumns f) ++
             "\nLANGUAGE " ++ sqlLanguage (functionLanguage f) ++
             "\nSECURITY " ++ sqlSecurity (functionSecurityDefiner f) ++
             "\nAS\n$BODY$\n" ++
@@ -258,14 +258,14 @@ getFunctionStatements opts setup f =
         sqlParameter p = " " ++ toSql(variableName p) ++ " " ++ variableType p
        
         -- If function returns a table, use service for field definition 
-        sqlReturnColumns cs
-         | upper (functionReturn f) == "TABLE" = 
+        sqlReturnsColumns cs
+         | upper (functionReturns f) == "TABLE" = 
             " (\n" ++
-            join ",\n" (maybeMap sqlReturnColumn cs) ++
+            join ",\n" (maybeMap sqlReturnsColumn cs) ++
             ") "
          | otherwise = ""
 
-        sqlReturnColumn c = toSql (parameterName c) ++ " " ++ parameterType c
+        sqlReturnsColumn c = toSql (parameterName c) ++ " " ++ parameterType c
 
         -- If language not defined, use service for variable definitions
         sqlBody 

@@ -327,7 +327,7 @@ data Function = Function {
     -- description what the function is good for
     functionDescription     :: String,
     -- return type of the function, TABLE is special (see return_columns)
-    functionReturn          :: String,
+    functionReturns         :: String,
     -- parameters the function takes
     functionParameters      :: Maybe [Variable],
     -- list of templates, used for this function
@@ -336,7 +336,7 @@ data Function = Function {
     -- TODO: move to xfunctionInternal
     functionTemplateData    :: Maybe [FunctionTpl],
     -- if return is TABLE, gives the columns that are returned (see parameter)
-    functionReturnColumns   :: Maybe [Parameter],
+    functionReturnsColumns  :: Maybe [Parameter],
     -- variables that are defined (ignored if language is given)
     functionVariables       :: Maybe [Variable],
     -- Role that has the privilege to execute the function
@@ -365,7 +365,7 @@ data FunctionInternal = FunctionInternal {
   functionLoadPath      :: FilePath,
   functionOriginal      :: Function,
   -- populated depending on the value of functionReturn
-  functionReturnTable   :: Bool
+  functionReturnsTable  :: Bool
 } deriving (Generic,Show, Data, Typeable)
 instance FromJSON FunctionInternal where parseJSON = strictParseYaml
 instance ToJSON FunctionInternal where toJSON = genericToJSON myOpt

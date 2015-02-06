@@ -7,7 +7,7 @@ synopsis:            HamSql
 -- description:         
 homepage:            https://github.com/qua-bla/hamsql
 license:             GPL-3
-license-file:        LICENSE
+license-file:        COPYING
 author:              Michael Herold et al.
 maintainer:          quabla@hemio.de
 -- copyright:           
@@ -20,6 +20,6 @@ executable hamsql
   main-is:             Main.hs
   -- other-modules:       
   other-extensions:    DeriveGeneric, OverloadedStrings, FlexibleInstances
-  build-depends:       base, yaml, bytestring, filepath, regex-posix, directory, aeson, HDBC, HDBC-postgresql, text, pandoc, utf8-string, unordered-containers, split, data-ordlist
+  build-depends:       base, yaml, bytestring, filepath, regex-posix, directory, aeson, HDBC, HDBC-postgresql, text, pandoc, utf8-string, unordered-containers, split, data-ordlist, MissingH
   -- hs-source-dirs:      
   default-language:    Haskell2010
