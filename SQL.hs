@@ -187,8 +187,8 @@ getTableStatements opts setup t =
             " FOREIGN KEY (" ++ join ", " (map toSql (foreignkeyColumns fk)) ++ ")" ++
             " REFERENCES " ++ toSql (foreignkeyRefTable fk) ++
             " (" ++ join ", " (map toSql $ foreignkeyRefColumns fk) ++ ")" ++
-            sqlOnRefUpdate (foreignkeyOnDelete fk) ++
-            sqlOnRefDelete (foreignkeyOnUpdate fk)              
+            sqlOnRefUpdate (foreignkeyOnUpdate fk) ++
+            sqlOnRefDelete (foreignkeyOnDelete fk)              
                 
         sqlOnRefUpdate Nothing = ""
         sqlOnRefUpdate (Just a) = " ON UPDATE " ++ a
