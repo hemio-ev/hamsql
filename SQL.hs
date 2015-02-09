@@ -193,7 +193,7 @@ getTableStatements opts setup t =
         sqlOnRefUpdate Nothing = ""
         sqlOnRefUpdate (Just a) = " ON UPDATE " ++ a
         sqlOnRefDelete Nothing = ""
-        sqlOnRefDelete (Just a) = " ON UPDATE " ++ a
+        sqlOnRefDelete (Just a) = " ON DELETE " ++ a
 
         sqlGrant right role = SqlStmtConstr ("GRANT " ++ right ++ " ON TABLE " ++
             toSql (tableName t) ++ " TO " ++ prefixedRole setup role)
