@@ -6,7 +6,7 @@ $for(modules)$
     subgraph cluster_$modules.name$ {
     label = <Module <i>$modules.name$</i>>;
     style = filled;
-    color = lightgray;
+    color = "#AAAAAA";
 
         $for(modules.tables)$
 

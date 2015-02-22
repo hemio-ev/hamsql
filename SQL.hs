@@ -143,8 +143,9 @@ getTableStatements opts setup t =
         sqlColumn c@(Column {}) =
             "  " ++ toSql (columnName c) ++ " " ++
             toSql (columnType c) ++ " " ++
-            sqlNull (columnNull c) ++ " " ++
-            sqlDefault (columnDefault c)
+            sqlNull (columnNull c) ++ 
+            sqlDefault (columnDefault c) ++
+            join "" (maybeMap sqlCheck (columnChecks c))
         sqlColumn _ = err "ColumnTemplates should not be present in SQL parsing"
 
         sqlNull Nothing        = "NOT NULL"
@@ -152,7 +153,7 @@ getTableStatements opts setup t =
         sqlNull (Just False)   = "NOT NULL"
         
         sqlDefault Nothing     = ""
-        sqlDefault (Just d)    = "DEFAULT " ++ d
+        sqlDefault (Just d)    = " DEFAULT " ++ d
         
         -- constraints
         sqlPrimaryKeyConstraint :: [String] -> String
@@ -232,7 +233,7 @@ getFunctionStatements opts setup f =
             sqlFunctionIdentifier ++ "\nTO " ++ prefixedRole setup u
 
         sqlCreateFunction =
-            "CREATE OR REPLACE FUNCTION " ++ sqlFunctionIdentifier ++
+            "CREATE OR REPLACE FUNCTION " ++ sqlFunctionIdentifierDef ++
             "\n" ++
             "RETURNS " ++ functionReturns f ++ sqlReturnsColumns (functionReturnsColumns f) ++
             "\nLANGUAGE " ++ sqlLanguage (functionLanguage f) ++
@@ -247,6 +248,13 @@ getFunctionStatements opts setup f =
         sqlSetOwner Nothing =
             ""
 
+        sqlFunctionIdentifierDef =
+            toSql [moduleName $ functionParentModule $ functionInternal f ,
+              functionName f]
+                ++ "(\n" ++
+                join ",\n" (maybeMap sqlParameterDef (functionParameters f)) ++
+                "\n)"
+
         sqlFunctionIdentifier =
             toSql [moduleName $ functionParentModule $ functionInternal f ,
               functionName f]
@@ -255,7 +263,17 @@ getFunctionStatements opts setup f =
                 "\n)"
 
         -- function parameter
-        sqlParameter p = " " ++ toSql(variableName p) ++ " " ++ toSql(variableType p)
+        sqlParameter p = 
+            " " ++ toSql(variableName p) ++ 
+            " " ++ toSql(variableType p)
+
+        sqlParameterDef p = 
+            " " ++ toSql(variableName p) ++ 
+            " " ++ toSql(variableType p)
+            ++ sqlParamDefault (variableDefault p)
+            where
+            sqlParamDefault Nothing = ""
+            sqlParamDefault (Just x) = " DEFAULT " ++ x 
        
         -- If function returns a table, use service for field definition 
         sqlReturnsColumns cs
