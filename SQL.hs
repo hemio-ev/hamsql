@@ -23,8 +23,10 @@ data SqlStatement =
   SqlStmtRoleDef String |
   SqlStmtRoleMembership String |
   SqlStmt String |
+  SqlStmtFunc String |
   SqlStmtInherit String |
   SqlStmtConstr String |
+  SqlStmtAddDefault String |
   SqlStmtPriv String |
   SqlStmtComment String |
   SqlStmtPostInstall String |
@@ -47,8 +49,10 @@ sqlFromStmt (SqlStmtRoleDelete x) = x
 sqlFromStmt (SqlStmtRoleDef x) = x
 sqlFromStmt (SqlStmtRoleMembership x) = x
 sqlFromStmt (SqlStmt x) = x
+sqlFromStmt (SqlStmtFunc x) = x
 sqlFromStmt (SqlStmtInherit x) = x
 sqlFromStmt (SqlStmtConstr x) = x
+sqlFromStmt (SqlStmtAddDefault x) = x
 sqlFromStmt (SqlStmtPriv x) = x
 sqlFromStmt (SqlStmtComment x) = x
 sqlFromStmt (SqlStmtPostInstall x) = x
@@ -126,7 +130,8 @@ getTableStatements opts setup t =
     -- multi column unique constraints
     map sqlColumnUnique (tableColumns t) ++
     -- ? 
-    maybeMap sqlAddForeignKey' (tableForeignKeys t)
+    maybeMap sqlAddForeignKey' (tableForeignKeys t) ++
+    map sqlColumnDefault (tableColumns t)
 
     where
         sqlTable =
@@ -144,7 +149,6 @@ getTableStatements opts setup t =
             "  " ++ toSql (columnName c) ++ " " ++
             toSql (columnType c) ++ " " ++
             sqlNull (columnNull c) ++ 
-            sqlDefault (columnDefault c) ++
             join "" (maybeMap sqlCheck (columnChecks c))
         sqlColumn _ = err "ColumnTemplates should not be present in SQL parsing"
 
@@ -152,8 +156,12 @@ getTableStatements opts setup t =
         sqlNull (Just True)    = "NULL"
         sqlNull (Just False)   = "NOT NULL"
         
-        sqlDefault Nothing     = ""
-        sqlDefault (Just d)    = " DEFAULT " ++ d
+        sqlColumnDefault c@(Column {}) = sqlDefault (columnDefault c)
+         where
+          sqlDefault Nothing     = SqlStmtEmpty
+          sqlDefault (Just d)    = SqlStmtAddDefault
+            ("ALTER TABLE " ++ toSql [ moduleName' t, tableName t ] ++
+            " ALTER COLUMN " ++ toSql (columnName c) ++ " SET DEFAULT " ++ d)
         
         -- constraints
         sqlPrimaryKeyConstraint :: [String] -> String
@@ -196,7 +204,7 @@ getTableStatements opts setup t =
         sqlOnRefDelete Nothing = ""
         sqlOnRefDelete (Just a) = " ON DELETE " ++ a
 
-        sqlGrant right role = SqlStmtConstr ("GRANT " ++ right ++ " ON TABLE " ++
+        sqlGrant right role = SqlStmtPriv ("GRANT " ++ right ++ " ON TABLE " ++
             toSql (tableName t) ++ " TO " ++ prefixedRole setup role)
 
         sqlAddInheritance :: SqlName -> SqlStatement
@@ -221,14 +229,14 @@ getTableStatements opts setup t =
 
 getFunctionStatements :: Opt -> Setup -> Function -> [SqlStatement]
 getFunctionStatements opts setup f =
-    SqlStmt sqlCreateFunction:
+    SqlStmtFunc sqlCreateFunction:
     SqlStmtPriv (sqlSetOwner (functionOwner f)):
     SqlStmtComment ("COMMENT ON FUNCTION " ++ sqlFunctionIdentifier ++
       " IS " ++ toSqlString (functionDescription f)):
     map sqlStmtGrantExecute (maybeList $ functionPrivExecute f)
 
     where
-        sqlStmtGrantExecute u = SqlStmt $ sqlGrantExecute u
+        sqlStmtGrantExecute u = SqlStmtPriv $ sqlGrantExecute u
         sqlGrantExecute u = "GRANT EXECUTE ON FUNCTION \n" ++
             sqlFunctionIdentifier ++ "\nTO " ++ prefixedRole setup u
 
@@ -330,22 +338,26 @@ getFunctionStatements opts setup f =
 -- Domains
 
 getDomainStatements :: Opt -> Domain -> [SqlStatement]
-getDomainStatements opt d = 
-  SqlStmtTypeDef (
-    "CREATE DOMAIN " ++ toSql fullName ++ " AS " ++ toSql(domainType d) ++
-    sqlDefault (domainDefault d) ++
-    join "\n" (maybeMap sqlCheck (domainChecks d))
-  ):
-  stmtCommentOn "DOMAIN" fullName (domainDescription d)
-  :[]
+getDomainStatements opt d =
+ 
+    SqlStmtTypeDef
+      ("CREATE DOMAIN " ++ toSql fullName ++ " AS " ++ toSql(domainType d))
+    :
+    sqlDefault (domainDefault d)
+  :(maybeMap sqlCheck (domainChecks d))
+
+  --stmtCommentOn "DOMAIN" fullName (domainDescription d)
 
     where
     fullName = [ moduleName $ domainParentModule $ domainInternal d , domainName d ]
-    sqlCheck c =
-        " CONSTRAINT " ++ toSql (name (checkName c)) ++
-        " CHECK (" ++ checkCheck c ++ ")"
-    sqlDefault Nothing = ""
-    sqlDefault (Just def) = " DEFAULT " ++ def
+    sqlCheck c = SqlStmtConstr (
+      "ALTER DOMAIN " ++ toSql fullName ++ " ADD" ++
+      " CONSTRAINT " ++ toSql (name (checkName c)) ++
+      " CHECK (" ++ checkCheck c ++ ")")
+
+    sqlDefault Nothing = SqlStmtEmpty
+    sqlDefault (Just def) = SqlStmtConstr (
+      "ALTER DOMAIN " ++ toSql fullName ++ " SET DEFAULT " ++ def)
 
     name a = SqlName "DOMAIN_" // domainName d // SqlName "__" // a
 

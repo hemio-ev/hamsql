@@ -99,9 +99,12 @@ instance SqlCode SqlType
         -- if at least a pair of brakets is found
         -- assume that a type like varchar(20) is meant
         ('(' `elem` n && ')' `elem` n) ||
-        -- if not dot is present, assume that buildin type
+        -- if no dot is present, assume that buildin type
         -- like integer is meant
-        not ('.' `elem` n)
+        not ('.' `elem` n) ||
+        -- if % is present, assume that something like
+        -- table%ROWTYPE could be meant
+        '%' `elem` n
       then
         n
       else
