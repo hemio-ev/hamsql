@@ -157,7 +157,7 @@ functionPopulateInternal m path f = f {
       functionParentModule = m,
       functionLoadPath = path,
       functionOriginal = f,
-      functionReturnsTable = functionReturns f == "TABLE"
+      functionReturnsTable = toSql (functionReturns f) == "TABLE"
     }
   }
 

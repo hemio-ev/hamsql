@@ -243,7 +243,7 @@ getFunctionStatements opts setup f =
         sqlCreateFunction =
             "CREATE OR REPLACE FUNCTION " ++ sqlFunctionIdentifierDef ++
             "\n" ++
-            "RETURNS " ++ functionReturns f ++ sqlReturnsColumns (functionReturnsColumns f) ++
+            "RETURNS " ++ toSql (functionReturns f) ++ sqlReturnsColumns (functionReturnsColumns f) ++
             "\nLANGUAGE " ++ sqlLanguage (functionLanguage f) ++
             "\nSECURITY " ++ sqlSecurity (functionSecurityDefiner f) ++
             "\nAS\n$BODY$\n" ++
@@ -285,7 +285,7 @@ getFunctionStatements opts setup f =
        
         -- If function returns a table, use service for field definition 
         sqlReturnsColumns cs
-         | upper (functionReturns f) == "TABLE" = 
+         | toSql (functionReturns f) == "TABLE" = 
             " (\n" ++
             join ",\n" (maybeMap sqlReturnsColumn cs) ++
             ") "

@@ -358,7 +358,7 @@ data Function = Function {
     -- description what the function is good for
     functionDescription     :: String,
     -- return type of the function, TABLE is special (see return_columns)
-    functionReturns         :: String,
+    functionReturns         :: SqlType,
     -- parameters the function takes
     functionParameters      :: Maybe [Variable],
     -- list of templates, used for this function
