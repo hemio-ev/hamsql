@@ -97,12 +97,41 @@ getModuleStatements opts s m =
     SqlStmtPostInstall . maybeList $ moduleExecPostInstall m,
     stmtCommentOn "schema" (moduleName m) (moduleDescription m)
   ] ++
+  maybeMap (privUsage) (modulePrivUsage m) ++
+  maybeMap (privSelectAll) (modulePrivSelectAll m) ++
+  maybeMap (privInsertAll) (modulePrivInsertAll m) ++
+  maybeMap (privUpdateAll) (modulePrivUpdateAll m) ++
+  maybeMap (privDeleteAll) (modulePrivDeleteAll m) ++
+  maybeMap (privSequenceAll) (modulePrivSequenceAll m) ++
+  maybeMap (privExecuteAll) (modulePrivExecuteAll m) ++
+  concat (maybeMap (privAllAll) (modulePrivAllAll m)) ++
   concat (maybeMap (getDomainStatements opts) (moduleDomains m)) ++
   concat (maybeMap (getTypeStatements opts) (moduleTypes m)) ++
   concat (maybeMap (getRoleStatements opts s) (moduleRoles m)) ++
   concat (maybeMap (getFunctionStatements opts s) (moduleFunctions m)) ++
   concat (maybeMap (getTableStatements opts s) (moduleTables m))
 
+  where
+    priv :: String -> SqlName -> SqlStatement
+    priv p r = SqlStmtPriv ("GRANT " ++ p ++ " " ++ toSql (moduleName m) ++ " TO " ++ prefixedRole s r)
+
+    privUsage = priv "USAGE ON SCHEMA"
+    privSelectAll = priv "SELECT ON ALL TABLES IN SCHEMA"
+    privInsertAll = priv "INSERT ON ALL TABLES IN SCHEMA"
+    privUpdateAll = priv "UPDATE ON ALL TABLES IN SCHEMA"
+    privDeleteAll = priv "DELETE ON ALL TABLES IN SCHEMA"
+    privSequenceAll = priv "USAGE ON ALL SEQUENCES IN SCHEMA"
+    privExecuteAll = priv "EXECUTE ON ALL FUNCTIONS IN SCHEMA"
+    privAllAll d = map (\x -> x d)
+      [
+        privUsage,
+        privSelectAll,
+        privInsertAll,
+        privUpdateAll,
+        privDeleteAll,
+        privSequenceAll,
+        privExecuteAll
+      ]
 
 -- Table
 
