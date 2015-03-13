@@ -396,7 +396,7 @@ getTypeStatements :: Opt -> Type -> [SqlStatement]
 getTypeStatements opt t =
   SqlStmtTypeDef (
     "CREATE TYPE " ++ toSql fullName ++ " AS (" ++
-    join ", " (map sqlElement (typeElements t))
+    join ", " (map sqlElement (typeElements t)) ++ ")"
   ):
   stmtCommentOn "TYPE" fullName (typeDescription t)
   :[]
