@@ -21,6 +21,10 @@ err :: String -> a
 err xs = unsafePerformIO $ do
   hPutStrLn stderr ("error: " ++ xs)
   exitWith $ ExitFailure 1
+
+inf xs ys = unsafePerformIO $ do
+  hPutStrLn stderr ("info: " ++ xs)
+  return ys
              
 --- Maybe Utils
 

@@ -41,6 +41,11 @@ main' opts args
     putStrLn $ getDoc $ unpack u
     
   | optExecuteSql opts = do
+    inf (show opts) $
+     pgsqlExecWithoutTransact
+      ((optServerConnectionUrl opts) { url_path = "" })
+      (sqlCreateDatabase $ url_path $ optServerConnectionUrl opts)
+  
     setup <- loadSetup opts (optSetupFile opts)
     statements <- pgsqlGetFullStatements opts setup
     

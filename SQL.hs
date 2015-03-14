@@ -17,6 +17,7 @@ import Data.String.Utils (replace)
 -- SQL statements
 
 data SqlStatement = 
+  SqlStmtPreInstall String |
   SqlStmtSchema String |
   SqlStmtTypeDef String |
   SqlStmtRoleDelete String |
@@ -35,10 +36,12 @@ data SqlStatement =
 
 statementTermin = ";\n"
 instance SqlCode SqlStatement where
-  toSql (SqlStmtEmpty) = ""
+  toSql (SqlStmtEmpty) = "--"
+  toSql (SqlStmtPreInstall xs) = xs ++ "\n"
+  toSql (SqlStmtPostInstall xs) = xs ++ "\n"
   toSql stmt = termin $ sqlFromStmt stmt
    where
-    termin [] = ""
+    termin [] = "SELECT 1;"
     termin xs = xs ++ statementTermin
   (//) _ _ = undefined
 
@@ -75,7 +78,10 @@ sqlAddTransact xs =
 -- create database
 
 sqlCreateDatabase :: String -> [SqlStatement]
-sqlCreateDatabase name = [ SqlStmt $ "CREATE DATABASE " ++ toSql (SqlName name) ]
+sqlCreateDatabase name = [
+        SqlStmt $ "DROP DATABASE IF EXISTS " ++ toSql (SqlName name),
+        SqlStmt $ "CREATE DATABASE " ++ toSql (SqlName name)
+    ]
 
 -- Setup
 
@@ -85,7 +91,7 @@ getSetupStatements opts s =
   where
     moduleStatements = 
       sort $ concatMap (getModuleStatements opts s) (setupModuleData $ setupInternal s)
-    getStmt (Just code) = SqlStmt code
+    getStmt (Just code) = SqlStmtPreInstall code
     getStmt Nothing = SqlStmtEmpty
   
 -- Module
@@ -94,7 +100,7 @@ getModuleStatements :: Opt -> Setup -> Module -> [SqlStatement]
 getModuleStatements opts s m =
   [
     SqlStmtSchema $ "CREATE SCHEMA " ++ toSql (moduleName m),
-    SqlStmtPostInstall . maybeList $ moduleExecPostInstall m,
+    postInst $ moduleExecPostInstall m,
     stmtCommentOn "schema" (moduleName m) (moduleDescription m)
   ] ++
   maybeMap (privUsage) (modulePrivUsage m) ++
@@ -112,6 +118,9 @@ getModuleStatements opts s m =
   concat (maybeMap (getTableStatements opts s) (moduleTables m))
 
   where
+    postInst Nothing = SqlStmtEmpty
+    postInst (Just xs) = SqlStmtPostInstall xs
+
     priv :: String -> SqlName -> SqlStatement
     priv p r = SqlStmtPriv ("GRANT " ++ p ++ " " ++ toSql (moduleName m) ++ " TO " ++ prefixedRole s r)
 
@@ -259,7 +268,7 @@ getTableStatements opts setup t =
 getFunctionStatements :: Opt -> Setup -> Function -> [SqlStatement]
 getFunctionStatements opts setup f =
     SqlStmtFunc sqlCreateFunction:
-    SqlStmtPriv (sqlSetOwner (functionOwner f)):
+    sqlSetOwner (functionOwner f):
     SqlStmtComment ("COMMENT ON FUNCTION " ++ sqlFunctionIdentifier ++
       " IS " ++ toSqlString (functionDescription f)):
     map sqlStmtGrantExecute (maybeList $ functionPrivExecute f)
@@ -279,11 +288,10 @@ getFunctionStatements opts setup f =
                 sqlBody ++
             "\n$BODY$\n"
 
-        sqlSetOwner (Just o) =
+        sqlSetOwner (Just o) = SqlStmtPriv $
             "ALTER FUNCTION " ++ sqlFunctionIdentifier ++
             "OWNER TO " ++ prefixedRole setup o
-        sqlSetOwner Nothing =
-            ""
+        sqlSetOwner Nothing = SqlStmtEmpty
 
         sqlFunctionIdentifierDef =
             toSql [moduleName $ functionParentModule $ functionInternal f ,
