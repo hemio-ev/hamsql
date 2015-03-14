@@ -41,8 +41,7 @@ main' opts args
     putStrLn $ getDoc $ unpack u
     
   | optExecuteSql opts = do
-    inf (show opts) $
-     pgsqlExecWithoutTransact
+    pgsqlExecWithoutTransact
       ((optServerConnectionUrl opts) { url_path = "" })
       (sqlCreateDatabase $ url_path $ optServerConnectionUrl opts)
   

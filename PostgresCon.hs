@@ -68,7 +68,7 @@ pgsqlHandleQry code e@(QueryError{}) = do
     "Information for SQL query:\n" ++
     code ++ "\n" ++
     "Message: '" ++ qeMessage e ++ "'"
-  return 2
+  return 0
 
 isNotEmptyStmt SqlStmtEmpty = False
 isNotEmptyStmt _ = True

@@ -41,7 +41,7 @@ instance SqlCode SqlStatement where
   toSql (SqlStmtPostInstall xs) = xs ++ "\n"
   toSql stmt = termin $ sqlFromStmt stmt
    where
-    termin [] = "SELECT 1;"
+    termin [] = ""
     termin xs = xs ++ statementTermin
   (//) _ _ = undefined
 
@@ -80,7 +80,8 @@ sqlAddTransact xs =
 sqlCreateDatabase :: String -> [SqlStatement]
 sqlCreateDatabase name = [
         SqlStmt $ "DROP DATABASE IF EXISTS " ++ toSql (SqlName name),
-        SqlStmt $ "CREATE DATABASE " ++ toSql (SqlName name)
+        SqlStmt $ "CREATE DATABASE " ++ toSql (SqlName name),
+        SqlStmt "ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC"
     ]
 
 -- Setup
