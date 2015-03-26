@@ -436,6 +436,8 @@ data FunctionTpl = FunctionTpl {
     -- language of the function has to be the same as for used templates
     -- TODO: implement checks to avoid explosions here ;)
     functiontplLanguage        :: Maybe String,
+    -- parameters are joined with function definition parameters
+    functiontplParameters      :: Maybe [Variable],
     -- variables are appended to the functions variables
     functiontplVariables       :: Maybe [Variable],
     -- defines priv_execute, can be overwritten by function definition
@@ -462,6 +464,9 @@ applyFunctionTpl t f = f {
 
     functionOwner =
       maybeRight (functiontplOwner t) (functionOwner f),
+
+    functionParameters =
+      maybeJoin (functionParameters f) (functiontplParameters t),
 
     functionVariables =
       maybeJoin (functionVariables f) (functiontplVariables t),

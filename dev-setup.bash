@@ -19,5 +19,5 @@ dpkg-query -l \
     libghc-yaml-dev \
     libghc-missingh-dev \
     libghc-pandoc-dev \
-    libghc-hdbc-postgresql-dev
+    haskell-postgresql-simple
 
