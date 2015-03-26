@@ -19,7 +19,9 @@ you can install one remaining custom lib and check the install status of the abo
 
 Compile with
 
-> ghc Main
+> cabal sandbox init
+> cabal install --only-dependencies
+> cabal build
 
 or
 
