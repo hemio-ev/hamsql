@@ -26,7 +26,10 @@ data SqlStatement =
   SqlStmt String |
   SqlStmtFunc String |
   SqlStmtInherit String |
-  SqlStmtConstr String |
+  SqlStmtCreatePrimaryKeyConstr String |
+  SqlStmtCreateUniqueConstr String |
+  SqlStmtCreateForeignKeyConstr String |
+  SqlStmtCreateCheckConstr String |
   SqlStmtAddDefault String |
   SqlStmtPriv String |
   SqlStmtComment String |
@@ -34,6 +37,19 @@ data SqlStatement =
   SqlStmtEmpty
     deriving (Eq, Ord, Show)
 
+afterDelete :: SqlStatement -> Bool
+--afterDelete (SqlStmtRoleDef _) = True
+--afterDelete (SqlStmtRoleMembership _) = True
+afterDelete (SqlStmtFunc _) = True
+afterDelete (SqlStmtCreatePrimaryKeyConstr _) = True
+afterDelete (SqlStmtCreateUniqueConstr _) = True
+afterDelete (SqlStmtCreateForeignKeyConstr _) = True
+afterDelete (SqlStmtCreateCheckConstr _) = True
+afterDelete (SqlStmtPriv _) = True
+afterDelete (SqlStmtComment _) = True
+--afterDelete (SqlStmtRoleDelete _) = True
+afterDelete _ = False
+    
 statementTermin = ";\n"
 instance SqlCode SqlStatement where
   toSql (SqlStmtEmpty) = "--"
@@ -54,7 +70,10 @@ sqlFromStmt (SqlStmtRoleMembership x) = x
 sqlFromStmt (SqlStmt x) = x
 sqlFromStmt (SqlStmtFunc x) = x
 sqlFromStmt (SqlStmtInherit x) = x
-sqlFromStmt (SqlStmtConstr x) = x
+sqlFromStmt (SqlStmtCreatePrimaryKeyConstr x) = x
+sqlFromStmt (SqlStmtCreateUniqueConstr x) = x
+sqlFromStmt (SqlStmtCreateForeignKeyConstr x) = x
+sqlFromStmt (SqlStmtCreateCheckConstr x) = x
 sqlFromStmt (SqlStmtAddDefault x) = x
 sqlFromStmt (SqlStmtPriv x) = x
 sqlFromStmt (SqlStmtComment x) = x
@@ -162,13 +181,17 @@ getTableStatements opts setup t =
     maybeMap (sqlGrant "UPDATE") (tablePrivUpdate t) ++
     maybeMap (sqlGrant "INSERT") (tablePrivInsert t) ++
     maybeMap (sqlGrant "DELETE") (tablePrivDelete t) ++
-    -- ?
+    -- primary key
+    [sqlAddPrimaryKey (tablePrimaryKey t)] ++
+    -- mult column unique
+    maybeMap sqlUniqueConstraint (tableUnique t) ++
+    -- single column FKs (references)
     map sqlAddForeignKey (tableColumns t) ++
     -- inheritance
     maybeMap sqlAddInheritance (tableInherits t) ++
     -- multi column unique constraints
     map sqlColumnUnique (tableColumns t) ++
-    -- ? 
+    -- multi column FKs
     maybeMap sqlAddForeignKey' (tableForeignKeys t) ++
     map sqlColumnDefault (tableColumns t)
 
@@ -177,9 +200,7 @@ getTableStatements opts setup t =
          "CREATE TABLE " ++ toSql [ moduleName' t, tableName t ] ++ " (\n" ++
          join ",\n" (filter (/= "") (
             map sqlColumn (tableColumns t) ++
-            maybeMap sqlCheck (tableChecks t) ++
-            [ sqlPrimaryKeyConstraint $ map toSql (tablePrimaryKey t) ] ++
-            maybeMap sqlUniqueConstraint (tableUnique t)
+            maybeMap sqlCheck (tableChecks t)
          )) ++
          "\n)"
 
@@ -202,24 +223,27 @@ getTableStatements opts setup t =
             ("ALTER TABLE " ++ toSql [ moduleName' t, tableName t ] ++
             " ALTER COLUMN " ++ toSql (columnName c) ++ " SET DEFAULT " ++ d)
         
-        -- constraints
-        sqlPrimaryKeyConstraint :: [String] -> String
-        sqlPrimaryKeyConstraint k =
-            "  CONSTRAINT " ++ name (SqlName "primary_key") ++ " PRIMARY KEY (" ++ join ", " k ++ ")"
-
+        sqlAddPrimaryKey :: [SqlName] -> SqlStatement
+        sqlAddPrimaryKey ks = SqlStmtCreatePrimaryKeyConstr $
+          "ALTER TABLE " ++ toSql [ moduleName' t, tableName t ] ++
+          " ADD CONSTRAINT " ++ name (SqlName "primary_key") ++ 
+          " PRIMARY KEY (" ++ join ", " (map toSql ks) ++ ")"
+            
         -- TODO: Make the constraint name unique
-        sqlUniqueConstraint :: [SqlName] -> String
-        sqlUniqueConstraint k =
-            "  CONSTRAINT " ++ name (SqlName "unique") ++ " UNIQUE (" ++ join ", " (map toSql k) ++ ")"
+        sqlUniqueConstraint :: [SqlName] -> SqlStatement
+        sqlUniqueConstraint ks = SqlStmtCreateUniqueConstr $
+          "ALTER TABLE " ++ toSql [ moduleName' t, tableName t ] ++
+          " ADD CONSTRAINT " ++ name (SqlName "unique") ++
+          " UNIQUE (" ++ join ", " (map toSql ks) ++ ")"
 
         sqlCheck c =
-            "  CONSTRAINT " ++ name (checkName c) ++ " CHECK (" ++ checkCheck c ++ ")"
+            " CONSTRAINT " ++ name (checkName c) ++ " CHECK (" ++ checkCheck c ++ ")"
 
         sqlAddForeignKey :: Column -> SqlStatement
         sqlAddForeignKey c@(Column { columnReferences = Nothing }) =
           SqlStmtEmpty
         sqlAddForeignKey c@(Column { columnReferences = (Just ref) }) =
-          SqlStmtConstr $
+          SqlStmtCreateForeignKeyConstr $
             "ALTER TABLE " ++ toSql [ moduleName' t, tableName t ] ++
             " ADD CONSTRAINT " ++ name (columnName c) ++
             " FOREIGN KEY (" ++ toSql (columnName c) ++ ")" ++
@@ -229,7 +253,7 @@ getTableStatements opts setup t =
             sqlOnRefDelete (columnOnRefDelete c)
             
         sqlAddForeignKey' :: ForeignKey -> SqlStatement
-        sqlAddForeignKey' fk = SqlStmtConstr $
+        sqlAddForeignKey' fk = SqlStmtCreateForeignKeyConstr $
             "ALTER TABLE " ++ toSql [ moduleName' t, tableName t ] ++
             " ADD CONSTRAINT " ++ name (tableName t // foreignkeyName fk) ++
             " FOREIGN KEY (" ++ join ", " (map toSql (foreignkeyColumns fk)) ++ ")" ++
@@ -251,7 +275,7 @@ getTableStatements opts setup t =
                 SqlStmtInherit $ "ALTER TABLE " ++ toSql [ moduleName' t, tableName t ] ++
                  " INHERIT " ++ toSql n
                 
-        sqlColumnUnique c@(Column{ columnUnique = (Just True) }) = SqlStmtConstr $
+        sqlColumnUnique c@(Column{ columnUnique = (Just True) }) = SqlStmtCreateUniqueConstr $
           "ALTER TABLE " ++ toSql [ moduleName' t, tableName t ] ++
             " ADD CONSTRAINT " ++ name (columnName c) ++ 
             " UNIQUE (" ++ toSql (columnName c) ++ ")"
@@ -388,13 +412,13 @@ getDomainStatements opt d =
 
     where
     fullName = [ moduleName $ domainParentModule $ domainInternal d , domainName d ]
-    sqlCheck c = SqlStmtConstr (
+    sqlCheck c = SqlStmtCreateCheckConstr (
       "ALTER DOMAIN " ++ toSql fullName ++ " ADD" ++
       " CONSTRAINT " ++ toSql (name (checkName c)) ++
       " CHECK (" ++ checkCheck c ++ ")")
 
     sqlDefault Nothing = SqlStmtEmpty
-    sqlDefault (Just def) = SqlStmtConstr (
+    sqlDefault (Just def) = SqlStmtAddDefault (
       "ALTER DOMAIN " ++ toSql fullName ++ " SET DEFAULT " ++ def)
 
     name a = SqlName "DOMAIN_" // domainName d // SqlName "__" // a

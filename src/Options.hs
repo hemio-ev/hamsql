@@ -22,6 +22,7 @@ data Opt = Opt
  { optVerbose     :: Bool
  , optShowVersion :: Bool
  , optExecuteSql  :: Bool
+ , optCleverSql   :: Bool
  , optPrintSql    :: Bool
  , optPrintPhp    :: Bool
  , optPrintDoc    :: Bool
@@ -38,6 +39,7 @@ defaultOpts = Opt
  { optVerbose     = False
  , optShowVersion = False
  , optExecuteSql  = False
+ , optCleverSql   = False
  , optPrintSql    = False
  , optPrintPhp	  = False
  , optPrintJson   = False
@@ -65,7 +67,10 @@ options =
     "shows version of this program"
   , Option ['e']     ["execute-sql"]
     (NoArg (\opts -> opts { optExecuteSql = True }))
-    "executes sql code on sql server"
+    "DELETES ALL DATA! Executes sql code on sql server, removes everything and creates from scracht"
+  , Option ['i']     ["clever-sql"]
+    (NoArg (\opts -> opts { optCleverSql = True }))
+    "makes necessary changes via sql"
   , Option ['g']     ["print-graph"]
     (NoArg (\opts -> opts { optPrintGraph = True }))
     "prints relations graph"

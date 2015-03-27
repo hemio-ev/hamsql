@@ -44,6 +44,13 @@ pgsqlConnectUrl url = do
     Left e@(SqlError{}) -> err $ "sql connection failed: " ++ B.unpack (sqlErrorMsg e)
     Right conn -> conn
 
+
+sqlManageSchemaJoin schemaid =
+      " JOIN pg_namespace AS n " ++
+      "  ON " ++ schemaid ++ " = n.oid AND " ++
+      "  NOT n.nspname LIKE 'pg_%' AND " ++
+      "  NOT n.nspname IN ('information_schema', 'public') "    
+    
 pgsqlDeleteRoleStmt :: URL -> String -> IO [SqlStatement]
 pgsqlDeleteRoleStmt url prefix = do
   conn <- pgsqlConnectUrl url
@@ -58,6 +65,67 @@ pgsqlDeleteRoleStmt url prefix = do
     -- statement :: (TextBl.ByteString) -> SqlStatement
     statement (Only user) = SqlStmtRoleDelete $ "DROP ROLE \"" ++ user ++ "\""
 
+pgsqlDeleteFunctionStmt :: Connection -> IO [SqlStatement]
+pgsqlDeleteFunctionStmt conn =
+  do
+    result <- query_ conn $ toQry $
+      "SELECT n.nspname, p.proname, oidvectortypes(p.proargtypes) " ++
+      "FROM pg_proc AS p " ++
+      (sqlManageSchemaJoin "p.pronamespace")
+      
+    return $ map f result
+    
+  where
+    f :: (String, String, String) -> SqlStatement
+    f (schema, function, args) = SqlStmtRoleDelete $
+      "DROP FUNCTION " ++ toSql(SqlName $ schema ++ "." ++ function) ++
+      "(" ++ args ++ ") CASCADE"
+
+      
+pgsqlDeleteTableConstraintStmt :: Connection -> IO [SqlStatement]
+pgsqlDeleteTableConstraintStmt conn =
+  do
+    result <- query_ conn $ toQry $
+      "SELECT n.nspname, t.relname, c.conname " ++
+      "FROM pg_constraint AS c " ++
+      "JOIN pg_class AS t " ++
+      "  ON c.conrelid = t.oid " ++
+      (sqlManageSchemaJoin "c.connamespace")
+
+    return $ map f result
+    
+  where
+    f :: (String, String, String) -> SqlStatement
+    f (schema, table, constraint) = SqlStmtRoleDelete $
+      "ALTER TABLE " ++ toSql(SqlName $ schema ++ "." ++ table) ++
+      " DROP CONSTRAINT IF EXISTS " ++ toSql(SqlName constraint) ++ " CASCADE"
+      
+pgsqlDeleteDomainConstraintStmt :: Connection -> IO [SqlStatement]
+pgsqlDeleteDomainConstraintStmt conn =
+  do
+    result <- query_ conn $ toQry $
+      "SELECT n.nspname, d.typname, c.conname " ++
+      "FROM pg_constraint AS c " ++
+      "JOIN pg_type AS d " ++
+      "  ON c.contypid = d.oid " ++
+      (sqlManageSchemaJoin "c.connamespace")
+
+    return $ map f result
+    
+  where
+    f :: (String, String, String) -> SqlStatement
+    f (schema, domain, constraint) = SqlStmtRoleDelete $
+      "ALTER DOMAIN " ++ toSql(SqlName $ schema ++ "." ++ domain) ++
+      " DROP CONSTRAINT " ++ toSql(SqlName constraint) ++ ""
+      
+pgsqlDeleteAllStmt :: Connection -> IO [SqlStatement]
+pgsqlDeleteAllStmt conn = do
+  function <- pgsqlDeleteFunctionStmt conn
+  table_constraints <- pgsqlDeleteTableConstraintStmt conn
+  domain_constraints <- pgsqlDeleteDomainConstraintStmt conn
+  
+  return $ function ++ table_constraints ++ domain_constraints
+      
 pgsqlHandleErr code e@(SqlError{}) =
   err $
     "sql error in following statement:\n" ++

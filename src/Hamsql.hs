@@ -42,13 +42,24 @@ main' opts args
     
   | optExecuteSql opts = do
     pgsqlExecWithoutTransact
-      ((optServerConnectionUrl opts) { url_path = "" })
+      ((optServerConnectionUrl opts) { url_path = "postgres" })
       (sqlCreateDatabase $ url_path $ optServerConnectionUrl opts)
   
     setup <- loadSetup opts (optSetupFile opts)
+    
+    statements <- pgsqlGetFullStatements opts setup
+    pgsqlExec (optServerConnectionUrl opts) (sort statements)
+    
+  | optCleverSql opts = do
+    setup <- loadSetup opts (optSetupFile opts)
+  
+    conn <- pgsqlConnectUrl (optServerConnectionUrl opts)
+    
+    del_stmt <- pgsqlDeleteAllStmt conn   
     statements <- pgsqlGetFullStatements opts setup
     
-    pgsqlExec (optServerConnectionUrl opts) (sort statements)
+    let stmts = (sort del_stmt) ++ (sort (Data.List.filter afterDelete statements))
+    pgsqlExec (optServerConnectionUrl opts) stmts
 
   | optPrintPhp opts = do
     setup <- loadSetup opts (optSetupFile opts)
