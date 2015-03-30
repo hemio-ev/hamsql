@@ -11,21 +11,32 @@ import System.IO.Unsafe
 import Data.Char
 import Debug.Trace
 import Data.List (intercalate)
+import Option
 
 join = intercalate
 
--- err :: [Char] -> IO a
--- err msg = do putStrLn $ "error: "++msg
---              exitWith $ ExitFailure 1
 err :: String -> a
 err xs = unsafePerformIO $ do
   hPutStrLn stderr ("error: " ++ xs)
   exitWith $ ExitFailure 1
 
-inf xs ys = unsafePerformIO $ do
-  hPutStrLn stderr ("info: " ++ xs)
+inf = msg "info"
+warn = msg "warning"
+warn' = msg' "warning"
+
+msg typ xs ys = unsafePerformIO $ do
+  msg' typ xs
   return ys
-             
+  
+msg' typ xs = hPutStrLn stderr (typ ++ ": " ++ xs)
+
+info :: OptCommon -> String -> IO ()
+info opts xs = do
+  if optVerbose opts then
+    msg' "debug" xs
+  else
+    return ()
+
 --- Maybe Utils
 
 -- Makes list out of Maybe

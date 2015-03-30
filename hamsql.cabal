@@ -4,13 +4,13 @@
 name:                hamsql
 version:             0.0.1.0
 synopsis:            HamSql
--- description:         
+description:         A YamSql interpreter
 homepage:            https://github.com/qua-bla/hamsql
 license:             GPL-3
 license-file:        COPYING
 author:              Michael Herold et al.
 maintainer:          quabla@hemio.de
--- copyright:           
+copyright:           Michael Herold et al.
 -- category:            
 build-type:          Simple
 extra-source-files:  README.md
@@ -21,9 +21,5 @@ executable hamsql
   Hs-Source-Dirs:      src
   -- other-modules:       
   other-extensions:    DeriveGeneric, OverloadedStrings, FlexibleInstances
-  build-depends:       base, bytestring, filepath, regex-posix, directory, aeson, text, utf8-string, unordered-containers, split, data-ordlist, postgresql-simple, pandoc, yaml, MissingH, url
-
-  -- From debian: postgresql-simple, pandoc, yaml, MissingH
-  -- Custom: url
-  -- hs-source-dirs:      
+  build-depends:       base, bytestring, filepath, regex-posix, directory, aeson, text, utf8-string, unordered-containers, split, data-ordlist, postgresql-simple, pandoc, yaml, MissingH, url, optparse-applicative
   default-language:    Haskell2010

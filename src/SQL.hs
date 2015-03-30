@@ -5,7 +5,7 @@
 
 module SQL where
 
-import Options
+import Option
 import Parser
 import Utils
 
@@ -96,16 +96,20 @@ sqlAddTransact xs =
 
 -- create database
 
-sqlCreateDatabase :: String -> [SqlStatement]
-sqlCreateDatabase name = [
-        SqlStmt $ "DROP DATABASE IF EXISTS " ++ toSql (SqlName name),
+sqlCreateDatabase :: Bool -> String -> [SqlStatement]
+sqlCreateDatabase _ "" = err "Please specify a database in the connection URL"
+sqlCreateDatabase deleteDatabase name = [
+        sqlDelete deleteDatabase,
         SqlStmt $ "CREATE DATABASE " ++ toSql (SqlName name),
         SqlStmt "ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC"
     ]
+  where
+    sqlDelete True = SqlStmt $ "DROP DATABASE IF EXISTS " ++ toSql (SqlName name)
+    sqlDelete False = SqlStmtEmpty
 
 -- Setup
 
-getSetupStatements :: Opt -> Setup -> [SqlStatement]
+getSetupStatements :: OptCommon -> Setup -> [SqlStatement]
 getSetupStatements opts s =
   [ getStmt $ setupPreCode s ] ++ moduleStatements ++ [ getStmt $ setupPostCode s ]
   where
@@ -116,7 +120,7 @@ getSetupStatements opts s =
   
 -- Module
 
-getModuleStatements :: Opt -> Setup -> Module -> [SqlStatement]
+getModuleStatements :: OptCommon -> Setup -> Module -> [SqlStatement]
 getModuleStatements opts s m =
   [
     SqlStmtSchema $ "CREATE SCHEMA " ++ toSql (moduleName m),
@@ -164,7 +168,7 @@ getModuleStatements opts s m =
 
 -- Table
 
-getTableStatements :: Opt -> Setup -> Table -> [SqlStatement]
+getTableStatements :: OptCommon -> Setup -> Table -> [SqlStatement]
 getTableStatements opts setup t =
     [
     -- table with columns
@@ -290,7 +294,7 @@ getTableStatements opts setup t =
         
 -- Function
 
-getFunctionStatements :: Opt -> Setup -> Function -> [SqlStatement]
+getFunctionStatements :: OptCommon -> Setup -> Function -> [SqlStatement]
 getFunctionStatements opts setup f =
     SqlStmtFunc sqlCreateFunction:
     sqlSetOwner (functionOwner f):
@@ -399,7 +403,7 @@ getFunctionStatements opts setup f =
 
 -- Domains
 
-getDomainStatements :: Opt -> Domain -> [SqlStatement]
+getDomainStatements :: OptCommon -> Domain -> [SqlStatement]
 getDomainStatements opt d =
  
     SqlStmtTypeDef
@@ -425,7 +429,7 @@ getDomainStatements opt d =
 
 -- Types
 
-getTypeStatements :: Opt -> Type -> [SqlStatement]
+getTypeStatements :: OptCommon -> Type -> [SqlStatement]
 getTypeStatements opt t =
   SqlStmtTypeDef (
     "CREATE TYPE " ++ toSql fullName ++ " AS (" ++
@@ -440,7 +444,7 @@ getTypeStatements opt t =
 
 -- Role
 
-getRoleStatements :: Opt -> Setup -> Role -> [SqlStatement]
+getRoleStatements :: OptCommon -> Setup -> Role -> [SqlStatement]
 getRoleStatements opts setup r =
     SqlStmtRoleDef sqlCreateRole:
     (stmtCommentOn "ROLE" (setupRolePrefix' setup // roleName r) (roleDescription r)):

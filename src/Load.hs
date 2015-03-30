@@ -17,11 +17,11 @@ import Control.Monad
 import Data.List
 
 import Parser
-import Options
+import Option
 import Utils
 import SQL
 
-loadSetup :: Opt -> FilePath -> IO Setup
+loadSetup :: OptCommon -> FilePath -> IO Setup
 loadSetup opts filePath = do
   setup <- readObjectFromFile opts filePath
   setup' <- loadSetupModules opts (dropFileName filePath) (initSetupInternal setup)
@@ -32,7 +32,7 @@ initSetupInternal s' = s' {
 }
 
 -- Tries to loads all defined modules from defined module dirs
-loadSetupModules :: Opt -> FilePath -> Setup -> IO Setup
+loadSetupModules :: OptCommon -> FilePath -> Setup -> IO Setup
 loadSetupModules opts path s = do
   moduleData <- sequence [ loadModule path name | name <- setupModules s ]
   return s {
@@ -103,7 +103,7 @@ errorCheck :: String -> Bool -> IO ()
 errorCheck msg False = err msg
 errorCheck _   True  = return ()
 
-readModule :: Opt -> FilePath -> IO Module
+readModule :: OptCommon -> FilePath -> IO Module
 readModule opts md = do
     doesDirectoryExist md >>= errorCheck ("module dir does not exist: " ++ md)
 
@@ -179,7 +179,7 @@ domainPopulateInternal m path d = d {
     }
   }
 
-readObjectFromFile :: (FromJSON a, ToJSON a) => Opt -> FilePath -> IO a
+readObjectFromFile :: (FromJSON a, ToJSON a) => OptCommon -> FilePath -> IO a
 readObjectFromFile opts file = do
   info opts $ "Reading and parsing yaml-file '" ++ file ++ "'"
 

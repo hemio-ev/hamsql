@@ -18,15 +18,18 @@ import Data.String
 import SQL
 import Parser
 import Utils
-import Options
+import Option
 
 toQry :: String -> Query
 toQry = fromString
 
-pgsqlGetFullStatements :: Opt -> Setup -> IO [SqlStatement]
-pgsqlGetFullStatements opts setup  = do
-  role_delete_stmts <- pgsqlDeleteRoleStmt (optServerConnectionUrl opts) rolePrefix
-  let main_stmts = getSetupStatements opts setup
+getConUrl :: OptCommonDb -> URL
+getConUrl xs = fromJustReason "Not a valid URL" (importURL $ optConnection xs)
+
+pgsqlGetFullStatements :: OptCommon -> OptCommonDb -> Setup -> IO [SqlStatement]
+pgsqlGetFullStatements opt optDb setup  = do
+  role_delete_stmts <- pgsqlDeleteRoleStmt (getConUrl optDb) rolePrefix
+  let main_stmts = getSetupStatements opt setup
 
   return $ main_stmts ++ role_delete_stmts
 
@@ -156,7 +159,13 @@ pgsqlExecWithoutTransact connUrl xs = do
     return ()
 
 pgsqlExec :: URL -> [SqlStatement] -> IO ()
-pgsqlExec connUrl xs = do
+pgsqlExec = pgsqlExecIntern True
+
+pgsqlExecAndRollback :: URL -> [SqlStatement] -> IO ()
+pgsqlExecAndRollback= pgsqlExecIntern False
+
+pgsqlExecIntern :: Bool -> URL -> [SqlStatement] -> IO ()
+pgsqlExecIntern doCommit connUrl xs = do
     conn <- connectPostgreSQL (B.pack (exportURL connUrl))
     begin conn
        
@@ -167,6 +176,8 @@ pgsqlExec connUrl xs = do
 
         return ()
       | stmt <- filter isNotEmptyStmt xs ]
-
-    commit conn
-
+    
+    if doCommit then
+      commit conn
+    else
+      rollback conn

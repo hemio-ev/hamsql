@@ -1,83 +1,65 @@
--- This file is part of HamSql
---
--- Copyright 2014 by it's authors. 
--- Some rights reserved. See COPYING, AUTHORS.
-
-module Main where
-
-import System.Environment
-import System.Console.GetOpt
-import Data.List
-import Data.Text
+import Options.Applicative (execParser)
 import Network.URL
+import Data.List
+import Data.Text (unpack)
+import Control.Monad (when)
 
-import Parser
-import Options
-import SQL
-import PHP
 import Utils
+import SQL
+import Option
+import PostgresCon
 import Load
 import Documentation
-import PostgresCon
 
 main :: IO ()
-main = do
-  -- read options from command line
-  optargs <- getArgs
-  (opts,args) <- processOpts optargs
+main = execParser parserInfoHamsql >>= run
 
-  main' opts args
+run :: Command -> IO ()
 
-main' :: Opt -> [String] -> IO ()
-main' opts args
-  | optPrintGraph opts = do
-    setup <- loadSetup opts (optSetupFile opts)
-    u <- getGraphDoc setup
-    putStrLn $ unpack u
-    
-  | optPrintDoc opts = do
-    setup <- loadSetup opts (optSetupFile opts)
-    u <- toSetupDoc setup
-    putStrLn $ getDoc $ unpack u
-    
-  | optExecuteSql opts = do
+-- Install
+run (Install opt optDb optInstall) = do
+  let dbname = url_path $ getConUrl optDb
+
+  if not (optEmulate optDb || optPrint optDb) then
     pgsqlExecWithoutTransact
-      ((optServerConnectionUrl opts) { url_path = "postgres" })
-      (sqlCreateDatabase $ url_path $ optServerConnectionUrl opts)
+      ((getConUrl optDb) { url_path = "postgres" })
+      (sqlCreateDatabase (optDeleteExistingDatabase optInstall) dbname)
+  else 
+    when (optDeleteExistingDatabase optInstall) $
+      warn' $ "WARNING [hamsql]: In --emulate and --print mode the" ++
+        " DROP/CREATE DATABASE statements are skipped. You have to ensure that a empty " ++
+        " database exists for those commands to make sense."
+    
+  setup <- loadSetup opt (optSetup opt)
+  statements <- pgsqlGetFullStatements opt optDb setup
   
-    setup <- loadSetup opts (optSetupFile opts)
-    
-    statements <- pgsqlGetFullStatements opts setup
-    pgsqlExec (optServerConnectionUrl opts) (sort statements)
-    
-  | optCleverSql opts = do
-    setup <- loadSetup opts (optSetupFile opts)
+  useSqlStmts optDb statements
   
-    conn <- pgsqlConnectUrl (optServerConnectionUrl opts)
+-- Upgrade
+run (Upgrade opt optDb optUpgrade) = do
+    setup <- loadSetup opt (optSetup opt)
+  
+    conn <- pgsqlConnectUrl (getConUrl optDb)
     
-    del_stmt <- pgsqlDeleteAllStmt conn   
-    statements <- pgsqlGetFullStatements opts setup
+    deleteStmts <- pgsqlDeleteAllStmt conn   
+    createStmts <- pgsqlGetFullStatements opt optDb setup
     
-    let stmts = (sort del_stmt) ++ (sort (Data.List.filter afterDelete statements))
-    pgsqlExec (optServerConnectionUrl opts) stmts
+    let stmts = (sort deleteStmts) ++ (sort (Data.List.filter afterDelete createStmts))
+    
+    useSqlStmts optDb stmts
 
-  | optPrintPhp opts = do
-    setup <- loadSetup opts (optSetupFile opts)
-    let statements = getSetupPhpClasses opts setup
-    putStrLn statements
+-- Doc
+run (Doc opt optDoc) = do
+  setup <- loadSetup opt (optSetup opt)
+  html <- toSetupDoc setup
+  dot <- getGraphDoc setup
+    
+  case optFormat optDoc of
+    "html" -> putStrLn $ getDoc $ unpack html
+    "dot" -> putStrLn $ unpack dot
 
-  | optPrintJson opts = do
-    setup <- loadSetup opts (optSetupFile opts)
-    putStrLn $ outJson setup
-
-  | optPrintSql opts = do
-    setup <- loadSetup opts (optSetupFile opts)
-    statements <- pgsqlGetFullStatements opts setup
-    putStrLn $ sqlPrinter $ sqlAddTransact (sort statements)
-    putStrLn "-- end of SQL code"
- 
- | optShowVersion opts = 
-    print "YamSql v0.0001"
-
-  | otherwise = putStrLn $ usageInfo usageHeader options
-
+useSqlStmts :: OptCommonDb -> [SqlStatement] -> IO ()
+useSqlStmts optDb stmts
+  | optPrint optDb = putStrLn $ sqlPrinter $ sqlAddTransact stmts
+  | optEmulate optDb = pgsqlExec (getConUrl optDb) stmts
+  | otherwise = pgsqlExec (getConUrl optDb) stmts
