@@ -62,7 +62,10 @@ parserOptCommon = OptCommon
         (long "setup" <> 
         short 's' <> 
         help "Setup file (yaml)" <> 
-        val "setup.yaml"
+        val "setup.yaml" <>
+        action "file -X '!*.yml'" <>
+        action "file -X '!*.yaml'" <>
+        action "directory"
         )
     <*> boolFlag
         (long "verbose" <> short 'v' <> help "Verbose")
@@ -122,4 +125,4 @@ data OptDoc = OptDoc {
 parserOptDoc :: Parser OptDoc
 parserOptDoc = OptDoc
     <$> strOption
-        (long "format" <> short 'f' <> val "html")
+        (long "format" <> short 'f' <> val "html" <> completeWith ["dot","html"])
