@@ -42,10 +42,18 @@ data SqlStatementType =
   SqlCreateSchema |
   SqlCreateDomain |
   SqlCreateType |
+  -- DROP CONSTRAINTS
   SqlDropTableConstraint |
   SqlDropDomainConstraint |
+  -- DROP FUNCTION
   SqlDropFunction |
+  -- TABLE
   SqlCreateTable |
+  SqlAddColumn |
+  SqlDropColumnDefault |
+  SqlAlterColumn |
+  SqlAddTableContraint |
+  -- FUNCTION
   SqlCreateFunction |
   SqlInherit |
   SqlCreatePrimaryKeyConstr |

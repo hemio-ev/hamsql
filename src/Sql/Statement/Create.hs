@@ -113,6 +113,12 @@ stmtsCreateTable opts setup t = debug opts "stmtCreateTable" $
     -- table comment
     stmtCommentOn "TABLE" intName (tableDescription t)
     ] ++
+    map stmtAddColumn (tableColumns t) ++
+    map stmtAlterColumnType (tableColumns t) ++
+    map stmtDropDefault (tableColumns t) ++
+    map stmtAlterColumnNull (tableColumns t) ++
+    maybeMap stmtCheck (tableChecks t) ++
+
     -- column comments
     map (\c -> stmtCommentOn "COLUMN"
             (intName <.> columnName c) 
@@ -141,13 +147,20 @@ stmtsCreateTable opts setup t = debug opts "stmtCreateTable" $
         sqlName =  toSql $ moduleName' t <.> tableName t
       
         stmtCreateTable = SqlStmt SqlCreateTable intName $
-         "CREATE TABLE " ++ sqlName ++ " (\n" ++
-         join ",\n" (filter (/= "") (
-            map sqlColumn (tableColumns t) ++
-            maybeMap sqlCheck (tableChecks t)
-         )) ++
-         "\n)"
-
+          "CREATE TABLE " ++ sqlName ++ " ()"
+      
+--         stmtCreateTable' = SqlStmt SqlCreateTable intName $
+--          "CREATE TABLE " ++ sqlName ++ " (\n" ++
+--          join ",\n" (filter (/= "") (
+--             map sqlColumn (tableColumns t) ++
+--             maybeMap sqlCheck (tableChecks t)
+--          )) ++
+--          "\n)"
+         
+        stmtCheck c = SqlStmt SqlAddTableContraint intName $
+          "ALTER TABLE " ++ toSql intName ++
+          " ADD CONSTRAINT " ++ name (checkName c) ++ " CHECK (" ++ checkCheck c ++ ")"
+         
         -- columns
         sqlColumn c@(Column {}) =
             "  " ++ toSql (columnName c) ++ " " ++
@@ -155,10 +168,38 @@ stmtsCreateTable opts setup t = debug opts "stmtCreateTable" $
             sqlNull (columnNull c) ++ 
             join "" (maybeMap sqlCheck (columnChecks c))
         sqlColumn _ = err "ColumnTemplates should not be present in SQL parsing"
-
+        
+        -- COLUMNS
+        
+        stmtAddColumn c@(Column {}) = SqlStmt SqlAddColumn (intName <.> columnName c) $
+            "ALTER TABLE " ++ toSql intName ++
+            " ADD COLUMN " ++ toSql (columnName c) ++ " " ++ toSql (columnType c)
+            
+        stmtAlterColumnType c
+          | toSql (columnType c) == "SERIAL" = SqlStmtEmpty
+          | otherwise = SqlStmt SqlAlterColumn intName $
+            sqlAlterColumn c ++ "SET DATA TYPE " ++ toSql (columnType c)
+          
+        stmtDropDefault c = SqlStmt SqlDropColumnDefault intName $
+          sqlAlterColumn c ++ "DROP DEFAULT"
+          
+        --stmtAlterColumnDefault 
+        
+        stmtAlterColumnNull c = SqlStmt SqlAlterColumn intName $
+            sqlAlterColumn c ++ sqlSetNull (columnNull c) 
+          where
+            sqlSetNull Nothing = "SET NOT NULL"
+            sqlSetNull (Just False) = "SET NOT NULL"
+            sqlSetNull (Just True) = "DROP NOT NULL"
+          
         sqlNull Nothing        = "NOT NULL"
         sqlNull (Just True)    = "NULL"
         sqlNull (Just False)   = "NOT NULL"
+        
+        sqlAlterColumn c@(Column {}) =
+            "ALTER TABLE " ++ toSql intName ++
+            " ALTER COLUMN " ++ toSql (columnName c) ++ " "
+        sqlAlterColumn _ = err "ColumnTemplates should not be present in SQL parsing"
         
         sqlColumnDefault c@(Column {}) = sqlDefault (columnDefault c)
          where
