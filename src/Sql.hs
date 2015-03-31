@@ -8,26 +8,29 @@ import Utils
 --import Data.List
 import Data.String.Utils (replace)
 
+afterDelete :: SqlStatement -> Bool
+afterDelete (SqlStmt t _ _) = f t
+  where
+      f :: SqlStatementType -> Bool
+      
+      f SqlRoleMembership = True
+      f SqlCreateFunction = True
+      f SqlCreatePrimaryKeyConstr = True
+      f SqlCreateUniqueConstr = True
+      f SqlCreateForeignKeyConstr = True
+      f SqlCreateCheckConstr = True
+      f SqlAddDefault = True
+      f SqlPriv = True
+      f SqlComment = True
+      f _ = False
+afterDelete _ = False
+
 -- SQL statements
 
 data SqlStatement =
   SqlStmt SqlStatementType SqlName String |
   SqlStmtEmpty
   deriving (Show)
-
-instance Eq SqlStatement where
-  (==) (SqlStmt t1 _ _) (SqlStmt t2 _ _) = t1 == t2
-  
-  (==) SqlStmtEmpty SqlStmtEmpty = True
-  (==) _ SqlStmtEmpty = False
-  (==) SqlStmtEmpty _ = False
-
-instance Ord SqlStatement where
-  (<=) (SqlStmt t1 _ _) (SqlStmt t2 _ _) = t1 <= t2
-  
-  (<=) SqlStmtEmpty SqlStmtEmpty = True
-  (<=) SqlStmtEmpty _ = False
-  (<=) _ SqlStmtEmpty = True
 
 data SqlStatementType = 
   SqlDropDatabase |
@@ -55,26 +58,26 @@ data SqlStatementType =
   SqlUnclassified |
   SqlPostInstall
     deriving (Eq, Ord, Show)
+
+instance Eq SqlStatement where
+  (==) (SqlStmt t1 _ _) (SqlStmt t2 _ _) = t1 == t2
+  
+  (==) SqlStmtEmpty SqlStmtEmpty = True
+  (==) _ SqlStmtEmpty = False
+  (==) SqlStmtEmpty _ = False
+
+instance Ord SqlStatement where
+  (<=) (SqlStmt t1 _ _) (SqlStmt t2 _ _) = t1 <= t2
+  
+  (<=) SqlStmtEmpty SqlStmtEmpty = True
+  (<=) SqlStmtEmpty _ = False
+  (<=) _ SqlStmtEmpty = True
     
 stmtsFilterExecutable :: [SqlStatement] -> [SqlStatement]
 stmtsFilterExecutable = filter executable
   where
     executable SqlStmtEmpty = False
     executable _ = True
-
-afterDelete :: SqlStatement -> Bool
-afterDelete (SqlStmt t _ _) = f t
-  where
-      f :: SqlStatementType -> Bool
-      f SqlCreateFunction = True
-      f SqlCreatePrimaryKeyConstr = True
-      f SqlCreateUniqueConstr = True
-      f SqlCreateForeignKeyConstr = True
-      f SqlCreateCheckConstr = True
-      f SqlPriv = True
-      f SqlComment = True
-      f _ = False
-afterDelete _ = False
 
 statementTermin :: String
 statementTermin = ";\n"
