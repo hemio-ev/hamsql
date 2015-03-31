@@ -24,7 +24,6 @@ import GHC.Generics
 import Data.List.Split (splitOn)
 import Data.HashMap.Strict (member,insert,keys)
 import System.IO
-
 import qualified Data.ByteString.Char8 as B
 
 import Utils

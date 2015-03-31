@@ -19,7 +19,6 @@ import Data.List
 import Parser
 import Option
 import Utils
-import SQL
 
 loadSetup :: OptCommon -> FilePath -> IO Setup
 loadSetup opts filePath = do

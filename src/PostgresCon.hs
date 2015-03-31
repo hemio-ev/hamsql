@@ -3,9 +3,9 @@
 -- Copyright 2014 by it's authors. 
 -- Some rights reserved. See COPYING, AUTHORS.
 
-
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE OverloadedStrings #-}
+
 module PostgresCon where
 
 import Control.Exception
@@ -15,10 +15,11 @@ import Network.URL
 import qualified Data.ByteString.Char8 as B
 import Data.String
 
-import SQL
-import Parser
-import Utils
 import Option
+import Parser
+import Sql
+import Sql.Statements.Create
+import Utils
 
 toQry :: String -> Query
 toQry = fromString

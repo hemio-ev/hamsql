@@ -5,12 +5,13 @@
 
 module Utils where
 
-import System.Exit
-import System.IO
-import System.IO.Unsafe
 import Data.Char
 import Debug.Trace
 import Data.List (intercalate)
+import System.Exit
+import System.IO
+import System.IO.Unsafe
+
 import Option
 
 join = intercalate

@@ -4,12 +4,13 @@ import Data.List
 import Data.Text (unpack)
 import Control.Monad (when)
 
-import Utils
-import SQL
+import Documentation
+import Load
 import Option
 import PostgresCon
-import Load
-import Documentation
+import Sql
+import Sql.Statements.Create
+import Utils
 
 main :: IO ()
 main = execParser parserInfoHamsql >>= run
