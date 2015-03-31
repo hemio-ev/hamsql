@@ -50,6 +50,7 @@ data SqlStatementType =
   -- TABLE
   SqlCreateTable |
   SqlAddColumn |
+  SqlAlterTable |
   SqlDropColumnDefault |
   SqlAlterColumn |
   SqlAddTableContraint |

@@ -33,7 +33,9 @@ msg' typ xs = hPutStrLn stderr (typ ++ ": " ++ xs)
 
 debug opt
   | optVerbose opt = msg "debug"
-  | otherwise = msg "NO DEBUG"
+  | otherwise = id'
+      where
+        id' _ = id
 
 info :: OptCommon -> String -> IO ()
 info opts xs = do
