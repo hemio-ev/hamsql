@@ -18,7 +18,8 @@ import Data.String
 import Option
 import Parser
 import Sql
-import Sql.Statements.Create
+import Sql.Statement.Create
+import Sql.Statement.Drop
 import Utils
 
 toQry :: String -> Query
@@ -67,7 +68,7 @@ pgsqlDeleteRoleStmt url prefix = do
   
   where
     -- statement :: (TextBl.ByteString) -> SqlStatement
-    statement (Only user) = SqlStmtRoleDelete $ "DROP ROLE \"" ++ user ++ "\""
+    statement (Only user) = stmtDropRole user
 
 pgsqlDeleteFunctionStmt :: Connection -> IO [SqlStatement]
 pgsqlDeleteFunctionStmt conn =
@@ -81,9 +82,7 @@ pgsqlDeleteFunctionStmt conn =
     
   where
     f :: (String, String, String) -> SqlStatement
-    f (schema, function, args) = SqlStmtRoleDelete $
-      "DROP FUNCTION " ++ toSql(SqlName $ schema ++ "." ++ function) ++
-      "(" ++ args ++ ") CASCADE"
+    f (schema, function, args) = stmtDropFunction schema function args
 
       
 pgsqlDeleteTableConstraintStmt :: Connection -> IO [SqlStatement]
@@ -100,9 +99,7 @@ pgsqlDeleteTableConstraintStmt conn =
     
   where
     f :: (String, String, String) -> SqlStatement
-    f (schema, table, constraint) = SqlStmtRoleDelete $
-      "ALTER TABLE " ++ toSql(SqlName $ schema ++ "." ++ table) ++
-      " DROP CONSTRAINT IF EXISTS " ++ toSql(SqlName constraint) ++ " CASCADE"
+    f (schema, table, constraint) = stmtDropTableConstraint schema table constraint
       
 pgsqlDeleteDomainConstraintStmt :: Connection -> IO [SqlStatement]
 pgsqlDeleteDomainConstraintStmt conn =
@@ -118,9 +115,7 @@ pgsqlDeleteDomainConstraintStmt conn =
     
   where
     f :: (String, String, String) -> SqlStatement
-    f (schema, domain, constraint) = SqlStmtRoleDelete $
-      "ALTER DOMAIN " ++ toSql(SqlName $ schema ++ "." ++ domain) ++
-      " DROP CONSTRAINT " ++ toSql(SqlName constraint) ++ ""
+    f (schema, domain, constraint) = stmtDropDomainConstraint schema domain constraint
       
 pgsqlDeleteAllStmt :: Connection -> IO [SqlStatement]
 pgsqlDeleteAllStmt conn = do
@@ -142,9 +137,6 @@ pgsqlHandleQry code e@(QueryError{}) = do
     "Message: '" ++ qeMessage e ++ "'"
   return 0
 
-isNotEmptyStmt SqlStmtEmpty = False
-isNotEmptyStmt _ = True
-
 pgsqlExecWithoutTransact :: URL -> [SqlStatement] -> IO ()
 pgsqlExecWithoutTransact connUrl xs = do
     conn <- connectPostgreSQL (B.pack (exportURL connUrl))
@@ -155,7 +147,7 @@ pgsqlExecWithoutTransact connUrl xs = do
         execResult <- catch (catch (execute_ conn (toQry code)) (pgsqlHandleErr code)) (pgsqlHandleQry code)
 
         return ()
-      | stmt <- filter isNotEmptyStmt xs ]
+      | stmt <- stmtsFilterExecutable xs ]
 
     return ()
 
@@ -176,7 +168,7 @@ pgsqlExecIntern doCommit connUrl xs = do
         execResult <- catch (catch (execute_ conn (toQry code)) (pgsqlHandleErr code)) (pgsqlHandleQry code)
 
         return ()
-      | stmt <- filter isNotEmptyStmt xs ]
+      | stmt <- stmtsFilterExecutable xs ]
     
     if doCommit then
       commit conn

@@ -3,7 +3,7 @@
 -- Copyright 2014 by it's authors. 
 -- Some rights reserved. See COPYING, AUTHORS.
 
-module Sql.Statements.Create where
+module Sql.Statement.Create where
 
 import Option
 import Parser
@@ -14,13 +14,17 @@ import Data.Maybe
 import Data.List
 import Data.String.Utils (replace)
 
+emptyName = undefined
+
 stmtCommentOn :: SqlCode a => String -> a -> String -> SqlStatement
-stmtCommentOn on obj com = SqlStmtComment $
+stmtCommentOn on obj com = SqlStmt SqlComment (SqlName $ toSql obj) $
   "COMMENT ON " ++ on ++ " " ++ toSql obj ++ " IS " ++ toSqlString com
 
 sqlAddTransact :: [SqlStatement] -> [SqlStatement]
 sqlAddTransact xs = 
-  [ SqlStmt "BEGIN TRANSACTION" ] ++ xs ++ [ SqlStmt "COMMIT" ]
+  [ SqlStmt SqlUnclassified emptyName "BEGIN TRANSACTION" ] ++
+  xs ++
+  [ SqlStmt SqlUnclassified emptyName "COMMIT" ]
 
 -- create database
 
@@ -28,30 +32,35 @@ sqlCreateDatabase :: Bool -> String -> [SqlStatement]
 sqlCreateDatabase _ "" = err "Please specify a database in the connection URL"
 sqlCreateDatabase deleteDatabase name = [
         sqlDelete deleteDatabase,
-        SqlStmt $ "CREATE DATABASE " ++ toSql (SqlName name),
-        SqlStmt "ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC"
+        SqlStmt SqlCreateDatabase name' $
+          "CREATE DATABASE " ++ toSql name',
+        SqlStmt SqlCreateDatabase name' 
+          "ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC"
     ]
   where
-    sqlDelete True = SqlStmt $ "DROP DATABASE IF EXISTS " ++ toSql (SqlName name)
+    sqlDelete True = SqlStmt SqlDropDatabase name' $
+      "DROP DATABASE IF EXISTS " ++ toSql name'
     sqlDelete False = SqlStmtEmpty
+    
+    name' = SqlName name
 
 -- Setup
 
 getSetupStatements :: OptCommon -> Setup -> [SqlStatement]
-getSetupStatements opts s =
+getSetupStatements opts s = debug opts "stmtInstallSetup" $
   [ getStmt $ setupPreCode s ] ++ moduleStatements ++ [ getStmt $ setupPostCode s ]
   where
     moduleStatements = 
-      sort $ concatMap (getModuleStatements opts s) (setupModuleData $ setupInternal s)
-    getStmt (Just code) = SqlStmtPreInstall code
+      concatMap (getModuleStatements opts s) (setupModuleData $ setupInternal s)
+    getStmt (Just code) = SqlStmt SqlPreInstall emptyName code
     getStmt Nothing = SqlStmtEmpty
   
 -- Module
 
 getModuleStatements :: OptCommon -> Setup -> Module -> [SqlStatement]
-getModuleStatements opts s m =
+getModuleStatements opts s m = debug opts "stmtCreateSchema" $
   [
-    SqlStmtSchema $ "CREATE SCHEMA " ++ toSql (moduleName m),
+    SqlStmt SqlCreateSchema (moduleName m) $ "CREATE SCHEMA " ++ toSql (moduleName m),
     postInst $ moduleExecPostInstall m,
     stmtCommentOn "schema" (moduleName m) (moduleDescription m)
   ] ++
@@ -67,14 +76,14 @@ getModuleStatements opts s m =
   concat (maybeMap (getTypeStatements opts) (moduleTypes m)) ++
   concat (maybeMap (getRoleStatements opts s) (moduleRoles m)) ++
   concat (maybeMap (getFunctionStatements opts s) (moduleFunctions m)) ++
-  concat (maybeMap (getTableStatements opts s) (moduleTables m))
+  concat (maybeMap (stmtsCreateTable opts s) (moduleTables m))
 
   where
     postInst Nothing = SqlStmtEmpty
-    postInst (Just xs) = SqlStmtPostInstall xs
+    postInst (Just xs) = SqlStmt SqlPostInstall emptyName xs
 
     priv :: String -> SqlName -> SqlStatement
-    priv p r = SqlStmtPriv ("GRANT " ++ p ++ " " ++ toSql (moduleName m) ++ " TO " ++ prefixedRole s r)
+    priv p r = SqlStmt SqlPriv r $ "GRANT " ++ p ++ " " ++ toSql (moduleName m) ++ " TO " ++ prefixedRole s r
 
     privUsage = priv "USAGE ON SCHEMA"
     privSelectAll = priv "SELECT ON ALL TABLES IN SCHEMA"
@@ -96,17 +105,17 @@ getModuleStatements opts s m =
 
 -- Table
 
-getTableStatements :: OptCommon -> Setup -> Table -> [SqlStatement]
-getTableStatements opts setup t =
+stmtsCreateTable :: OptCommon -> Setup -> Table -> [SqlStatement]
+stmtsCreateTable opts setup t = debug opts "stmtCreateTable" $
     [
     -- table with columns
-    SqlStmt sqlTable,
+    stmtCreateTable,
     -- table comment
-    stmtCommentOn "TABLE" [ moduleName' t, tableName t ] (tableDescription t)
+    stmtCommentOn "TABLE" intName (tableDescription t)
     ] ++
     -- column comments
     map (\c -> stmtCommentOn "COLUMN"
-            [ moduleName' t, tableName t, columnName c] 
+            (intName <.> columnName c) 
             (columnDescription c)) (tableColumns t) ++
     -- grant rights to roles
     maybeMap (sqlGrant "SELECT") (tablePrivSelect t) ++
@@ -128,8 +137,11 @@ getTableStatements opts setup t =
     map sqlColumnDefault (tableColumns t)
 
     where
-        sqlTable =
-         "CREATE TABLE " ++ toSql [ moduleName' t, tableName t ] ++ " (\n" ++
+        intName = moduleName' t <.> tableName t 
+        sqlName =  toSql $ moduleName' t <.> tableName t
+      
+        stmtCreateTable = SqlStmt SqlCreateTable intName $
+         "CREATE TABLE " ++ sqlName ++ " (\n" ++
          join ",\n" (filter (/= "") (
             map sqlColumn (tableColumns t) ++
             maybeMap sqlCheck (tableChecks t)
@@ -151,20 +163,20 @@ getTableStatements opts setup t =
         sqlColumnDefault c@(Column {}) = sqlDefault (columnDefault c)
          where
           sqlDefault Nothing     = SqlStmtEmpty
-          sqlDefault (Just d)    = SqlStmtAddDefault
-            ("ALTER TABLE " ++ toSql [ moduleName' t, tableName t ] ++
+          sqlDefault (Just d)    = SqlStmt SqlAddDefault (intName <.> columnName c) $
+            ("ALTER TABLE " ++ toSql intName ++
             " ALTER COLUMN " ++ toSql (columnName c) ++ " SET DEFAULT " ++ d)
         
         sqlAddPrimaryKey :: [SqlName] -> SqlStatement
-        sqlAddPrimaryKey ks = SqlStmtCreatePrimaryKeyConstr $
-          "ALTER TABLE " ++ toSql [ moduleName' t, tableName t ] ++
+        sqlAddPrimaryKey ks = SqlStmt SqlCreatePrimaryKeyConstr intName $
+          "ALTER TABLE " ++ toSql intName ++
           " ADD CONSTRAINT " ++ name (SqlName "primary_key") ++ 
           " PRIMARY KEY (" ++ join ", " (map toSql ks) ++ ")"
             
         -- TODO: Make the constraint name unique
         sqlUniqueConstraint :: [SqlName] -> SqlStatement
-        sqlUniqueConstraint ks = SqlStmtCreateUniqueConstr $
-          "ALTER TABLE " ++ toSql [ moduleName' t, tableName t ] ++
+        sqlUniqueConstraint ks = SqlStmt SqlCreateUniqueConstr intName $
+          "ALTER TABLE " ++ toSql intName ++
           " ADD CONSTRAINT " ++ name (SqlName "unique") ++
           " UNIQUE (" ++ join ", " (map toSql ks) ++ ")"
 
@@ -175,18 +187,18 @@ getTableStatements opts setup t =
         sqlAddForeignKey c@(Column { columnReferences = Nothing }) =
           SqlStmtEmpty
         sqlAddForeignKey c@(Column { columnReferences = (Just ref) }) =
-          SqlStmtCreateForeignKeyConstr $
-            "ALTER TABLE " ++ toSql [ moduleName' t, tableName t ] ++
+          SqlStmt SqlCreateForeignKeyConstr intName $
+            "ALTER TABLE " ++ toSql intName ++
             " ADD CONSTRAINT " ++ name (columnName c) ++
             " FOREIGN KEY (" ++ toSql (columnName c) ++ ")" ++
-            " REFERENCES " ++ toSql (init $ expSqlName ref) ++
+            " REFERENCES " ++ toSql' (init $ expSqlName ref) ++
             " (" ++ toSql (last $ expSqlName ref) ++ ")" ++
             sqlOnRefUpdate (columnOnRefUpdate c) ++
             sqlOnRefDelete (columnOnRefDelete c)
             
         sqlAddForeignKey' :: ForeignKey -> SqlStatement
-        sqlAddForeignKey' fk = SqlStmtCreateForeignKeyConstr $
-            "ALTER TABLE " ++ toSql [ moduleName' t, tableName t ] ++
+        sqlAddForeignKey' fk = SqlStmt SqlCreateForeignKeyConstr intName $
+            "ALTER TABLE " ++ toSql intName ++
             " ADD CONSTRAINT " ++ name (tableName t // foreignkeyName fk) ++
             " FOREIGN KEY (" ++ join ", " (map toSql (foreignkeyColumns fk)) ++ ")" ++
             " REFERENCES " ++ toSql (foreignkeyRefTable fk) ++
@@ -199,16 +211,16 @@ getTableStatements opts setup t =
         sqlOnRefDelete Nothing = ""
         sqlOnRefDelete (Just a) = " ON DELETE " ++ a
 
-        sqlGrant right role = SqlStmtPriv ("GRANT " ++ right ++ " ON TABLE " ++
+        sqlGrant right role = SqlStmt SqlPriv intName ("GRANT " ++ right ++ " ON TABLE " ++
             toSql (tableName t) ++ " TO " ++ prefixedRole setup role)
 
         sqlAddInheritance :: SqlName -> SqlStatement
         sqlAddInheritance n = 
-                SqlStmtInherit $ "ALTER TABLE " ++ toSql [ moduleName' t, tableName t ] ++
+                SqlStmt SqlInherit intName $ "ALTER TABLE " ++ toSql intName ++
                  " INHERIT " ++ toSql n
                 
-        sqlColumnUnique c@(Column{ columnUnique = (Just True) }) = SqlStmtCreateUniqueConstr $
-          "ALTER TABLE " ++ toSql [ moduleName' t, tableName t ] ++
+        sqlColumnUnique c@(Column{ columnUnique = (Just True) }) = SqlStmt SqlCreateUniqueConstr intName $
+          "ALTER TABLE " ++ toSql intName ++
             " ADD CONSTRAINT " ++ name (columnName c) ++ 
             " UNIQUE (" ++ toSql (columnName c) ++ ")"
         sqlColumnUnique _ = SqlStmtEmpty
@@ -224,18 +236,19 @@ getTableStatements opts setup t =
 
 getFunctionStatements :: OptCommon -> Setup -> Function -> [SqlStatement]
 getFunctionStatements opts setup f =
-    SqlStmtFunc sqlCreateFunction:
+    stmtCreateFunction:
     sqlSetOwner (functionOwner f):
-    SqlStmtComment ("COMMENT ON FUNCTION " ++ sqlFunctionIdentifier ++
-      " IS " ++ toSqlString (functionDescription f)):
+    stmtComment:
     map sqlStmtGrantExecute (maybeList $ functionPrivExecute f)
 
     where
-        sqlStmtGrantExecute u = SqlStmtPriv $ sqlGrantExecute u
+        name = (moduleName $ functionParentModule $ functionInternal f) <.> functionName f
+      
+        sqlStmtGrantExecute u = SqlStmt SqlPriv name $ sqlGrantExecute u
         sqlGrantExecute u = "GRANT EXECUTE ON FUNCTION \n" ++
             sqlFunctionIdentifier ++ "\nTO " ++ prefixedRole setup u
 
-        sqlCreateFunction =
+        stmtCreateFunction = SqlStmt SqlCreateFunction (functionName f) $
             "CREATE OR REPLACE FUNCTION " ++ sqlFunctionIdentifierDef ++
             "\n" ++
             "RETURNS " ++ toSql (functionReturns f) ++ sqlReturnsColumns (functionReturnsColumns f) ++
@@ -245,21 +258,23 @@ getFunctionStatements opts setup f =
                 sqlBody ++
             "\n$BODY$\n"
 
-        sqlSetOwner (Just o) = SqlStmtPriv $
+        stmtComment = SqlStmt SqlComment (functionName f) $
+          "COMMENT ON FUNCTION " ++ sqlFunctionIdentifier ++
+          " IS " ++ toSqlString (functionDescription f)
+            
+        sqlSetOwner (Just o) = SqlStmt SqlPriv name $
             "ALTER FUNCTION " ++ sqlFunctionIdentifier ++
             "OWNER TO " ++ prefixedRole setup o
         sqlSetOwner Nothing = SqlStmtEmpty
 
         sqlFunctionIdentifierDef =
-            toSql [moduleName $ functionParentModule $ functionInternal f ,
-              functionName f]
+            toSql name
                 ++ "(\n" ++
                 join ",\n" (maybeMap sqlParameterDef (functionParameters f)) ++
                 "\n)"
 
         sqlFunctionIdentifier =
-            toSql [moduleName $ functionParentModule $ functionInternal f ,
-              functionName f]
+            toSql name
                 ++ "(\n" ++
                 join ",\n" (maybeMap sqlParameter (functionParameters f)) ++
                 "\n)"
@@ -332,10 +347,9 @@ getFunctionStatements opts setup f =
 -- Domains
 
 getDomainStatements :: OptCommon -> Domain -> [SqlStatement]
-getDomainStatements opt d =
+getDomainStatements opt d = debug opt "stmtCreateDomain" $
  
-    SqlStmtTypeDef
-      ("CREATE DOMAIN " ++ toSql fullName ++ " AS " ++ toSql(domainType d))
+  stmtCreateDomain
     :
     sqlDefault (domainDefault d)
   :(maybeMap sqlCheck (domainChecks d))
@@ -343,15 +357,20 @@ getDomainStatements opt d =
   --stmtCommentOn "DOMAIN" fullName (domainDescription d)
 
     where
-    fullName = [ moduleName $ domainParentModule $ domainInternal d , domainName d ]
-    sqlCheck c = SqlStmtCreateCheckConstr (
+    fullName = (moduleName $ domainParentModule $ domainInternal d) <.> domainName d
+    
+    stmtCreateDomain = SqlStmt SqlCreateDomain fullName $
+      "CREATE DOMAIN " ++ toSql fullName ++ " AS " ++ toSql (domainType d)
+    
+    sqlCheck :: Check -> SqlStatement
+    sqlCheck c = SqlStmt SqlCreateCheckConstr fullName (
       "ALTER DOMAIN " ++ toSql fullName ++ " ADD" ++
       " CONSTRAINT " ++ toSql (name (checkName c)) ++
       " CHECK (" ++ checkCheck c ++ ")")
 
     sqlDefault Nothing = SqlStmtEmpty
-    sqlDefault (Just def) = SqlStmtAddDefault (
-      "ALTER DOMAIN " ++ toSql fullName ++ " SET DEFAULT " ++ def)
+    sqlDefault (Just def) = SqlStmt SqlAddDefault fullName $
+      "ALTER DOMAIN " ++ toSql fullName ++ " SET DEFAULT " ++ def
 
     name a = SqlName "DOMAIN_" // domainName d // SqlName "__" // a
 
@@ -359,7 +378,7 @@ getDomainStatements opt d =
 
 getTypeStatements :: OptCommon -> Type -> [SqlStatement]
 getTypeStatements opt t =
-  SqlStmtTypeDef (
+  SqlStmt SqlCreateType fullName (
     "CREATE TYPE " ++ toSql fullName ++ " AS (" ++
     join ", " (map sqlElement (typeElements t)) ++ ")"
   ):
@@ -367,14 +386,14 @@ getTypeStatements opt t =
   :[]
 
   where
-    fullName = [ moduleName $ typeParentModule $ typeInternal t , typeName t ]
+    fullName = (moduleName $ typeParentModule $ typeInternal t) <.> typeName t
     sqlElement e = toSql (typeelementName e) ++ " " ++ toSql(typeelementType e)
 
 -- Role
 
 getRoleStatements :: OptCommon -> Setup -> Role -> [SqlStatement]
 getRoleStatements opts setup r =
-    SqlStmtRoleDef sqlCreateRole:
+    SqlStmt SqlCreateRole (roleName r) sqlCreateRole:
     (stmtCommentOn "ROLE" (setupRolePrefix' setup // roleName r) (roleDescription r)):
     maybeMap sqlRoleMembership (roleMemberIn r)
 
@@ -384,7 +403,7 @@ getRoleStatements opts setup r =
             sqlPassword (rolePassword r)
 
         sqlRoleMembership group = 
-            SqlStmtRoleMembership $
+            SqlStmt SqlRoleMembership (roleName r) $
             "GRANT " ++ prefix group ++ " TO " ++ prefix (roleName r);
             
         sqlLogin (Just True) = "LOGIN"

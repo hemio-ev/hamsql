@@ -9,7 +9,7 @@ import Load
 import Option
 import PostgresCon
 import Sql
-import Sql.Statements.Create
+import Sql.Statement.Create
 import Utils
 
 main :: IO ()
@@ -31,10 +31,12 @@ run (Install opt optDb optInstall) = do
         " DROP/CREATE DATABASE statements are skipped. You have to ensure that a empty " ++
         " database exists for those commands to make sense."
     
+  warn' "getting setup"
   setup <- loadSetup opt (optSetup opt)
+  warn' "got setup"
   statements <- pgsqlGetFullStatements opt optDb setup
   
-  useSqlStmts optDb statements
+  useSqlStmts optDb (sort statements)
   
 -- Upgrade
 run (Upgrade opt optDb optUpgrade) = do

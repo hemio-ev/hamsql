@@ -1,78 +1,97 @@
 module Sql where
 
-import Option
+--import Option
 import Parser
 import Utils
 
-import Data.Maybe
-import Data.List
+--import Data.Maybe
+--import Data.List
 import Data.String.Utils (replace)
 
 -- SQL statements
 
-data SqlStatement = 
-  SqlStmtPreInstall String |
-  SqlStmtSchema String |
-  SqlStmtTypeDef String |
-  SqlStmtRoleDelete String |
-  SqlStmtRoleDef String |
-  SqlStmtRoleMembership String |
-  SqlStmt String |
-  SqlStmtFunc String |
-  SqlStmtInherit String |
-  SqlStmtCreatePrimaryKeyConstr String |
-  SqlStmtCreateUniqueConstr String |
-  SqlStmtCreateForeignKeyConstr String |
-  SqlStmtCreateCheckConstr String |
-  SqlStmtAddDefault String |
-  SqlStmtPriv String |
-  SqlStmtComment String |
-  SqlStmtPostInstall String |
+data SqlStatement =
+  SqlStmt SqlStatementType SqlName String |
   SqlStmtEmpty
+  deriving (Show)
+
+instance Eq SqlStatement where
+  (==) (SqlStmt t1 _ _) (SqlStmt t2 _ _) = t1 == t2
+  
+  (==) SqlStmtEmpty SqlStmtEmpty = True
+  (==) _ SqlStmtEmpty = False
+  (==) SqlStmtEmpty _ = False
+
+instance Ord SqlStatement where
+  (<=) (SqlStmt t1 _ _) (SqlStmt t2 _ _) = t1 <= t2
+  
+  (<=) SqlStmtEmpty SqlStmtEmpty = True
+  (<=) SqlStmtEmpty _ = False
+  (<=) _ SqlStmtEmpty = True
+
+data SqlStatementType = 
+  SqlDropDatabase |
+  SqlCreateDatabase |
+  SqlPreInstall |
+  SqlDropRole |
+  SqlCreateRole |
+  SqlRoleMembership |
+  SqlCreateSchema |
+  SqlCreateDomain |
+  SqlCreateType |
+  SqlDropTableConstraint |
+  SqlDropDomainConstraint |
+  SqlDropFunction |
+  SqlCreateTable |
+  SqlCreateFunction |
+  SqlInherit |
+  SqlCreatePrimaryKeyConstr |
+  SqlCreateUniqueConstr |
+  SqlCreateForeignKeyConstr |
+  SqlCreateCheckConstr |
+  SqlAddDefault |
+  SqlPriv |
+  SqlComment |
+  SqlUnclassified |
+  SqlPostInstall
     deriving (Eq, Ord, Show)
+    
+stmtsFilterExecutable :: [SqlStatement] -> [SqlStatement]
+stmtsFilterExecutable = filter executable
+  where
+    executable SqlStmtEmpty = False
+    executable _ = True
 
 afterDelete :: SqlStatement -> Bool
---afterDelete (SqlStmtRoleDef _) = True
---afterDelete (SqlStmtRoleMembership _) = True
-afterDelete (SqlStmtFunc _) = True
-afterDelete (SqlStmtCreatePrimaryKeyConstr _) = True
-afterDelete (SqlStmtCreateUniqueConstr _) = True
-afterDelete (SqlStmtCreateForeignKeyConstr _) = True
-afterDelete (SqlStmtCreateCheckConstr _) = True
-afterDelete (SqlStmtPriv _) = True
-afterDelete (SqlStmtComment _) = True
---afterDelete (SqlStmtRoleDelete _) = True
+afterDelete (SqlStmt t _ _) = f t
+  where
+      f :: SqlStatementType -> Bool
+      f SqlCreateFunction = True
+      f SqlCreatePrimaryKeyConstr = True
+      f SqlCreateUniqueConstr = True
+      f SqlCreateForeignKeyConstr = True
+      f SqlCreateCheckConstr = True
+      f SqlPriv = True
+      f SqlComment = True
+      f _ = False
 afterDelete _ = False
-    
+
+statementTermin :: String
 statementTermin = ";\n"
+
 instance SqlCode SqlStatement where
-  toSql (SqlStmtEmpty) = "--"
-  toSql (SqlStmtPreInstall xs) = xs ++ "\n"
-  toSql (SqlStmtPostInstall xs) = xs ++ "\n"
-  toSql stmt = termin $ sqlFromStmt stmt
+  toSql (SqlStmtEmpty) = ""
+  toSql (SqlStmt SqlPreInstall _ xs) = xs ++ "\n"
+  toSql (SqlStmt SqlPostInstall _ xs) = xs ++ "\n"
+  toSql (SqlStmt _ _ xs) = termin $ xs
    where
-    termin [] = ""
-    termin xs = xs ++ statementTermin
+    termin [] = undefined
+    termin ys = ys ++ statementTermin
   (//) _ _ = undefined
 
 sqlFromStmt :: SqlStatement -> String
-sqlFromStmt (SqlStmtSchema x) = x
-sqlFromStmt (SqlStmtTypeDef x) = x
-sqlFromStmt (SqlStmtRoleDelete x) = x
-sqlFromStmt (SqlStmtRoleDef x) = x
-sqlFromStmt (SqlStmtRoleMembership x) = x
-sqlFromStmt (SqlStmt x) = x
-sqlFromStmt (SqlStmtFunc x) = x
-sqlFromStmt (SqlStmtInherit x) = x
-sqlFromStmt (SqlStmtCreatePrimaryKeyConstr x) = x
-sqlFromStmt (SqlStmtCreateUniqueConstr x) = x
-sqlFromStmt (SqlStmtCreateForeignKeyConstr x) = x
-sqlFromStmt (SqlStmtCreateCheckConstr x) = x
-sqlFromStmt (SqlStmtAddDefault x) = x
-sqlFromStmt (SqlStmtPriv x) = x
-sqlFromStmt (SqlStmtComment x) = x
-sqlFromStmt (SqlStmtPostInstall x) = x
-
+sqlFromStmt (SqlStmt _ _ str) = str
+sqlFromStmt SqlStmtEmpty = undefined
 
 sqlPrinter :: [SqlStatement] -> String
 sqlPrinter xs = join "" $ map toSql xs

@@ -31,6 +31,10 @@ msg typ xs ys = unsafePerformIO $ do
   
 msg' typ xs = hPutStrLn stderr (typ ++ ": " ++ xs)
 
+debug opt
+  | optVerbose opt = msg "debug"
+  | otherwise = msg "NO DEBUG"
+
 info :: OptCommon -> String -> IO ()
 info opts xs = do
   if optVerbose opts then

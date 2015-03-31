@@ -71,17 +71,14 @@ instance SqlCode SqlName
       if '"' `elem` n then
         n
       else
-        toSql $ expSqlName $ SqlName n
+        toSql' $ expSqlName $ SqlName n
 
     (//) (SqlName s) (SqlName t) = SqlName (s ++ t)
-        
-instance SqlCode [SqlName]
-  where
-    toSql [] = throw $ YamsqlException "Not allowed: [SqlName]=[]"
-    toSql xs = join "." (map getSql xs)
-      where
-        getSql (SqlName s) = "\"" ++ s ++ "\""
-    (//) a b = a ++ b
+
+(<.>) :: SqlName -> SqlName -> SqlName
+(<.>) (SqlName s) (SqlName t) = SqlName $ s ++ "." ++ t
+
+getSql (SqlName s) = "\"" ++ s ++ "\""
 
 expSqlName :: SqlName -> [SqlName]
 expSqlName n = map SqlName (splitOn "." (getStr n))
@@ -107,7 +104,7 @@ instance SqlCode SqlType
       then
         n
       else
-        toSql $ expSqlName $ SqlName n
+        toSql' $ expSqlName $ SqlName n
 
     (//) (SqlType s) (SqlType t) = SqlType (s ++ t)
 
@@ -115,13 +112,19 @@ contSqlName :: [SqlName] -> SqlName
 contSqlName ns = SqlName $ join "." $ map getStr ns
   where
     getStr (SqlName n') = n'
+
+toSql' :: [SqlName] -> String
+toSql' xs = join "." $ map quotedName xs
+  where
+    quotedName (SqlName s) = "\"" ++ s ++ "\""
     
 class SqlCode a where
   toSql :: a -> String
   (//) :: a -> a -> a
 
+ 
 -- SqlName
-newtype SqlName = SqlName String deriving (Generic,Show,Eq, Typeable, Data)
+newtype SqlName = SqlName String deriving (Generic,Ord,Show,Eq, Typeable, Data)
 instance FromJSON SqlName where parseJSON = genericParseJSON myOpt
 instance ToJSON SqlName where toJSON = genericToJSON myOpt
 
@@ -555,13 +558,13 @@ class WithName a where
  name :: a -> String
 
 instance WithName (WithModule TableTpl) where
- name (WithModule m t) = toSql [Parser.moduleName m, tabletplTemplate t]
+ name (WithModule m t) = toSql $ (Parser.moduleName m) <.> tabletplTemplate t
 
 instance WithName (WithModule FunctionTpl) where
- name (WithModule m f) = toSql [Parser.moduleName m, functiontplTemplate f]
+ name (WithModule m f) = toSql $ (Parser.moduleName m) <.> functiontplTemplate f
 
 instance WithName (WithModule TableColumnTpl) where
- name (WithModule m f) = toSql [Parser.moduleName m, tablecolumntplTemplate f]
+ name (WithModule m f) = toSql $ (Parser.moduleName m) <.> tablecolumntplTemplate f
 
 withoutModule (WithModule _ t) = t
 
