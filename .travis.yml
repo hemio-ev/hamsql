@@ -1,0 +1,10 @@
+language: haskell
+ghc:
+ - 7.8
+
+install:
+ - sudo apt-get install haskell-platform libghc-yaml-dev libghc-missingh-dev libghc-pandoc-dev libghc-hdbc-postgresql-dev
+ - cabal sandbox init
+ - cabal update
+ - cabal install --only-dependencies
+ - cabal build
