@@ -31,9 +31,8 @@ run (Install opt optDb optInstall) = do
         " DROP/CREATE DATABASE statements are skipped. You have to ensure that a empty " ++
         " database exists for those commands to make sense."
     
-  warn' "getting setup"
   setup <- loadSetup opt (optSetup opt)
-  warn' "got setup"
+
   statements <- pgsqlGetFullStatements opt optDb setup
   
   useSqlStmts optDb (sort statements)
@@ -52,14 +51,17 @@ run (Upgrade opt optDb optUpgrade) = do
     useSqlStmts optDb stmts
 
 -- Doc
-run (Doc opt optDoc) = do
-  setup <- loadSetup opt (optSetup opt)
-  html <- toSetupDoc setup
-  dot <- getGraphDoc setup
-    
+run (Doc opt optDoc) =
   case optFormat optDoc of
-    "html" -> putStrLn $ getDoc $ unpack html
-    "dot" -> putStrLn $ unpack dot
+    "html" -> do
+      setup <- loadSetup opt (optSetup opt)
+      html <- toSetupDoc optDoc setup
+      putStrLn $ getDoc $ unpack html
+      
+    "dot" -> do
+      setup <- loadSetup opt (optSetup opt)
+      dot <- getGraphDoc optDoc setup
+      putStrLn $ unpack dot
 
 useSqlStmts :: OptCommonDb -> [SqlStatement] -> IO ()
 useSqlStmts optDb stmts

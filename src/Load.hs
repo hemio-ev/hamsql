@@ -76,7 +76,7 @@ catchErrors filePath x = do
    Right _ -> x
 
 yamlEnding :: String -> Bool
-yamlEnding xs = xs =~ "\\.yaml$"
+yamlEnding xs = xs =~ "\\.yaml$" || xs =~ "\\.yml$"
 
 pgsqlEnding :: String -> Bool
 pgsqlEnding xs = xs =~ "\\.sql$"

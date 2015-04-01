@@ -118,11 +118,26 @@ parserOptUpgrade = OptUpgrade
 
 -- Command Doc
 data OptDoc = OptDoc {
-    optFormat :: String
+    optFormat :: String,
+    optTemplate :: FilePath
 }
     deriving Show
 
 parserOptDoc :: Parser OptDoc
 parserOptDoc = OptDoc
     <$> strOption
-        (long "format" <> short 'f' <> val "html" <> completeWith ["dot","html"])
+        (
+        long "format" <> 
+        short 'f' <> 
+        val "html" <> 
+        completeWith ["dot","html"]
+        )
+    <*> strOption
+        (
+        long "template" <> 
+        short 't' <> 
+        val "doc-template" <>
+        action "file -X '!*.html'" <>
+        action "file -X '!*.dot'" <>
+        action "directory"
+        )

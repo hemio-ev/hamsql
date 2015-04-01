@@ -13,26 +13,31 @@ import Data.Text
 import Data.Aeson
 import Text.Pandoc.Templates
 import GHC.Generics
-import Parser
 import Text.Pandoc
 import Data.Text.IO
 import qualified Data.ByteString.Char8 as B
+import Text.Regex.Posix
 
+import Option
+import Parser
 
---setupDocMask :: Template
---setupDocMask = either error id $ compileTemplate
---   "$for(setup.module_data)$# Module $setup.module_data.name$\n$setup.module_data.description$\n\n$endfor$"
---   "This is module '$a.namex$' $for(employee)$Hi, $employee.name.first$. $if(employee.salary)$You make $employee.salary$.$else$No salary data.$endif$$sep$\n$endfor$"
+ensureFileExt :: String -> FilePath -> FilePath
+ensureFileExt ext xs
+  | xs =~ ("\\." ++ ext ++ "$") =
+    xs
+  | otherwise =
+    xs ++ "." ++ ext
+  
 
-toSetupDoc :: Setup -> IO (Text)
-toSetupDoc s = do
-  template <- Data.Text.IO.readFile "doc-template.html"
+toSetupDoc :: OptDoc -> Setup -> IO (Text)
+toSetupDoc optDoc s = do
+  let fileName =  (ensureFileExt "html") $ optTemplate optDoc
+  template <- Data.Text.IO.readFile fileName
   let t = either error id $ compileTemplate template
   return $ renderTemplate t $ object [
     "modules" .= (setupModuleData $ setupInternal s),
     "setup" .= s
     ]
-
 
 markdownToRST :: String -> String
 markdownToRST =
@@ -48,9 +53,10 @@ markdownToRST =
 
 getDoc d = markdownToRST d
 
-getGraphDoc :: Setup -> IO (Text)
-getGraphDoc s = do
-    template <- Data.Text.IO.readFile "doc-template.dot"
+getGraphDoc :: OptDoc -> Setup -> IO (Text)
+getGraphDoc optDoc s = do
+    let fileName =  (ensureFileExt "dot") $ optTemplate optDoc
+    template <- Data.Text.IO.readFile fileName
     let t = either error id $ compileTemplate template
     return $ renderTemplate t $ object [
         "modules" .= (setupModuleData $ setupInternal s),
