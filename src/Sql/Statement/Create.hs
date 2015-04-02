@@ -14,7 +14,7 @@ import Data.Maybe
 import Data.List
 import Data.String.Utils (replace)
 
-emptyName = undefined
+emptyName = SqlName ""
 
 stmtCommentOn :: SqlCode a => String -> a -> String -> SqlStatement
 stmtCommentOn on obj com = SqlStmt SqlComment (SqlName $ toSql obj) $
@@ -255,7 +255,7 @@ stmtsCreateTable opts setup t = debug opts "stmtCreateTable" $
 
         moduleName' :: Table -> SqlName
         moduleName' t' = moduleName $ tableParentModule $ tableInternal t'
-        
+
 -- Function
 
 getFunctionStatements :: OptCommon -> Setup -> Function -> [SqlStatement]

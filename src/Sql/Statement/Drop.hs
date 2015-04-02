@@ -20,3 +20,21 @@ stmtDropDomainConstraint schema domain constraint = SqlStmt SqlDropDomainConstra
   (SqlName schema <.> SqlName domain) $
       "ALTER DOMAIN " ++ toSql(SqlName $ schema ++ "." ++ domain) ++
       " DROP CONSTRAINT " ++ toSql(SqlName constraint) ++ ""
+
+  
+stmtDropTable :: SqlName -> SqlStatement
+stmtDropTable t = SqlStmt SqlDropTable t $
+  "DROP TABLE " ++ toSql t
+
+stmtDropTableColumn :: (SqlName, SqlName) -> SqlStatement
+stmtDropTableColumn (t, c) = SqlStmt SqlDropColumn (t <.> c) $
+  "ALTER TABLE " ++ toSql t ++ " DROP COLUMN " ++ toSql c
+
+stmtDropDomain :: SqlName -> SqlStatement
+stmtDropDomain d = SqlStmt SqlDropDomain d $
+  "DROP DOMAIN " ++ toSql d
+  
+  
+stmtDropType :: SqlName -> SqlStatement
+stmtDropType t = SqlStmt SqlDropType t $
+  "DROP TYPE " ++ toSql t

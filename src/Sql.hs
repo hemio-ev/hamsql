@@ -46,6 +46,7 @@ data SqlStatementType =
   SqlDropTableConstraint |
   SqlDropDomainConstraint |
   -- DROP FUNCTION
+  SqlDropColumn |
   SqlDropTable |
   SqlDropFunction |
   -- TABLE
@@ -56,6 +57,8 @@ data SqlStatementType =
   SqlAlterColumn |
   SqlAddTableContraint |
   -- FUNCTION
+  SqlDropDomain |
+  SqlDropType |
   SqlCreateFunction |
   SqlInherit |
   SqlCreatePrimaryKeyConstr |

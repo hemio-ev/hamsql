@@ -19,5 +19,6 @@ dpkg-query -l \
     libghc-yaml-dev \
     libghc-missingh-dev \
     libghc-pandoc-dev \
-    haskell-postgresql-simple
+    haskell-postgresql-simple \
+    optparse-applicative
 

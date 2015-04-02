@@ -1,6 +1,6 @@
 -- This file is part of HamSql
 --
--- Copyright 2014 by it's authors. 
+-- Copyright 2014-2015 by it's authors. 
 -- Some rights reserved. See COPYING, AUTHORS.
 
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -14,6 +14,7 @@ import Database.PostgreSQL.Simple.Internal
 import Network.URL
 import qualified Data.ByteString.Char8 as B
 import Data.String
+import Data.List
 
 import Option
 import Parser
@@ -124,7 +125,116 @@ pgsqlDeleteAllStmt conn = do
   domain_constraints <- pgsqlDeleteDomainConstraintStmt conn
   
   return $ function ++ table_constraints ++ domain_constraints
-      
+
+-- List existing objects
+
+pgsqlListTables :: Connection -> IO [SqlName]
+pgsqlListTables conn = do
+  dat :: [(String,String)] <- query_ conn $ toQry $
+    "SELECT table_schema, table_name" ++
+    " FROM information_schema.tables" ++
+    " WHERE table_type = 'BASE TABLE'" ++
+    " AND table_schema NOT IN ('information_schema', 'pg_catalog')"
+  return $ map toSqlName dat
+  
+  where
+    toSqlName (s,t) = (SqlName s) <.> SqlName t
+
+
+pgsqlListTableColumns :: Connection -> IO [(SqlName, SqlName)]
+pgsqlListTableColumns conn = do
+  dat :: [(String, String, String)] <- query_ conn $ toQry $
+    "SELECT table_schema, table_name, column_name" ++
+    " FROM information_schema.columns" ++
+    --" WHERE table_type = 'BASE TABLE'" ++
+    " WHERE table_schema NOT IN ('information_schema', 'pg_catalog')"
+  return $ map toSqlName dat
+  
+  where
+    toSqlName (s,t,u) = ((SqlName s) <.> SqlName t, SqlName u)
+
+    
+pgsqlListDomains :: Connection -> IO [SqlName]
+pgsqlListDomains conn = do
+  dat :: [(String,String)] <- query_ conn $ toQry $
+    "SELECT domain_schema, domain_name" ++
+    " FROM information_schema.domains" ++
+    " WHERE domain_schema NOT IN ('information_schema', 'pg_catalog')"
+
+  return $ map toSqlName dat
+  
+  where
+    toSqlName (s,t) = (SqlName s) <.> SqlName t
+
+pgsqlListTypes :: Connection -> IO [SqlName]
+pgsqlListTypes conn = do
+  dat :: [(String,String)] <- query_ conn $ toQry $
+    "SELECT user_defined_type_schema, user_defined_type_name" ++
+    " FROM information_schema.user_defined_types" ++
+    " WHERE user_defined_type_schema NOT IN ('information_schema', 'pg_catalog')"
+     
+  return $ map toSqlName dat
+  
+  where
+    toSqlName (s,t) = (SqlName s) <.> SqlName t
+    
+-- Fix missing or spare objects
+  
+pgsqlCorrectTables :: Connection -> [SqlStatement] -> IO [SqlStatement]
+pgsqlCorrectTables conn stmtsInstall = do
+  existingNames <- pgsqlListTables conn
+  let expected = filter (SqlCreateTable `typeEq`) stmtsInstall
+  let existing = map (SqlCreateTable `replacesTypeOf`) $ map stmtDropTable existingNames
+ 
+  let stmtsCreate =  expected \\ existing
+  let stmtsDrop = map (SqlDropTable `replacesTypeOf`) $ existing \\ expected
+  
+  return $ stmtsCreate ++ stmtsDrop
+
+pgsqlCorrectTableColumns :: Connection -> [SqlStatement] -> IO [SqlStatement]
+pgsqlCorrectTableColumns conn stmtsInstall = do
+  existingNames <- pgsqlListTableColumns conn
+  let expected = filter (SqlAddColumn `typeEq`) stmtsInstall
+  let existing = map (SqlAddColumn `replacesTypeOf`) $ map stmtDropTableColumn existingNames
+ 
+  let stmtsCreate =  expected \\ existing
+  let stmtsDrop = map (SqlDropColumn `replacesTypeOf`) $ existing \\ expected
+  
+  return $ stmtsCreate ++ stmtsDrop
+  
+pgsqlCorrectDomains :: Connection -> [SqlStatement] -> IO [SqlStatement]
+pgsqlCorrectDomains conn stmtsInstall = do
+  existingNames <- pgsqlListDomains conn
+  let expected = filter (SqlCreateDomain `typeEq`) stmtsInstall
+  let existing = map (SqlCreateDomain `replacesTypeOf`) $ map stmtDropDomain existingNames
+ 
+  let stmtsCreate =  expected \\ existing
+  let stmtsDrop = map (SqlDropDomain `replacesTypeOf`) $ existing \\ expected
+  
+  return $ stmtsCreate ++ stmtsDrop
+
+pgsqlCorrectTypes :: Connection -> [SqlStatement] -> IO [SqlStatement]
+pgsqlCorrectTypes conn stmtsInstall = do
+  existingNames <- pgsqlListTypes conn
+  let expected = filter (SqlCreateType `typeEq`) stmtsInstall
+  let existing = map (SqlCreateType `replacesTypeOf`) $ map stmtDropType existingNames
+ 
+  let stmtsCreate =  expected \\ existing
+  let stmtsDrop = map (SqlDropType `replacesTypeOf`) $ existing \\ expected
+  
+  return $ stmtsCreate ++ stmtsDrop
+  
+pgsqlUpdateFragile :: Connection -> [SqlStatement] -> IO [SqlStatement]
+pgsqlUpdateFragile conn stmtsInstall = do
+  tables <- pgsqlCorrectTables conn stmtsInstall
+  columns <- pgsqlCorrectTableColumns conn stmtsInstall
+  domains <- pgsqlCorrectDomains conn stmtsInstall
+  types <- pgsqlCorrectTypes conn stmtsInstall
+   
+  return $ tables ++ columns ++ domains ++ types
+  
+-- DB Utils
+  
 pgsqlHandleErr code e@(SqlError{}) =
   err $
     "sql error in following statement:\n" ++

@@ -64,7 +64,10 @@ forceToJson s = do
    (\handle -> hPutStrLn handle $ show $ toJSON s)
 
 -- SqlCode (right now only SqlName)
-                       
+
+instance Eq SqlName where
+  (==) x y = toSql x == toSql y
+
 instance SqlCode SqlName
   where
     toSql (SqlName n) = 
@@ -124,7 +127,7 @@ class SqlCode a where
 
  
 -- SqlName
-newtype SqlName = SqlName String deriving (Generic,Ord,Show,Eq, Typeable, Data)
+newtype SqlName = SqlName String deriving (Generic,Ord,Show, Typeable, Data)
 instance FromJSON SqlName where parseJSON = genericParseJSON myOpt
 instance ToJSON SqlName where toJSON = genericToJSON myOpt
 
