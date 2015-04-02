@@ -4,7 +4,7 @@ ghc:
  - 7.6
 
 install:
- - sudo apt-get install haskell-platform libghc-yaml-dev libghc-missingh-dev libghc-pandoc-dev haskell-postgresql-simple optparse-applicative
+    - sudo apt-get install haskell-platform libghc-yaml-dev libghc-missingh-dev libghc-pandoc-dev libghc-postgresql-simple-dev libghc-optparse-applicative-dev
  - cabal sandbox init
  - cabal update
  - cabal install --only-dependencies --avoid-reinstalls
