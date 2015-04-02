@@ -46,6 +46,7 @@ data SqlStatementType =
   SqlDropTableConstraint |
   SqlDropDomainConstraint |
   -- DROP FUNCTION
+  SqlDropTable |
   SqlDropFunction |
   -- TABLE
   SqlCreateTable |
@@ -69,7 +70,7 @@ data SqlStatementType =
     deriving (Eq, Ord, Show)
 
 instance Eq SqlStatement where
-  (==) (SqlStmt t1 _ _) (SqlStmt t2 _ _) = t1 == t2
+  (==) (SqlStmt t1 n1 _) (SqlStmt t2 n2 _) = t1 == t2 && n1 == n2
   
   (==) SqlStmtEmpty SqlStmtEmpty = True
   (==) _ SqlStmtEmpty = False
@@ -81,7 +82,12 @@ instance Ord SqlStatement where
   (<=) SqlStmtEmpty SqlStmtEmpty = True
   (<=) SqlStmtEmpty _ = False
   (<=) _ SqlStmtEmpty = True
-    
+  
+  
+typeEq :: SqlStatementType -> SqlStatement -> Bool
+typeEq t1 (SqlStmt t2 _ _) = t1 == t2
+typeEq _ _ = False
+
 stmtsFilterExecutable :: [SqlStatement] -> [SqlStatement]
 stmtsFilterExecutable = filter executable
   where
@@ -90,6 +96,9 @@ stmtsFilterExecutable = filter executable
 
 statementTermin :: String
 statementTermin = ";\n"
+
+replacesTypeOf :: SqlStatementType -> SqlStatement -> SqlStatement
+replacesTypeOf t (SqlStmt _ x y) = SqlStmt t x y
 
 instance SqlCode SqlStatement where
   toSql (SqlStmtEmpty) = ""
