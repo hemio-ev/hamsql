@@ -3,7 +3,7 @@ hamsql
 
 Interpreter for SQL-structure definitions in Yaml (YamSql)
 
-[![Build Status](https://drone.io/github.com/qua-bla/hamsql/status.png)](https://drone.io/github.com/qua-bla/hamsql/latest)
+[![Build Status](https://travis-ci.org/qua-bla/hamsql.svg?branch=master)](https://travis-ci.org/qua-bla/hamsql)
 
 ## Getting started with developement
 
