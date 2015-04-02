@@ -13,6 +13,7 @@ afterDelete (SqlStmt t _ _) = f t
   where
       f :: SqlStatementType -> Bool
       
+      f SqlCreateSchema = True
       f SqlRoleMembership = True
       f SqlCreateFunction = True
       f SqlCreatePrimaryKeyConstr = True

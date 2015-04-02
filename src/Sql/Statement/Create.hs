@@ -60,7 +60,7 @@ getSetupStatements opts s = debug opts "stmtInstallSetup" $
 getModuleStatements :: OptCommon -> Setup -> Module -> [SqlStatement]
 getModuleStatements opts s m = debug opts "stmtCreateSchema" $
   [
-    SqlStmt SqlCreateSchema (moduleName m) $ "CREATE SCHEMA " ++ toSql (moduleName m),
+    SqlStmt SqlCreateSchema (moduleName m) $ "CREATE SCHEMA IF NOT EXISTS " ++ toSql (moduleName m),
     postInst $ moduleExecPostInstall m,
     stmtCommentOn "schema" (moduleName m) (moduleDescription m)
   ] ++
