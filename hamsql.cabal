@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                hamsql
-version:             0.3.0.0
+version:             0.4.1.0
 synopsis:            HamSql
 description:         A YamSql interpreter
 homepage:            https://github.com/qua-bla/hamsql
@@ -17,7 +17,7 @@ extra-source-files:  README.md
 cabal-version:       >=1.10
 
 executable hamsql
-  main-is:             Hamsql.hs
+  main-is:             Main.hs
   Hs-Source-Dirs:      src
   -- other-modules:       
   other-extensions:    DeriveGeneric, OverloadedStrings, FlexibleInstances
