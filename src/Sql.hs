@@ -1,7 +1,7 @@
 module Sql where
 
 --import Option
-import Parser
+import Parser.Basic
 import Utils
 
 --import Data.Maybe

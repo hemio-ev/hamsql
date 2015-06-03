@@ -12,11 +12,21 @@ import System.FilePath.Posix (combine, dropFileName)
 import Control.Monad (filterM, liftM)
 import Text.Regex.Posix
 import System.Directory (doesFileExist, doesDirectoryExist, getDirectoryContents)
-import Data.Yaml
+import Data.Yaml ()
+import Data.Aeson.Types
 import Control.Monad
 import Data.List
 
 import Parser
+import Parser.Basic
+import Parser.Check
+import Parser.Commons
+import Parser.Domain
+import Parser.Function
+import Parser.Module
+import Parser.Role
+import Parser.Table
+import Parser.Type
 import Option
 import Utils
 
@@ -111,72 +121,24 @@ readModule opts md = do
     tables <- do
       files <- selectFilesInDir yamlEnding (combine md "tables.d")
       sequence [
-        do
-          t <- readObjectFromFile opts f
-          return $ tablePopulateInternal moduleData f t
+        readObjectFromFile opts f :: IO (Table)
         | f <- files ]
 
     functions <- do
       files <- selectFilesInDir pgsqlEnding (combine md "functions.d")
       sequence [
-        do
-          t <- readObjectFromFile opts f
-          return $ functionPopulateInternal moduleData f t
+        readObjectFromFile opts f :: IO (Function)
         | f <- files ]
 
     let moduleData' = moduleData {
-      moduleTables = maybeLeftJoin (moduleTables moduleData) tables,
-      moduleFunctions = maybeLeftJoin (moduleFunctions moduleData) functions,
-      moduleTypes = Just $ maybeMap (typePopulateInternal moduleData md) (moduleTypes moduleData),
-      moduleDomains = Just $ maybeMap (domainPopulateInternal moduleData md) (moduleDomains moduleData)
+        moduleTables = maybeJoin (moduleTables moduleData) (Just tables),
+        moduleFunctions = maybeJoin (moduleFunctions moduleData) (Just functions)
     }
 
     return moduleData'
 
     where
         moduleConfig = combine md "module.yaml"
-
-insertTable :: Module -> Table -> Module
-insertTable m t = m {
-    moduleTables = maybeJoin (moduleTables m) (Just [t])
-  }
-
-tablePopulateInternal :: Module -> FilePath -> Table -> Table
-tablePopulateInternal m path t = t {
-    xtableInternal = Just TableInternal {
-      tableParentModule = m,
-      tableLoadPath = path,
-      tableOriginal = t
-    }
-  }
-
-functionPopulateInternal :: Module -> FilePath -> Function -> Function
-functionPopulateInternal m path f = f {
-    xfunctionInternal = Just FunctionInternal {
-      functionParentModule = m,
-      functionLoadPath = path,
-      functionOriginal = f,
-      functionReturnsTable = toSql (functionReturns f) == "TABLE"
-    }
-  }
-
-typePopulateInternal :: Module -> FilePath -> Type -> Type
-typePopulateInternal m path t = t {
-    xtypeInternal = Just TypeInternal {
-      typeParentModule = m,
-      typeLoadPath = path,
-      typeOriginal = t
-    }
-  }
-
-domainPopulateInternal :: Module -> FilePath -> Domain -> Domain
-domainPopulateInternal m path d = d {
-    xdomainInternal = Just DomainInternal {
-      domainParentModule = m,
-      domainLoadPath = path,
-      domainOriginal = d
-    }
-  }
 
 readObjectFromFile :: (FromJSON a, ToJSON a) => OptCommon -> FilePath -> IO a
 readObjectFromFile opts file = do

@@ -7,6 +7,15 @@ module Sql.Statement.Create where
 
 import Option
 import Parser
+import Parser.Basic
+import Parser.Check
+import Parser.Commons
+import Parser.Domain
+import Parser.Function
+import Parser.Module
+import Parser.Role
+import Parser.Table
+import Parser.Type
 import Utils
 import Sql
 
@@ -72,11 +81,11 @@ getModuleStatements opts s m = debug opts "stmtCreateSchema" $
   maybeMap (privSequenceAll) (modulePrivSequenceAll m) ++
   maybeMap (privExecuteAll) (modulePrivExecuteAll m) ++
   concat (maybeMap (privAllAll) (modulePrivAllAll m)) ++
-  concat (maybeMap (getDomainStatements opts) (moduleDomains m)) ++
-  concat (maybeMap (getTypeStatements opts) (moduleTypes m)) ++
+  concat (maybeMap (getDomainStatements opts s m) (moduleDomains m)) ++
+  concat (maybeMap (getTypeStatements opts s m) (moduleTypes m)) ++
   concat (maybeMap (getRoleStatements opts s) (moduleRoles m)) ++
-  concat (maybeMap (getFunctionStatements opts s) (moduleFunctions m)) ++
-  concat (maybeMap (stmtsCreateTable opts s) (moduleTables m))
+  concat (maybeMap (getFunctionStatements opts s m) (moduleFunctions m)) ++
+  concat (maybeMap (stmtsCreateTable opts s m) (moduleTables m))
 
   where
     postInst Nothing = SqlStmtEmpty
@@ -105,8 +114,8 @@ getModuleStatements opts s m = debug opts "stmtCreateSchema" $
 
 -- Table
 
-stmtsCreateTable :: OptCommon -> Setup -> Table -> [SqlStatement]
-stmtsCreateTable opts setup t = debug opts "stmtCreateTable" $
+stmtsCreateTable :: OptCommon -> Setup -> Module -> Table -> [SqlStatement]
+stmtsCreateTable opts setup m t = debug opts "stmtCreateTable" $
     [
     -- table with columns
     stmtCreateTable,
@@ -144,11 +153,10 @@ stmtsCreateTable opts setup t = debug opts "stmtCreateTable" $
     maybeMap sqlAddForeignKey' (tableForeignKeys t)
 
     where
-        intName = moduleName' t <.> tableName t 
-        sqlName =  toSql $ moduleName' t <.> tableName t
+        intName = (moduleName m) <.> tableName t 
       
         stmtCreateTable = SqlStmt SqlCreateTable intName $
-          "CREATE TABLE " ++ sqlName ++ " ()"
+          "CREATE TABLE " ++ toSql intName ++ " ()"
               
         stmtCheck c = SqlStmt SqlAddTableContraint intName $
           "ALTER TABLE " ++ toSql intName ++
@@ -169,10 +177,10 @@ stmtsCreateTable opts setup t = debug opts "stmtCreateTable" $
           | toSql (columnType c) == "SERIAL" = SqlStmtEmpty
           | otherwise = SqlStmt SqlAlterColumn intName $
             sqlAlterColumn c ++ "SET DATA TYPE " ++ toSql (columnType c)
-          
+        
         stmtDropDefault c = SqlStmt SqlDropColumnDefault intName $
           sqlAlterColumn c ++ "DROP DEFAULT"
-         
+        
         stmtAddColumnCheck c = maybeMap stmtCheck (columnChecks c)
         
         stmtAlterColumnNull c = SqlStmt SqlAlterColumn intName $
@@ -188,9 +196,15 @@ stmtsCreateTable opts setup t = debug opts "stmtCreateTable" $
           sqlDefault (Just d)    = SqlStmt SqlAddDefault (intName <.> columnName c) $
             sqlAlterColumn c ++ "SET DEFAULT " ++ d
         
+        -- SERIAL
         
-        --
+--        CREATE SEQUENCE tablename_colname_seq;
+--CREATE TABLE tablename (
+--    colname integer NOT NULL DEFAULT nextval('tablename_colname_seq')
+--);
+--ALTER SEQUENCE tablename_colname_seq OWNED BY tablename.colname;
         
+        -- PRIMARY KEY
 
         sqlAddPrimaryKey :: [SqlName] -> SqlStatement
         sqlAddPrimaryKey ks = SqlStmt SqlCreatePrimaryKeyConstr intName $
@@ -251,22 +265,19 @@ stmtsCreateTable opts setup t = debug opts "stmtCreateTable" $
         
         -- tools
 
-        name a = toSql (SqlName "TABLE_" // tableName t // SqlName "__" // a)
-
-        moduleName' :: Table -> SqlName
-        moduleName' t' = moduleName $ tableParentModule $ tableInternal t'
+        name a = toSql (SqlName "TABLE_" // tableName t // SqlName "_" // a)
 
 -- Function
 
-getFunctionStatements :: OptCommon -> Setup -> Function -> [SqlStatement]
-getFunctionStatements opts setup f =
+getFunctionStatements :: OptCommon -> Setup -> Module -> Function -> [SqlStatement]
+getFunctionStatements opts setup m f =
     stmtCreateFunction:
     sqlSetOwner (functionOwner f):
     stmtComment:
     map sqlStmtGrantExecute (maybeList $ functionPrivExecute f)
 
     where
-        name = (moduleName $ functionParentModule $ functionInternal f) <.> functionName f
+        name = (moduleName m) <.> functionName f
       
         sqlStmtGrantExecute u = SqlStmt SqlPriv name $ sqlGrantExecute u
         sqlGrantExecute u = "GRANT EXECUTE ON FUNCTION \n" ++
@@ -370,18 +381,17 @@ getFunctionStatements opts setup f =
 
 -- Domains
 
-getDomainStatements :: OptCommon -> Domain -> [SqlStatement]
-getDomainStatements opt d = debug opt "stmtCreateDomain" $
+getDomainStatements :: OptCommon -> Setup -> Module -> Domain -> [SqlStatement]
+getDomainStatements opt _ m d = debug opt "stmtCreateDomain" $
  
   stmtCreateDomain
-    :
-    sqlDefault (domainDefault d)
+  :sqlDefault (domainDefault d)
   :(maybeMap sqlCheck (domainChecks d))
 
   --stmtCommentOn "DOMAIN" fullName (domainDescription d)
 
     where
-    fullName = (moduleName $ domainParentModule $ domainInternal d) <.> domainName d
+    fullName = (moduleName m) <.> domainName d
     
     stmtCreateDomain = SqlStmt SqlCreateDomain fullName $
       "CREATE DOMAIN " ++ toSql fullName ++ " AS " ++ toSql (domainType d)
@@ -400,17 +410,19 @@ getDomainStatements opt d = debug opt "stmtCreateDomain" $
 
 -- Types
 
-getTypeStatements :: OptCommon -> Type -> [SqlStatement]
-getTypeStatements opt t =
+getTypeStatements :: OptCommon -> Setup -> Module -> Type -> [SqlStatement]
+getTypeStatements opt s m t =
   SqlStmt SqlCreateType fullName (
     "CREATE TYPE " ++ toSql fullName ++ " AS (" ++
     join ", " (map sqlElement (typeElements t)) ++ ")"
   ):
   stmtCommentOn "TYPE" fullName (typeDescription t)
   :[]
+  
+  -- ALTER TYPE name ALTER ATTRIBUTE attribute_name [ SET DATA ] TYPE data_type
 
   where
-    fullName = (moduleName $ typeParentModule $ typeInternal t) <.> typeName t
+    fullName = (moduleName m) <.> typeName t
     sqlElement e = toSql (typeelementName e) ++ " " ++ toSql(typeelementType e)
 
 -- Role

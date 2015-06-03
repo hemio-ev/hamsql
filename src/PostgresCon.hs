@@ -18,6 +18,7 @@ import Data.List
 
 import Option
 import Parser
+import Parser.Basic
 import Sql
 import Sql.Statement.Create
 import Sql.Statement.Drop
@@ -253,7 +254,7 @@ pgsqlExecWithoutTransact connUrl xs = do
        
     _ <- sequence [ 
       do
-        let code = (Parser.toSql stmt)
+        let code = (Parser.Basic.toSql stmt)
         execResult <- catch (catch (execute_ conn (toQry code)) (pgsqlHandleErr code)) (pgsqlHandleQry code)
 
         return ()
@@ -274,7 +275,7 @@ pgsqlExecIntern doCommit connUrl xs = do
        
     _ <- sequence [ 
       do
-        let code = (Parser.toSql stmt)
+        let code = (Parser.Basic.toSql stmt)
         execResult <- catch (catch (execute_ conn (toQry code)) (pgsqlHandleErr code)) (pgsqlHandleQry code)
 
         return ()

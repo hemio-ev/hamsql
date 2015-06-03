@@ -1,7 +1,7 @@
 module Sql.Statement.Drop where
 
 import Sql
-import Parser
+import Parser.Basic
 
 stmtDropRole :: String -> SqlStatement
 stmtDropRole role = SqlStmt SqlDropRole (SqlName role) $ "DROP ROLE \"" ++ role ++ "\""

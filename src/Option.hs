@@ -112,8 +112,8 @@ parserOptUpgrade :: Parser OptUpgrade
 parserOptUpgrade = OptUpgrade
     <$> boolFlag
         (long "do-not-delete-data"
-        <> short 's'
-        <> help "Do not perform table/column deletion"
+        <> short 'n'
+        <> help "NOT IMPLEMENTED: Do not perform table/column deletion (CURRENTLY NO EFFECT!)"
         )
 
 -- Command Doc
