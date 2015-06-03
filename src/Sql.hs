@@ -50,6 +50,8 @@ data SqlStatementType =
   SqlDropColumn |
   SqlDropTable |
   SqlDropFunction |
+  -- SEQUENCE
+  SqlCreateSequence |
   -- TABLE
   SqlCreateTable |
   SqlAddColumn |
@@ -57,6 +59,8 @@ data SqlStatementType =
   SqlDropColumnDefault |
   SqlAlterColumn |
   SqlAddTableContraint |
+  -- ALTER SEQUENCE
+  SqlAlterSequence |
   -- FUNCTION
   SqlDropDomain |
   SqlDropType |

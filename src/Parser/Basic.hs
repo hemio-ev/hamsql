@@ -50,6 +50,8 @@ forceToJson s = do
 
 -- SqlCode (right now only SqlName)
 
+unsafePlainName (SqlName n) = n
+
 instance Eq SqlName where
   (==) x y = toSql x == toSql y
 

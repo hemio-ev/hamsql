@@ -18,16 +18,18 @@ import Parser.Table
 import Parser.Type
 import Utils
 import Sql
+import Sql.Statement.Commons
 
 import Data.Maybe
 import Data.List
 import Data.String.Utils (replace)
 
+import Sql.Statement.CreateSequence
+import Sql.Statement.CreateTable
+
 emptyName = SqlName ""
 
-stmtCommentOn :: SqlCode a => String -> a -> String -> SqlStatement
-stmtCommentOn on obj com = SqlStmt SqlComment (SqlName $ toSql obj) $
-  "COMMENT ON " ++ on ++ " " ++ toSql obj ++ " IS " ++ toSqlString com
+
 
 sqlAddTransact :: [SqlStatement] -> [SqlStatement]
 sqlAddTransact xs = 
@@ -85,7 +87,8 @@ getModuleStatements opts s m = debug opts "stmtCreateSchema" $
   concat (maybeMap (getTypeStatements opts s m) (moduleTypes m)) ++
   concat (maybeMap (getRoleStatements opts s) (moduleRoles m)) ++
   concat (maybeMap (getFunctionStatements opts s m) (moduleFunctions m)) ++
-  concat (maybeMap (stmtsCreateTable opts s m) (moduleTables m))
+  concat (maybeMap (createTable opts s m) (moduleTables m)) ++
+  concat (maybeMap (createSequence opts s m) (moduleSequences m))
 
   where
     postInst Nothing = SqlStmtEmpty
@@ -111,161 +114,6 @@ getModuleStatements opts s m = debug opts "stmtCreateSchema" $
         privSequenceAll,
         privExecuteAll
       ]
-
--- Table
-
-stmtsCreateTable :: OptCommon -> Setup -> Module -> Table -> [SqlStatement]
-stmtsCreateTable opts setup m t = debug opts "stmtCreateTable" $
-    [
-    -- table with columns
-    stmtCreateTable,
-    -- table comment
-    stmtCommentOn "TABLE" intName (tableDescription t)
-    ] ++
-    map stmtAddColumn (tableColumns t) ++
-    map stmtAlterColumnType (tableColumns t) ++
-    map stmtDropDefault (tableColumns t) ++
-    map stmtAddColumnDefault (tableColumns t) ++
-    map stmtAlterColumnNull (tableColumns t) ++
-    concat (map stmtAddColumnCheck (tableColumns t)) ++
-    maybeMap stmtCheck (tableChecks t) ++
-
-    -- column comments
-    map (\c -> stmtCommentOn "COLUMN"
-            (intName <.> columnName c) 
-            (columnDescription c)) (tableColumns t) ++
-    -- grant rights to roles
-    maybeMap (sqlGrant "SELECT") (tablePrivSelect t) ++
-    maybeMap (sqlGrant "UPDATE") (tablePrivUpdate t) ++
-    maybeMap (sqlGrant "INSERT") (tablePrivInsert t) ++
-    maybeMap (sqlGrant "DELETE") (tablePrivDelete t) ++
-    -- primary key
-    [sqlAddPrimaryKey (tablePrimaryKey t)] ++
-    -- mult column unique
-    maybeMap sqlUniqueConstraint (tableUnique t) ++
-    -- single column FKs (references)
-    map sqlAddForeignKey (tableColumns t) ++
-    -- inheritance
-    maybeMap sqlAddInheritance (tableInherits t) ++
-    -- multi column unique constraints
-    map sqlColumnUnique (tableColumns t) ++
-    -- multi column FKs
-    maybeMap sqlAddForeignKey' (tableForeignKeys t)
-
-    where
-        intName = (moduleName m) <.> tableName t 
-      
-        stmtCreateTable = SqlStmt SqlCreateTable intName $
-          "CREATE TABLE " ++ toSql intName ++ " ()"
-              
-        stmtCheck c = SqlStmt SqlAddTableContraint intName $
-          "ALTER TABLE " ++ toSql intName ++
-          " ADD CONSTRAINT " ++ name (checkName c) ++ " CHECK (" ++ checkCheck c ++ ")"
-                
-        -- COLUMNS
-
-        sqlAlterColumn c@(Column {}) =
-            "ALTER TABLE " ++ toSql intName ++
-            " ALTER COLUMN " ++ toSql (columnName c) ++ " "
-        sqlAlterColumn _ = err "ColumnTemplates should not be present in SQL parsing"
-      
-        stmtAddColumn c@(Column {}) = SqlStmt SqlAddColumn (intName <.> columnName c) $
-            "ALTER TABLE " ++ toSql intName ++
-            " ADD COLUMN " ++ toSql (columnName c) ++ " " ++ toSql (columnType c)
-            
-        stmtAlterColumnType c
-          | toSql (columnType c) == "SERIAL" = SqlStmtEmpty
-          | otherwise = SqlStmt SqlAlterColumn intName $
-            sqlAlterColumn c ++ "SET DATA TYPE " ++ toSql (columnType c)
-        
-        stmtDropDefault c = SqlStmt SqlDropColumnDefault intName $
-          sqlAlterColumn c ++ "DROP DEFAULT"
-        
-        stmtAddColumnCheck c = maybeMap stmtCheck (columnChecks c)
-        
-        stmtAlterColumnNull c = SqlStmt SqlAlterColumn intName $
-            sqlAlterColumn c ++ sqlSetNull (columnNull c) 
-          where
-            sqlSetNull Nothing = "SET NOT NULL"
-            sqlSetNull (Just False) = "SET NOT NULL"
-            sqlSetNull (Just True) = "DROP NOT NULL"
-        
-        stmtAddColumnDefault c = sqlDefault (columnDefault c)
-         where
-          sqlDefault Nothing     = SqlStmtEmpty
-          sqlDefault (Just d)    = SqlStmt SqlAddDefault (intName <.> columnName c) $
-            sqlAlterColumn c ++ "SET DEFAULT " ++ d
-        
-        -- SERIAL
-        
---        CREATE SEQUENCE tablename_colname_seq;
---CREATE TABLE tablename (
---    colname integer NOT NULL DEFAULT nextval('tablename_colname_seq')
---);
---ALTER SEQUENCE tablename_colname_seq OWNED BY tablename.colname;
-        
-        -- PRIMARY KEY
-
-        sqlAddPrimaryKey :: [SqlName] -> SqlStatement
-        sqlAddPrimaryKey ks = SqlStmt SqlCreatePrimaryKeyConstr intName $
-          "ALTER TABLE " ++ toSql intName ++
-          " ADD CONSTRAINT " ++ name (SqlName "primary_key") ++ 
-          " PRIMARY KEY (" ++ join ", " (map toSql ks) ++ ")"
-            
-        -- TODO: Make the constraint name unique
-        sqlUniqueConstraint :: [SqlName] -> SqlStatement
-        sqlUniqueConstraint ks = SqlStmt SqlCreateUniqueConstr intName $
-          "ALTER TABLE " ++ toSql intName ++
-          " ADD CONSTRAINT " ++ name (SqlName "unique") ++
-          " UNIQUE (" ++ join ", " (map toSql ks) ++ ")"
-
-        sqlCheck c =
-            " CONSTRAINT " ++ name (checkName c) ++ " CHECK (" ++ checkCheck c ++ ")"
-
-        sqlAddForeignKey :: Column -> SqlStatement
-        sqlAddForeignKey c@(Column { columnReferences = Nothing }) =
-          SqlStmtEmpty
-        sqlAddForeignKey c@(Column { columnReferences = (Just ref) }) =
-          SqlStmt SqlCreateForeignKeyConstr intName $
-            "ALTER TABLE " ++ toSql intName ++
-            " ADD CONSTRAINT " ++ name (columnName c) ++
-            " FOREIGN KEY (" ++ toSql (columnName c) ++ ")" ++
-            " REFERENCES " ++ toSql' (init $ expSqlName ref) ++
-            " (" ++ toSql (last $ expSqlName ref) ++ ")" ++
-            sqlOnRefUpdate (columnOnRefUpdate c) ++
-            sqlOnRefDelete (columnOnRefDelete c)
-            
-        sqlAddForeignKey' :: ForeignKey -> SqlStatement
-        sqlAddForeignKey' fk = SqlStmt SqlCreateForeignKeyConstr intName $
-            "ALTER TABLE " ++ toSql intName ++
-            " ADD CONSTRAINT " ++ name (tableName t // foreignkeyName fk) ++
-            " FOREIGN KEY (" ++ join ", " (map toSql (foreignkeyColumns fk)) ++ ")" ++
-            " REFERENCES " ++ toSql (foreignkeyRefTable fk) ++
-            " (" ++ join ", " (map toSql $ foreignkeyRefColumns fk) ++ ")" ++
-            sqlOnRefUpdate (foreignkeyOnUpdate fk) ++
-            sqlOnRefDelete (foreignkeyOnDelete fk)              
-                
-        sqlOnRefUpdate Nothing = ""
-        sqlOnRefUpdate (Just a) = " ON UPDATE " ++ a
-        sqlOnRefDelete Nothing = ""
-        sqlOnRefDelete (Just a) = " ON DELETE " ++ a
-
-        sqlGrant right role = SqlStmt SqlPriv intName ("GRANT " ++ right ++ " ON TABLE " ++
-            toSql (tableName t) ++ " TO " ++ prefixedRole setup role)
-
-        sqlAddInheritance :: SqlName -> SqlStatement
-        sqlAddInheritance n = SqlStmt SqlAlterTable intName $
-          "ALTER TABLE " ++ toSql intName ++ " INHERIT " ++ toSql n
-                
-        sqlColumnUnique c@(Column{ columnUnique = (Just True) }) = SqlStmt SqlCreateUniqueConstr intName $
-          "ALTER TABLE " ++ toSql intName ++
-            " ADD CONSTRAINT " ++ name (columnName c) ++ 
-            " UNIQUE (" ++ toSql (columnName c) ++ ")"
-        sqlColumnUnique _ = SqlStmtEmpty
-        
-        -- tools
-
-        name a = toSql (SqlName "TABLE_" // tableName t // SqlName "_" // a)
 
 -- Function
 
@@ -450,5 +298,4 @@ getRoleStatements opts setup r =
 
         prefix role = prefixedRole setup role
 
-prefixedRole :: Setup -> SqlName -> String
-prefixedRole setup role = toSql (setupRolePrefix' setup // role)
+

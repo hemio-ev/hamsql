@@ -17,7 +17,7 @@ data Sequence = Sequence {
     sequenceMinValue :: Maybe Int,
     sequenceMaxValue :: Maybe Int,
     sequenceStartValue :: Maybe Int,
-    -- sequenceCache :: Maybe Int,
+    sequenceCache :: Maybe Int,
     sequenceCycle :: Maybe Bool,
     -- PostgreSQL extension
     sequenceOwnedByColumn :: Maybe SqlName
