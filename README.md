@@ -1,4 +1,4 @@
-hamsql
+HamSql
 ======
 
 Interpreter for SQL-structure definitions in Yaml (YamSql)
@@ -27,3 +27,13 @@ With
 
 you can install one remaining custom lib and check the install status of the above ones.
 
+Finally you need cabal (~500 MB)
+
+    apt-get install cabal-install
+
+Now you can
+
+    cabal update
+    cabal sandbox init
+    cabal install --only-dependencies
+    cabal build
