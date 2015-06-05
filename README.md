@@ -19,7 +19,7 @@ Url package (see `./dev-setup.bash` below!)
 
 You can install some of the required libraries from debian packages (jessie)
 
-    apt-get install haskell-platform libghc-yaml-dev libghc-missingh-dev libghc-pandoc-dev libghc-hdbc-postgresql-dev
+    apt-get install haskell-platform libghc-yaml-dev libghc-missingh-dev libghc-pandoc-dev libghc-postgresql-simple-dev
 
 With
 
