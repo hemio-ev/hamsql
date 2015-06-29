@@ -19,7 +19,7 @@ data Table = Table {
   tableDescription  :: String,
   tableColumns      :: [Column],
   tablePrimaryKey   :: [SqlName],
-  tableUnique       :: Maybe [[SqlName]],
+  tableUnique       :: Maybe [UniqueKey],
   tableForeignKeys  :: Maybe [ForeignKey],
   tableChecks       :: Maybe [Check],
   tableInherits     :: Maybe [SqlName],
@@ -131,10 +131,17 @@ applyColumnTpl tmp c = Column {
     maybeRight' :: a -> Maybe a -> a
     maybeRight' x Nothing = x
     maybeRight' _ (Just y) = y
-      
+
+data UniqueKey = UniqueKey {
+  uniquekeyName    :: SqlName,
+  uniquekeyColumns :: [SqlName]
+} deriving (Generic, Show, Typeable, Data)
+instance FromJSON UniqueKey where parseJSON = strictParseYaml
+instance ToJSON UniqueKey where toJSON = genericToJSON myOpt
+
 data ForeignKey = ForeignKey {
   foreignkeyName        :: SqlName,
-  foreignkeyColumns :: [SqlName],
+  foreignkeyColumns     :: [SqlName],
   foreignkeyRefTable    :: SqlName,
   foreignkeyRefColumns  :: [SqlName],
   foreignkeyOnDelete    :: Maybe String,

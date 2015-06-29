@@ -130,12 +130,11 @@ createTable opts setup m t = debug opts "stmtCreateTable" $
           " ADD CONSTRAINT " ++ name (SqlName "primary_key") ++ 
           " PRIMARY KEY (" ++ join ", " (map toSql ks) ++ ")"
             
-        -- TODO: Make the constraint name unique
-        sqlUniqueConstraint :: [SqlName] -> SqlStatement
+        sqlUniqueConstraint :: UniqueKey -> SqlStatement
         sqlUniqueConstraint ks = SqlStmt SqlCreateUniqueConstr intName $
           "ALTER TABLE " ++ toSql intName ++
-          " ADD CONSTRAINT " ++ name (SqlName "unique") ++
-          " UNIQUE (" ++ join ", " (map toSql ks) ++ ")"
+          " ADD CONSTRAINT " ++ name (uniquekeyName ks) ++
+          " UNIQUE (" ++ join ", " (map toSql (uniquekeyColumns ks)) ++ ")"
 
         sqlCheck c =
             " CONSTRAINT " ++ name (checkName c) ++ " CHECK (" ++ checkCheck c ++ ")"
