@@ -106,6 +106,7 @@ createTable opts setup m t = debug opts "stmtCreateTable" $
           | otherwise = c
           
         columnIsSerial c = toSql (columnType c) == "SERIAL"
+        -- do not change this, it is PostgreSQL internal convention
         serialSequenceName c =
           tableName t // SqlName "_" // columnName c // SqlName "_seq"
         
@@ -155,7 +156,7 @@ createTable opts setup m t = debug opts "stmtCreateTable" $
         sqlAddForeignKey' :: ForeignKey -> SqlStatement
         sqlAddForeignKey' fk = SqlStmt SqlCreateForeignKeyConstr intName $
             "ALTER TABLE " ++ toSql intName ++
-            " ADD CONSTRAINT " ++ name (tableName t // foreignkeyName fk) ++
+            " ADD CONSTRAINT " ++ name (foreignkeyName fk) ++
             " FOREIGN KEY (" ++ join ", " (map toSql (foreignkeyColumns fk)) ++ ")" ++
             " REFERENCES " ++ toSql (foreignkeyRefTable fk) ++
             " (" ++ join ", " (map toSql $ foreignkeyRefColumns fk) ++ ")" ++
@@ -182,5 +183,5 @@ createTable opts setup m t = debug opts "stmtCreateTable" $
         
         -- tools
 
-        name a = toSql (SqlName "TABLE_" // tableName t // SqlName "_" // a)
+        name a = toSql (tableName t // SqlName "-" // a)
 
