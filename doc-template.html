@@ -4,24 +4,20 @@
 $for(modules)$
 
 <h1 id="MODULE-$modules.name$">
-    $modules.name$
+    Module "$modules.name$"
 </h1>
 
 <pre>$modules.description$</pre>
-
-<p>Sources: <tt>$modules.internal.load_path$</tt></p>
 
     $if(modules.tables)$
     <h2>Tables</h2>
     
     $for(modules.tables)$
         <h3 id="TABLE-$modules.name$.$modules.tables.name$">
-            $modules.tables.name$
+            Table "$modules.name$"."$modules.tables.name$"
         </h3>
 
         <pre>$modules.tables.description$</pre>
-
-        <p>Source: <tt>$modules.tables.internal.load_path$</tt></p>
 
         <ul>
             <li>Primary key:
@@ -70,10 +66,11 @@ $for(modules)$
             $endif$
         </ul>
 
+        <h4>Columns</h4>
         $for(modules.tables.columns)$
 
-            <h4 id="COLUMN-$modules.name$.$modules.tables.name$.$modules.tables.columns.name$">$modules.tables.columns.name$</h4> 
-            $modules.tables.columns.description$
+            <h5 id="COLUMN-$modules.name$.$modules.tables.name$.$modules.tables.columns.name$">$modules.tables.columns.name$</h5> 
+            <pre>$modules.tables.columns.description$</pre>
 
             <ul>
                 <li>Type: $modules.tables.columns.type$</li>
@@ -107,13 +104,11 @@ $for(modules)$
     $for(modules.functions)$
 
         <h3 id ="FUNCTION-$modules.name$.$modules.functions.name$">
-            $modules.functions.name$
+            Function "$modules.name$"."$modules.functions.name$"
         </h3>
 
         <pre>$modules.functions.description$</pre>
        
-        <p>Source: <tt>$modules.functions.internal.load_path$</tt></p>
-
         <ul>
 
             <li>Parameters:
@@ -201,7 +196,7 @@ $for(modules)$
     $for(modules.domains)$
 
         <h3 id ="DOMAIN-$modules.name$.$modules.domain.name$">
-            $modules.domains.name$
+            Domain "$modules.name$"."$modules.domains.name$"
         </h3>
 
         <pre>$modules.domains.description$</pre>
@@ -214,7 +209,7 @@ $for(modules)$
     $for(modules.roles)$
 
         <h3 id ="ROLE-$modules.roles.name$">
-            $modules.roles.name$
+            Role "$modules.roles.name$"
         </h3>
         $modules.roles.description$
         <ul>
