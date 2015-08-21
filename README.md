@@ -12,7 +12,8 @@ Install haskell compiler and required libraries:
     apt-get install haskell-platform
     apt-get install libghc-missingh-dev libghc-optparse-applicative-dev \
                     libghc-pandoc-dev libghc-postgresql-simple-dev libghc-yaml-dev
-
+    apt-get install make
+    
 Run the script
 
     ./dev-setup.bash
