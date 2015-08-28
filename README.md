@@ -9,7 +9,7 @@ Interpreter for SQL-structure definitions in Yaml (YamSql)
 
 Install haskell compiler and required libraries:
 
-    apt-get install haskell-platform
+    apt-get install haskell-platform make
     apt-get install libghc-missingh-dev libghc-optparse-applicative-dev \
                     libghc-pandoc-dev libghc-postgresql-simple-dev libghc-yaml-dev
 

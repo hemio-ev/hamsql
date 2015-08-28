@@ -1,3 +1,8 @@
+-- This file is part of HamSql
+--
+-- Copyright 2014-2015 by it's authors. 
+-- Some rights reserved. See COPYING, AUTHORS.
+
 import Options.Applicative (execParser)
 import Network.URL
 import Data.List
