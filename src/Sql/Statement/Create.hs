@@ -131,7 +131,9 @@ getFunctionStatements opts setup m f =
         sqlGrantExecute u = "GRANT EXECUTE ON FUNCTION \n" ++
             sqlFunctionIdentifier ++ "\nTO " ++ prefixedRole setup u
 
-        stmtCreateFunction = SqlStmt SqlCreateFunction (functionName f) $
+        stmtCreateFunction = SqlStmtFunction SqlCreateFunction (functionName f)
+            (maybeMap variableType (functionParameters f))
+            $
             "CREATE OR REPLACE FUNCTION " ++ sqlFunctionIdentifierDef ++
             "\n" ++
             "RETURNS " ++ toSql (functionReturns f) ++ sqlReturnsColumns (functionReturnsColumns f) ++

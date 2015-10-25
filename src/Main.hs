@@ -75,3 +75,4 @@ useSqlStmts optDb stmts
   | optPrint optDb = putStrLn $ sqlPrinter $ sqlAddTransact stmts
   | optEmulate optDb = pgsqlExec (getConUrl optDb) stmts
   | otherwise = pgsqlExec (getConUrl optDb) stmts
+

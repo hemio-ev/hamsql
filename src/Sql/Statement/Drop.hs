@@ -2,19 +2,22 @@ module Sql.Statement.Drop where
 
 import Sql
 import Parser.Basic
+import Utils
 
-stmtDropRole :: String -> SqlStatement
-stmtDropRole role = SqlStmt SqlDropRole (SqlName role) $ "DROP ROLE \"" ++ role ++ "\""
+stmtDropRole :: SqlName -> SqlStatement
+stmtDropRole role = SqlStmt SqlDropRole role $ "DROP ROLE " ++ toSql role
 
-stmtDropFunction :: String -> String -> String -> SqlStatement
-stmtDropFunction schema function args = SqlStmt SqlDropFunction (SqlName "") $
-      "DROP FUNCTION " ++ toSql(SqlName $ schema ++ "." ++ function) ++
-      "(" ++ args ++ ") CASCADE"
+stmtDropFunction :: SqlName -> SqlName -> [SqlType] -> SqlStatement
+stmtDropFunction schema function args =
+  SqlStmtFunction SqlDropFunction function args $
+      "DROP FUNCTION " ++ toSql(schema <.> function) ++
+      "(" ++ (join ", " (map toSql args)) ++ ")"
+      --" CASCADE"
       
 stmtDropTableConstraint schema table constraint = SqlStmt SqlDropTableConstraint
   (SqlName "") $
       "ALTER TABLE " ++ toSql(SqlName $ schema ++ "." ++ table) ++
-      " DROP CONSTRAINT IF EXISTS " ++ toSql(SqlName constraint) ++ " CASCADE"
+      " DROP CONSTRAINT IF EXISTS " ++ toSql(SqlName constraint) -- ++ " CASCADE"
       
 stmtDropDomainConstraint schema domain constraint = SqlStmt SqlDropDomainConstraint
   (SqlName schema <.> SqlName domain) $

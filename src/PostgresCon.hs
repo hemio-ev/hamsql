@@ -10,7 +10,7 @@ module PostgresCon where
 
 import Control.Exception
 import Database.PostgreSQL.Simple
-import Database.PostgreSQL.Simple.Internal
+import Database.PostgreSQL.Simple.Types (PGArray, fromPGArray)
 import Network.URL
 import qualified Data.ByteString.Char8 as B
 import Data.String
@@ -23,6 +23,8 @@ import Sql
 import Sql.Statement.Create
 import Sql.Statement.Drop
 import Utils
+
+import Data.Vector (fromList)
 
 toQry :: String -> Query
 toQry = fromString
@@ -57,36 +59,41 @@ sqlManageSchemaJoin schemaid =
       "  ON " ++ schemaid ++ " = n.oid AND " ++
       "  NOT n.nspname LIKE 'pg_%' AND " ++
       "  NOT n.nspname IN ('information_schema', 'public') "    
-    
+
+-- DROP ROLE statements for all roles on the server prefixed with `prefix`
 pgsqlDeleteRoleStmt :: URL -> String -> IO [SqlStatement]
 pgsqlDeleteRoleStmt url prefix = do
   conn <- pgsqlConnectUrl url
 
-  result :: [Only String] <- query_ conn $ toQry
-    ("SELECT rolname FROM pg_roles WHERE rolname LIKE '" ++ prefix ++ "%'")
+  result <- query conn "SELECT rolname FROM pg_roles WHERE rolname LIKE ?" $
+    Only $ prefix ++ "%"
   let users = result
   
-  return $ map statement users
+  return $ map toStmt users
   
   where
-    -- statement :: (TextBl.ByteString) -> SqlStatement
-    statement (Only user) = stmtDropRole user
+    toStmt :: Only String -> SqlStatement
+    toStmt (Only user) = stmtDropRole $ SqlName user
 
+-- DROP FUNCTION
 pgsqlDeleteFunctionStmt :: Connection -> IO [SqlStatement]
 pgsqlDeleteFunctionStmt conn =
   do
     result <- query_ conn $ toQry $
-      "SELECT n.nspname, p.proname, oidvectortypes(p.proargtypes) " ++
+      "SELECT n.nspname, p.proname, " ++
+      -- This part of the query includes a workaround for
+      -- <https://github.com/lpsmith/postgresql-simple/issues/166>
+      "ARRAY(SELECT UNNEST(p.proargtypes::regtype[]::varchar[])) " ++
       "FROM pg_proc AS p " ++
       (sqlManageSchemaJoin "p.pronamespace")
       
-    return $ map f result
+    return $ map toStmt result
     
   where
-    f :: (String, String, String) -> SqlStatement
-    f (schema, function, args) = stmtDropFunction schema function args
+    toStmt :: (SqlName, SqlName, PGArray SqlType) -> SqlStatement
+    toStmt (schema, function, args) = stmtDropFunction schema function (fromPGArray args)
 
-      
+-- DROP TABLE CONSTRAINT
 pgsqlDeleteTableConstraintStmt :: Connection -> IO [SqlStatement]
 pgsqlDeleteTableConstraintStmt conn =
   do
@@ -102,7 +109,8 @@ pgsqlDeleteTableConstraintStmt conn =
   where
     f :: (String, String, String) -> SqlStatement
     f (schema, table, constraint) = stmtDropTableConstraint schema table constraint
-      
+
+-- DROP DOMAIN CONSTRAINT
 pgsqlDeleteDomainConstraintStmt :: Connection -> IO [SqlStatement]
 pgsqlDeleteDomainConstraintStmt conn =
   do
@@ -118,17 +126,18 @@ pgsqlDeleteDomainConstraintStmt conn =
   where
     f :: (String, String, String) -> SqlStatement
     f (schema, domain, constraint) = stmtDropDomainConstraint schema domain constraint
-      
+
+-- All DROP statements
 pgsqlDeleteAllStmt :: Connection -> IO [SqlStatement]
 pgsqlDeleteAllStmt conn = do
-  function <- pgsqlDeleteFunctionStmt conn
   table_constraints <- pgsqlDeleteTableConstraintStmt conn
   domain_constraints <- pgsqlDeleteDomainConstraintStmt conn
   
-  return $ function ++ table_constraints ++ domain_constraints
+  return $ table_constraints ++ domain_constraints
 
 -- List existing objects
 
+-- List TABLE
 pgsqlListTables :: Connection -> IO [SqlName]
 pgsqlListTables conn = do
   dat :: [(String,String)] <- query_ conn $ toQry $
@@ -141,7 +150,7 @@ pgsqlListTables conn = do
   where
     toSqlName (s,t) = (SqlName s) <.> SqlName t
 
-
+-- List TABLE COLUMN
 pgsqlListTableColumns :: Connection -> IO [(SqlName, SqlName)]
 pgsqlListTableColumns conn = do
   dat :: [(String, String, String)] <- query_ conn $ toQry $
@@ -154,14 +163,14 @@ pgsqlListTableColumns conn = do
   where
     toSqlName (s,t,u) = ((SqlName s) <.> SqlName t, SqlName u)
 
-    
+-- List DOMAIN
 pgsqlListDomains :: Connection -> IO [SqlName]
 pgsqlListDomains conn = do
   dat :: [(String,String)] <- query_ conn $ toQry $
     "SELECT domain_schema, domain_name" ++
     " FROM information_schema.domains" ++
     " WHERE domain_schema NOT IN ('information_schema', 'pg_catalog')"
-
+  
   return $ map toSqlName dat
   
   where
@@ -180,17 +189,37 @@ pgsqlListTypes conn = do
     toSqlName (s,t) = (SqlName s) <.> SqlName t
     
 -- Fix missing or spare objects
-  
+
 pgsqlCorrectTables :: Connection -> [SqlStatement] -> IO [SqlStatement]
 pgsqlCorrectTables conn stmtsInstall = do
   existingNames <- pgsqlListTables conn
-  let expected = filter (SqlCreateTable `typeEq`) stmtsInstall
+  let expected = filter (typeEq SqlCreateTable) stmtsInstall
   let existing = map (SqlCreateTable `replacesTypeOf`) $ map stmtDropTable existingNames
  
   let stmtsCreate =  expected \\ existing
   let stmtsDrop = map (SqlDropTable `replacesTypeOf`) $ existing \\ expected
   
   return $ stmtsCreate ++ stmtsDrop
+
+normalizedFuncStmt :: Connection -> SqlStatement -> IO SqlStatement
+normalizedFuncStmt conn (SqlStmtFunction t n p c) = do
+  x :: [(Int,Int)] <- query conn "SELECT ?, ?" (1::Int, 2::Int)
+  p' :: [Only (PGArray SqlType)] <- query conn "SELECT ?::regtype[]::varchar[]" (Only $ fromList (map toSql p))
+  
+  return $ SqlStmtFunction t n (fromPGArray $ map fromOnly p'!!0) c
+  
+
+pgsqlCorrectFunctions :: Connection -> [SqlStatement] -> IO [SqlStatement]
+pgsqlCorrectFunctions conn xs = do
+  -- pgsqlDeleteFunctionStmt conn
+  drop <- pgsqlDeleteFunctionStmt conn
+  let create = filter (typeEq SqlCreateFunction) xs
+
+  createNormalized <- sequence $ map (normalizedFuncStmt conn) create
+  let dropFiltered = drop \\ (map (SqlDropFunction `replacesTypeOf`) createNormalized)
+  -- let d = map (normalizedFuncStmt conn) expected
+  
+  return $ create ++ dropFiltered
 
 pgsqlCorrectTableColumns :: Connection -> [SqlStatement] -> IO [SqlStatement]
 pgsqlCorrectTableColumns conn stmtsInstall = do
@@ -219,7 +248,7 @@ pgsqlCorrectTypes conn stmtsInstall = do
   existingNames <- pgsqlListTypes conn
   let expected = filter (SqlCreateType `typeEq`) stmtsInstall
   let existing = map (SqlCreateType `replacesTypeOf`) $ map stmtDropType existingNames
- 
+  
   let stmtsCreate =  expected \\ existing
   let stmtsDrop = map (SqlDropType `replacesTypeOf`) $ existing \\ expected
   
@@ -231,8 +260,9 @@ pgsqlUpdateFragile conn stmtsInstall = do
   columns <- pgsqlCorrectTableColumns conn stmtsInstall
   domains <- pgsqlCorrectDomains conn stmtsInstall
   types <- pgsqlCorrectTypes conn stmtsInstall
+  functions <- pgsqlCorrectFunctions conn stmtsInstall
    
-  return $ tables ++ columns ++ domains ++ types
+  return $ tables ++ columns ++ domains ++ types ++ functions
   
 -- DB Utils
   
@@ -285,3 +315,4 @@ pgsqlExecIntern doCommit connUrl xs = do
       commit conn
     else
       rollback conn
+
