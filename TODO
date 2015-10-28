@@ -1,8 +1,0 @@
-- Implement Parser.columnCheck
-- Ensure that every module is only loaded once.
-  Giving 2x the same module in setup.yaml
-  can lead to strange errors
-- Maybe a flag for strict parsing. Non-scrict turns
-  error messages for unkown keys to warnings
-- Maybe a flag for sloppy parsing. Erronouse objects
-  are ignored and the next object is parsed

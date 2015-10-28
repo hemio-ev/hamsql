@@ -104,16 +104,15 @@ parserOptInstall = OptInstall
 
 -- Command Upgrade
 data OptUpgrade = OptUpgrade {
-    optDeleteData :: Bool
+    optPermitDataDeletion :: Bool
 }
     deriving Show
 
 parserOptUpgrade :: Parser OptUpgrade
 parserOptUpgrade = OptUpgrade
     <$> boolFlag
-        (long "do-not-delete-data"
-        <> short 'n'
-        <> help "NOT IMPLEMENTED: Do not perform table/column deletion (CURRENTLY NO EFFECT!)"
+        (long "perimit-data-deletion"
+        <> help "Permit deletion of columns or tables"
         )
 
 -- Command Doc
@@ -126,18 +125,17 @@ data OptDoc = OptDoc {
 parserOptDoc :: Parser OptDoc
 parserOptDoc = OptDoc
     <$> strOption
-        (
-        long "format" <> 
+        (long "format" <> 
         short 'f' <> 
         val "html" <> 
         completeWith ["dot","html"]
         )
     <*> strOption
-        (
-        long "template" <> 
+        (long "template" <> 
         short 't' <> 
         val "doc-template" <>
         action "file -X '!*.html'" <>
         action "file -X '!*.dot'" <>
         action "directory"
         )
+        

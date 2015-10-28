@@ -91,7 +91,7 @@ pgsqlDeleteFunctionStmt conn =
     
   where
     toStmt :: (SqlName, SqlName, PGArray SqlType) -> SqlStatement
-    toStmt (schema, function, args) = stmtDropFunction schema function (fromPGArray args)
+    toStmt (schema, function, args) = stmtDropFunction (schema, function, (fromPGArray args))
 
 -- DROP TABLE CONSTRAINT
 pgsqlDeleteTableConstraintStmt :: Connection -> IO [SqlStatement]
@@ -107,8 +107,8 @@ pgsqlDeleteTableConstraintStmt conn =
     return $ map f result
     
   where
-    f :: (String, String, String) -> SqlStatement
-    f (schema, table, constraint) = stmtDropTableConstraint schema table constraint
+    f :: (SqlName, SqlName, SqlName) -> SqlStatement
+    f = stmtDropTableConstraint
 
 -- DROP DOMAIN CONSTRAINT
 pgsqlDeleteDomainConstraintStmt :: Connection -> IO [SqlStatement]
@@ -124,8 +124,8 @@ pgsqlDeleteDomainConstraintStmt conn =
     return $ map f result
     
   where
-    f :: (String, String, String) -> SqlStatement
-    f (schema, domain, constraint) = stmtDropDomainConstraint schema domain constraint
+    f :: (SqlName, SqlName, SqlName) -> SqlStatement
+    f = stmtDropDomainConstraint
 
 -- All DROP statements
 pgsqlDeleteAllStmt :: Connection -> IO [SqlStatement]
@@ -254,15 +254,19 @@ pgsqlCorrectTypes conn stmtsInstall = do
   
   return $ stmtsCreate ++ stmtsDrop
   
-pgsqlUpdateFragile :: Connection -> [SqlStatement] -> IO [SqlStatement]
-pgsqlUpdateFragile conn stmtsInstall = do
+pgsqlUpdateFragile :: OptUpgrade -> Connection -> [SqlStatement] -> IO [SqlStatement]
+pgsqlUpdateFragile optUpgrade conn stmtsInstall = do
   tables <- pgsqlCorrectTables conn stmtsInstall
   columns <- pgsqlCorrectTableColumns conn stmtsInstall
   domains <- pgsqlCorrectDomains conn stmtsInstall
   types <- pgsqlCorrectTypes conn stmtsInstall
   functions <- pgsqlCorrectFunctions conn stmtsInstall
-   
-  return $ tables ++ columns ++ domains ++ types ++ functions
+
+  return $ if (optPermitDataDeletion optUpgrade)
+    then 
+      tables ++ columns ++ domains ++ types ++ functions
+    else filter (\t -> typeEq SqlDropTable t || typeEq SqlDropColumn t)
+      tables ++ columns ++ domains ++ types ++ functions
   
 -- DB Utils
   
