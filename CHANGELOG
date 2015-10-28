@@ -1,2 +1,5 @@
+v0.5.0
+  - Adds proper deletion of obsolete functions
+  - Changes to no data deletion as default for upgrades
 v0.4.1
   - First release used in production
