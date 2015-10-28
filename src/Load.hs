@@ -37,6 +37,7 @@ loadSetup opts filePath = do
   return $ applyTpl setup'
 
 initSetupInternal s' = s' {
+  setupModules = removeDuplicates $ setupModules s',
   xsetupInternal = Just SetupInternal { setupModuleData = [] }
 }
 

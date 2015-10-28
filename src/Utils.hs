@@ -7,7 +7,7 @@ module Utils where
 
 import Data.Char
 import Debug.Trace
-import Data.List (intercalate)
+import Data.List (intercalate, sort, group)
 import System.Exit
 import System.IO
 import System.IO.Unsafe
@@ -28,7 +28,7 @@ warn' = msg' "warning"
 msg typ xs ys = unsafePerformIO $ do
   msg' typ xs
   return ys
-  
+
 msg' typ xs = hPutStrLn stderr (typ ++ ": " ++ xs)
 
 debug opt
@@ -43,6 +43,9 @@ info opts xs = do
     msg' "debug" xs
   else
     return ()
+    
+removeDuplicates :: (Ord a) => [a] -> [a]
+removeDuplicates = map head . group . sort
 
 --- Maybe Utils
 
