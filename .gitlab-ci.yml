@@ -1,5 +1,7 @@
 build-hamsql:
-    script: make
+    script:
+        - make
+        - cp dist/build/hamsql/hamsql ./
     artifacts:
         paths:
-            - dist/build/hamsql/hamsql
+            - hamsql
