@@ -1,21 +1,21 @@
 -- This file is part of HamSql
 --
--- Copyright 2014-2015 by it's authors. 
+-- Copyright 2014-2015 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 
+{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE FlexibleContexts #-}
 
 module PostgresCon where
 
-import Control.Exception
-import Database.PostgreSQL.Simple
-import Database.PostgreSQL.Simple.Types (PGArray, fromPGArray)
-import Network.URL
-import qualified Data.ByteString.Char8 as B
-import Data.String
-import Data.List
+import           Control.Exception
+import qualified Data.ByteString.Char8            as B
+import           Data.List
+import           Data.String
+import           Database.PostgreSQL.Simple
+import           Database.PostgreSQL.Simple.Types (PGArray, fromPGArray)
+import           Network.URL
 
 import Option
 import Parser

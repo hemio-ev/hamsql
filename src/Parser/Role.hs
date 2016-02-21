@@ -1,12 +1,12 @@
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveGeneric      #-}
 
 module Parser.Role where
 
 import Data.Aeson.Types
-import GHC.Generics
 import Data.Data
 import Data.Typeable
+import GHC.Generics
 
 import Parser.Basic
 

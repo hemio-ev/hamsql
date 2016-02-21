@@ -1,37 +1,37 @@
 -- This file is part of HamSql
 --
--- Copyright 2014 by it's authors. 
+-- Copyright 2014 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE FlexibleContexts   #-}
+{-# LANGUAGE FlexibleInstances  #-}
+{-# LANGUAGE OverloadedStrings  #-}
 
 
 module Parser where
 
-import Control.Exception
-import Data.Typeable
-import Data.Yaml ()
-import Data.Aeson.Types
-import Data.Char
-import Data.Maybe (fromJust,fromMaybe)
-import Data.Data
-import Data.Text (unpack)
-import Data.List.Ordered (subset,minus,sort)
-import GHC.Generics
-import Data.List.Split (splitOn)
-import Data.HashMap.Strict (member,insert,keys)
-import System.IO
+import           Control.Exception
+import           Data.Aeson.Types
 import qualified Data.ByteString.Char8 as B
+import           Data.Char
+import           Data.Data
+import           Data.HashMap.Strict   (insert, keys, member)
+import           Data.List.Ordered     (minus, sort, subset)
+import           Data.List.Split       (splitOn)
+import           Data.Maybe            (fromJust, fromMaybe)
+import           Data.Text             (unpack)
+import           Data.Typeable
+import           Data.Yaml             ()
+import           GHC.Generics
+import           System.IO
 
-import Utils
 import Parser.Basic
 import Parser.Function
 import Parser.Module
 import Parser.Table
+import Utils
 
 -- Setup --
 

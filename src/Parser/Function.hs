@@ -1,5 +1,5 @@
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveGeneric      #-}
 
 module Parser.Function where
 

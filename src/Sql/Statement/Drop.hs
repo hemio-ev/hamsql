@@ -1,7 +1,7 @@
 module Sql.Statement.Drop where
 
-import Sql
 import Parser.Basic
+import Sql
 import Utils
 
 -- ROLE

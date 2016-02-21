@@ -1,6 +1,6 @@
 -- This file is part of HamSql
 --
--- Copyright 2014 by it's authors. 
+-- Copyright 2014 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 
 {-# LANGUAGE OverloadedStrings #-}
@@ -9,14 +9,14 @@
 
 module Documentation where
 
-import Data.Text
-import Data.Aeson
-import Text.Pandoc.Templates
-import GHC.Generics
-import Text.Pandoc
-import Data.Text.IO
+import           Data.Aeson
 import qualified Data.ByteString.Char8 as B
-import Text.Regex.Posix
+import           Data.Text
+import           Data.Text.IO
+import           GHC.Generics
+import           Text.Pandoc
+import           Text.Pandoc.Templates
+import           Text.Regex.Posix
 
 import Option
 import Parser

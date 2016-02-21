@@ -1,14 +1,14 @@
 -- This file is part of HamSql
 --
--- Copyright 2014 by it's authors. 
+-- Copyright 2014 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 
 module Utils where
 
 import Control.Monad
 import Data.Char
+import Data.List        (group, intercalate, sort)
 import Debug.Trace
-import Data.List (intercalate, sort, group)
 import System.Exit
 import System.IO
 import System.IO.Unsafe

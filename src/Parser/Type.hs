@@ -1,20 +1,20 @@
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveGeneric      #-}
 
 module Parser.Type where
 
 import Data.Aeson.Types
-import GHC.Generics
 import Data.Data
 import Data.Typeable
+import GHC.Generics
 
 import Parser.Basic
 import Utils
 
 data Type = Type {
-    typeName :: SqlName,
+    typeName        :: SqlName,
     typeDescription :: String,
-    typeElements :: [TypeElement]
+    typeElements    :: [TypeElement]
 } deriving (Generic, Show, Data, Typeable)
 instance FromJSON Type where parseJSON = strictParseYaml
 instance ToJSON Type where toJSON = genericToJSON myOpt

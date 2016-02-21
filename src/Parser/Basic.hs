@@ -1,23 +1,23 @@
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE FlexibleContexts   #-}
 
 module Parser.Basic where
 
-import Control.Exception
-import Data.Typeable
-import Data.Yaml ()
-import Data.Aeson.Types
-import Data.Char
-import Data.Maybe (fromJust,fromMaybe)
-import Data.Data
-import Data.Text (unpack)
-import Data.List.Ordered (subset,minus,sort)
-import GHC.Generics
-import Data.List.Split (splitOn)
-import Data.HashMap.Strict (member,insert,keys)
-import System.IO
+import           Control.Exception
+import           Data.Aeson.Types
 import qualified Data.ByteString.Char8 as B
+import           Data.Char
+import           Data.Data
+import           Data.HashMap.Strict   (insert, keys, member)
+import           Data.List.Ordered     (minus, sort, subset)
+import           Data.List.Split       (splitOn)
+import           Data.Maybe            (fromJust, fromMaybe)
+import           Data.Text             (unpack)
+import           Data.Typeable
+import           Data.Yaml             ()
+import           GHC.Generics
+import           System.IO
 
 import Utils
 

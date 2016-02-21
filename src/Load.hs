@@ -5,16 +5,18 @@
 
 module Load where
 
-import Control.Exception
-import Data.Yaml
+import           Control.Exception
+import           Control.Monad
+import           Data.Aeson.Types
 import qualified Data.ByteString.Char8 as B
-import System.FilePath.Posix (combine, dropFileName)
-import Text.Regex.Posix
-import System.Directory (doesFileExist, doesDirectoryExist, getDirectoryContents)
-import Data.Aeson.Types
-import Control.Monad
-import Data.List
+import           Data.List
+import           Data.Yaml
+import           System.Directory      (doesDirectoryExist, doesFileExist,
+                                        getDirectoryContents)
+import           System.FilePath.Posix (combine, dropFileName)
+import           Text.Regex.Posix
 
+import Option
 import Parser
 import Parser.Basic
 import Parser.Check
@@ -25,7 +27,6 @@ import Parser.Module
 import Parser.Role
 import Parser.Table
 import Parser.Type
-import Option
 import Utils
 
 loadSetup :: OptCommon -> FilePath -> IO Setup

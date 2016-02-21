@@ -1,11 +1,11 @@
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveGeneric      #-}
 
 module Parser.Trigger where
 
-import Data.Typeable
 import Data.Aeson.Types
 import Data.Data
+import Data.Typeable
 import GHC.Generics
 
 import Parser.Basic

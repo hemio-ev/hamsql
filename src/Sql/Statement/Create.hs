@@ -1,6 +1,6 @@
 -- This file is part of HamSql
 --
--- Copyright 2014-2015 by it's authors. 
+-- Copyright 2014-2015 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 
 module Sql.Statement.Create where
@@ -16,12 +16,12 @@ import Parser.Module
 import Parser.Role
 import Parser.Table
 import Parser.Type
-import Utils
 import Sql
 import Sql.Statement.Commons
+import Utils
 
-import Data.Maybe
 import Data.List
+import Data.Maybe
 import Data.String.Utils (replace)
 
 import Sql.Statement.CreateSequence
@@ -177,7 +177,7 @@ getFunctionStatements opts setup m f =
             sqlParamDefault Nothing = ""
             sqlParamDefault (Just x) = " DEFAULT " ++ x
 
-        -- If function returns a table, use service for field definition 
+        -- If function returns a table, use service for field definition
         sqlReturnsColumns cs
          | toSql (functionReturns f) == "TABLE" =
             " (\n" ++

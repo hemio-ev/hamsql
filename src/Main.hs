@@ -1,13 +1,13 @@
 -- This file is part of HamSql
 --
--- Copyright 2014-2015 by it's authors. 
+-- Copyright 2014-2015 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 
-import Options.Applicative (execParser)
-import Network.URL
+import Control.Monad       (when)
 import Data.List
-import Data.Text (unpack)
-import Control.Monad (when)
+import Data.Text           (unpack)
+import Network.URL
+import Options.Applicative (execParser)
 
 import Documentation
 import Load

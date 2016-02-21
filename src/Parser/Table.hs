@@ -1,18 +1,18 @@
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE OverloadedStrings  #-}
 
 module Parser.Table where
 
 import Data.Aeson.Types
-import GHC.Generics
 import Data.Data
+import Data.HashMap.Strict (insert, keys, member)
 import Data.Typeable
-import Data.HashMap.Strict (member,insert,keys)
+import GHC.Generics
 
 import Parser.Basic
-import Utils
 import Parser.Check
+import Utils
 
 data Table = Table {
   tableName         :: SqlName,
@@ -49,16 +49,16 @@ instance FromJSON TableTpl where parseJSON = strictParseYaml
 instance ToJSON TableTpl where toJSON = genericToJSON myOpt
 
 data Column = Column {
-    columnName            :: SqlName,
-    columnType            :: SqlType,
-    columnDescription     :: String,
-    columnDefault         :: Maybe String,
-    columnNull            :: Maybe Bool,
-    columnReferences      :: Maybe SqlName,
-    columnOnRefDelete     :: Maybe String,
-    columnOnRefUpdate     :: Maybe String,
-    columnUnique          :: Maybe Bool,
-    columnChecks          :: Maybe [Check]
+    columnName        :: SqlName,
+    columnType        :: SqlType,
+    columnDescription :: String,
+    columnDefault     :: Maybe String,
+    columnNull        :: Maybe Bool,
+    columnReferences  :: Maybe SqlName,
+    columnOnRefDelete :: Maybe String,
+    columnOnRefUpdate :: Maybe String,
+    columnUnique      :: Maybe Bool,
+    columnChecks      :: Maybe [Check]
 } | ColumnTpl {
     columntplTemplate     :: SqlName,
     columntplTemplateData :: Maybe TableColumnTpl,
@@ -87,17 +87,17 @@ addColumnDefaultTag (Object o) = Object $
    insert "tag" "column" o
 
 data TableColumnTpl = TableColumnTpl {
-    tablecolumntplTemplate     :: SqlName,
-    tablecolumntplName         :: SqlName,
-    tablecolumntplType         :: SqlType,
-    tablecolumntplDescription  :: String,
-    tablecolumntplDefault      :: Maybe String,
-    tablecolumntplNull         :: Maybe Bool,
-    tablecolumntplReferences   :: Maybe SqlName,
-    tablecolumntplOnRefDelete  :: Maybe String,
-    tablecolumntplOnRefUpdate  :: Maybe String,
-    tablecolumntplUnique       :: Maybe Bool,
-    tablecolumntplChecks       :: Maybe [Check]
+    tablecolumntplTemplate    :: SqlName,
+    tablecolumntplName        :: SqlName,
+    tablecolumntplType        :: SqlType,
+    tablecolumntplDescription :: String,
+    tablecolumntplDefault     :: Maybe String,
+    tablecolumntplNull        :: Maybe Bool,
+    tablecolumntplReferences  :: Maybe SqlName,
+    tablecolumntplOnRefDelete :: Maybe String,
+    tablecolumntplOnRefUpdate :: Maybe String,
+    tablecolumntplUnique      :: Maybe Bool,
+    tablecolumntplChecks      :: Maybe [Check]
 } deriving (Generic, Show, Typeable, Data)
 instance FromJSON TableColumnTpl where parseJSON = strictParseYaml
 instance ToJSON TableColumnTpl where toJSON = genericToJSON myOpt
@@ -140,12 +140,12 @@ instance FromJSON UniqueKey where parseJSON = strictParseYaml
 instance ToJSON UniqueKey where toJSON = genericToJSON myOpt
 
 data ForeignKey = ForeignKey {
-  foreignkeyName        :: SqlName,
-  foreignkeyColumns     :: [SqlName],
-  foreignkeyRefTable    :: SqlName,
-  foreignkeyRefColumns  :: [SqlName],
-  foreignkeyOnDelete    :: Maybe String,
-  foreignkeyOnUpdate    :: Maybe String
+  foreignkeyName       :: SqlName,
+  foreignkeyColumns    :: [SqlName],
+  foreignkeyRefTable   :: SqlName,
+  foreignkeyRefColumns :: [SqlName],
+  foreignkeyOnDelete   :: Maybe String,
+  foreignkeyOnUpdate   :: Maybe String
 } deriving (Generic, Show, Typeable, Data)
 instance FromJSON ForeignKey where parseJSON = strictParseYaml
 instance ToJSON ForeignKey where toJSON = genericToJSON myOpt
