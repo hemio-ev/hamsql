@@ -40,16 +40,16 @@ toSetupDoc optDoc s = do
     ]
 
 markdownToRST :: String -> String
-markdownToRST =
-   (writeHtmlString def {
-        writerHtml5 = True,
-        writerSectionDivs = True,
-        writerReferenceLinks = True,
-        writerTableOfContents=False,
-        writerStandalone = True,
-        writerTemplate ="<!DOCTYPE html><html><head><meta charset='utf-8' /><link rel='stylesheet' href='s.css' /></head><body>$if(toc)$$toc$$endif$\n$body$</body></html>",
-        writerTOCDepth=3
-    }) . readHtml def
+markdownToRST = undefined
+--   (writeHtmlString def {
+--        writerHtml5 = True,
+--        writerSectionDivs = True,
+--        writerReferenceLinks = True,
+--        writerTableOfContents=False,
+--        writerStandalone = True,
+--        writerTemplate ="<!DOCTYPE html><html><head><meta charset='utf-8' /><link rel='stylesheet' href='s.css' /></head><body>$if(toc)$$toc$$endif$\n$body$</body></html>",
+--        writerTOCDepth=3
+--    }) . readHtml def
 
 getDoc d = markdownToRST d
 
