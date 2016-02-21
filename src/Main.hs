@@ -1,9 +1,9 @@
 -- This file is part of HamSql
 --
--- Copyright 2014-2015 by it's authors.
+-- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 
-import Control.Monad       (when)
+import Control.Monad       (void, when)
 import Data.List
 import Data.Text           (unpack)
 import Network.URL
@@ -27,7 +27,7 @@ run (Install opt optDb optInstall) = do
   let dbname = url_path $ getConUrl optDb
 
   if not (optEmulate optDb || optPrint optDb) then
-    pgsqlExecWithoutTransact
+    void $ pgsqlExecWithoutTransact
       ((getConUrl optDb) { url_path = "postgres" })
       (sqlCreateDatabase (optDeleteExistingDatabase optInstall) dbname)
   else
@@ -73,6 +73,6 @@ run (Doc opt optDoc) =
 useSqlStmts :: OptCommonDb -> [SqlStatement] -> IO ()
 useSqlStmts optDb stmts
   | optPrint optDb = putStrLn $ sqlPrinter $ sqlAddTransact stmts
-  | optEmulate optDb = pgsqlExec (getConUrl optDb) stmts
-  | otherwise = pgsqlExec (getConUrl optDb) stmts
+  | optEmulate optDb = void $ pgsqlExec (getConUrl optDb) stmts
+  | otherwise = void $ pgsqlExec (getConUrl optDb) stmts
 

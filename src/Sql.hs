@@ -1,3 +1,8 @@
+-- This file is part of HamSql
+--
+-- Copyright 2014-2016 by it's authors.
+-- Some rights reserved. See COPYING, AUTHORS.
+
 module Sql where
 
 --import Option

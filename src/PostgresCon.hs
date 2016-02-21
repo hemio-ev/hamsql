@@ -1,6 +1,6 @@
 -- This file is part of HamSql
 --
--- Copyright 2014-2015 by it's authors.
+-- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 
 {-# LANGUAGE FlexibleContexts    #-}
@@ -10,11 +10,13 @@
 module PostgresCon where
 
 import           Control.Exception
-import qualified Data.ByteString.Char8            as B
+import           Control.Monad                          (void, when)
+import qualified Data.ByteString.Char8                  as B
 import           Data.List
 import           Data.String
 import           Database.PostgreSQL.Simple
-import           Database.PostgreSQL.Simple.Types (PGArray, fromPGArray)
+import           Database.PostgreSQL.Simple.Transaction
+import           Database.PostgreSQL.Simple.Types       (PGArray, fromPGArray)
 import           Network.URL
 
 import Option
@@ -26,12 +28,6 @@ import Sql.Statement.Drop
 import Utils
 
 import Data.Vector (fromList)
-
-toQry :: String -> Query
-toQry = fromString
-
-getConUrl :: OptCommonDb -> URL
-getConUrl xs = fromJustReason "Not a valid URL" (importURL $ optConnection xs)
 
 pgsqlGetFullStatements :: OptCommon -> OptCommonDb -> Setup -> IO [SqlStatement]
 pgsqlGetFullStatements opt optDb setup  = do
@@ -45,15 +41,6 @@ pgsqlGetFullStatements opt optDb setup  = do
     rolePrefix = getPrefix (setupRolePrefix' setup)
     getPrefix :: SqlName -> String
     getPrefix (SqlName xs) = xs
-
-pgsqlConnectUrl :: URL -> IO Connection
-pgsqlConnectUrl url = do
-  connResult <- try $ connectPostgreSQL (B.pack (exportURL url))
-
-  return $ case connResult of
-    Left e@SqlError{} -> err $ "sql connection failed: " ++ B.unpack (sqlErrorMsg e)
-    Right conn -> conn
-
 
 sqlManageSchemaJoin schemaid =
       " JOIN pg_namespace AS n " ++
@@ -271,53 +258,83 @@ pgsqlUpdateFragile optUpgrade conn stmtsInstall = do
 
 -- DB Utils
 
-pgsqlHandleErr code e@SqlError{} =
-  err $
-    "sql error in following statement:\n" ++
-    code ++ "\n" ++
-    "sql error: " ++ B.unpack (sqlErrorMsg e) ++ " (Error Code: " ++ B.unpack (sqlState e) ++ ")"
-pgsqlHandleQry code e@QueryError{} = do
-  putStrLn $
-    "Information for SQL query:\n" ++
-    code ++ "\n" ++
-    "Message: '" ++ qeMessage e ++ "'"
-  return 0
+toQry :: String -> Query
+toQry = fromString
 
-pgsqlExecWithoutTransact :: URL -> [SqlStatement] -> IO ()
-pgsqlExecWithoutTransact connUrl xs = do
-    conn <- connectPostgreSQL (B.pack (exportURL connUrl))
+getConUrl :: OptCommonDb -> URL
+getConUrl xs = fromJustReason "Not a valid URL" (importURL $ optConnection xs)
 
-    _ <- sequence [
-      do
-        let code = Parser.Basic.toSql stmt
-        execResult <- catch (catch (execute_ conn (toQry code)) (pgsqlHandleErr code)) (pgsqlHandleQry code)
+pgsqlConnectUrl :: URL -> IO Connection
+pgsqlConnectUrl url = do
+  connResult <- try $ connectPostgreSQL (B.pack (exportURL url))
 
-        return ()
-      | stmt <- stmtsFilterExecutable xs ]
+  return $ case connResult of
+    Left e@SqlError{} -> err $ "sql connection failed: " ++ B.unpack (sqlErrorMsg e)
+    Right conn -> conn
+
+pgsqlHandleErr :: SqlStatement -> SqlError -> IO ()
+pgsqlHandleErr code e = do
+    err $
+        "sql error in following statement:\n" ++
+        toSql code ++ "\n" ++
+        "sql error: " ++ B.unpack (sqlErrorMsg e) ++ " (Error Code: " ++ B.unpack (sqlState e) ++ ")"
+    return ()
+
+pgsqlExecWithoutTransact :: URL -> [SqlStatement] -> IO Connection
+pgsqlExecWithoutTransact = pgsqlExecIntern PgSqlWithoutTransaction
+
+pgsqlExec :: URL -> [SqlStatement] -> IO Connection
+pgsqlExec = pgsqlExecIntern PgSqlWithTransaction
+
+pgsqlExecAndRollback :: URL -> [SqlStatement] -> IO ()
+pgsqlExecAndRollback url stmts = do
+    conn <- pgsqlExecIntern PgSqlWithTransaction url stmts
+    rollback conn
+
+data PgSqlMode = PgSqlWithoutTransaction | PgSqlWithTransaction
+ deriving Eq
+
+data Status = Init | Changed | Unchanged
+
+pgsqlExecStmtList :: Status -> [SqlStatement] -> [SqlStatement] -> Connection -> IO ()
+pgsqlExecStmtList _         [] []     conn = commit conn
+pgsqlExecStmtList Unchanged [] failed conn = pgsqlExecStmtHandled conn (head failed)
+pgsqlExecStmtList Changed   [] failed conn = void $ pgsqlExecStmtList Unchanged failed [] conn
+pgsqlExecStmtList status (x:xs) failed conn = do
+    savepoint <- newSavepoint conn
+    result <- try $ pgsqlExecStmt conn x
+
+    case result of
+        Left SqlError {} -> do
+            rollbackToSavepoint conn savepoint
+            releaseSavepoint conn savepoint
+            pgsqlExecStmtList status xs (failed ++ [x]) conn
+        Right _ -> do
+            releaseSavepoint conn savepoint
+            pgsqlExecStmtList Changed xs failed conn
 
     return ()
 
-pgsqlExec :: URL -> [SqlStatement] -> IO ()
-pgsqlExec = pgsqlExecIntern True
+pgsqlExecStmt :: Connection -> SqlStatement -> IO ()
+pgsqlExecStmt conn stmt = do
+    let code = Parser.Basic.toSql stmt
+    execute_ conn (toQry code)
+    return ()
 
-pgsqlExecAndRollback :: URL -> [SqlStatement] -> IO ()
-pgsqlExecAndRollback= pgsqlExecIntern False
+pgsqlExecStmtHandled :: Connection -> SqlStatement -> IO ()
+pgsqlExecStmtHandled conn stmt = pgsqlExecStmt conn stmt
+    `catch` pgsqlHandleErr stmt
 
-pgsqlExecIntern :: Bool -> URL -> [SqlStatement] -> IO ()
-pgsqlExecIntern doCommit connUrl xs = do
-    conn <- connectPostgreSQL (B.pack (exportURL connUrl))
-    begin conn
+pgsqlExecIntern :: PgSqlMode -> URL -> [SqlStatement] -> IO Connection
+pgsqlExecIntern mode connUrl xs = do
+    conn <- pgsqlConnectUrl connUrl
 
-    _ <- sequence [
-      do
-        let code = Parser.Basic.toSql stmt
-        execResult <- catch (catch (execute_ conn (toQry code)) (pgsqlHandleErr code)) (pgsqlHandleQry code)
+    when (mode == PgSqlWithTransaction) $ do
+        begin conn
+        pgsqlExecStmtList Init (stmtsFilterExecutable xs) [] conn
 
-        return ()
-      | stmt <- stmtsFilterExecutable xs ]
+    when (mode == PgSqlWithoutTransaction) $ void $
+        mapM (pgsqlExecStmtHandled conn) (stmtsFilterExecutable xs)
 
-    if doCommit then
-      commit conn
-    else
-      rollback conn
+    return conn
 
