@@ -5,6 +5,7 @@
 
 module Utils where
 
+import Control.Monad
 import Data.Char
 import Debug.Trace
 import Data.List (intercalate, sort, group)
@@ -38,12 +39,9 @@ debug opt
         id' _ = id
 
 info :: OptCommon -> String -> IO ()
-info opts xs = do
-  if optVerbose opts then
+info opts xs = when(optVerbose opts) $
     msg' "debug" xs
-  else
-    return ()
-    
+
 removeDuplicates :: (Ord a) => [a] -> [a]
 removeDuplicates = map head . group . sort
 
@@ -85,7 +83,7 @@ fromJustReason _ (Just x) = x
 fromJustReason reason Nothing = err $ "fromJust failed: " ++ reason
 
 selectUniqueReason :: String -> [a] -> a
-selectUniqueReason _ (x:[]) = x
+selectUniqueReason _ [x] = x
 selectUniqueReason msg [] = err $ "No element found while trying to find exactly one: " ++ msg
 selectUniqueReason msg xs = err $
   "More then one element (" ++ show (length xs) ++") found while trying to extrac one: " ++ msg

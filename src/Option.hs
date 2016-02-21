@@ -33,19 +33,19 @@ parserCommand = subparser
 
 parserCmdInstall :: Parser Command
 parserCmdInstall = Install
-    <$> parserOptCommon 
-    <*> parserOptCommonDb 
+    <$> parserOptCommon
+    <*> parserOptCommonDb
     <*> parserOptInstall
 
 parserCmdUpgrade :: Parser Command
-parserCmdUpgrade = Upgrade 
-    <$> parserOptCommon 
-    <*> parserOptCommonDb 
+parserCmdUpgrade = Upgrade
+    <$> parserOptCommon
+    <*> parserOptCommonDb
     <*> parserOptUpgrade
 
 parserCmdDoc :: Parser Command
 parserCmdDoc = Doc
-    <$> parserOptCommon 
+    <$> parserOptCommon
     <*> parserOptDoc
 
 -- Commons
@@ -59,9 +59,9 @@ data OptCommon = OptCommon {
 parserOptCommon :: Parser OptCommon
 parserOptCommon = OptCommon
     <$> strOption
-        (long "setup" <> 
-        short 's' <> 
-        help "Setup file (yaml)" <> 
+        (long "setup" <>
+        short 's' <>
+        help "Setup file (yaml)" <>
         val "setup.yaml" <>
         action "file -X '!*.yml'" <>
         action "file -X '!*.yaml'" <>
@@ -125,17 +125,17 @@ data OptDoc = OptDoc {
 parserOptDoc :: Parser OptDoc
 parserOptDoc = OptDoc
     <$> strOption
-        (long "format" <> 
-        short 'f' <> 
-        val "html" <> 
+        (long "format" <>
+        short 'f' <>
+        val "html" <>
         completeWith ["dot","html"]
         )
     <*> strOption
-        (long "template" <> 
-        short 't' <> 
+        (long "template" <>
+        short 't' <>
         val "doc-template" <>
         action "file -X '!*.html'" <>
         action "file -X '!*.dot'" <>
         action "directory"
         )
-        
+

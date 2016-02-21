@@ -10,7 +10,7 @@ import Sql
 (+++) a b = a ++ " " ++ b
 
 createSequence :: OptCommon -> Setup -> Module -> Sequence -> [SqlStatement]
-createSequence _ _ m s = 
+createSequence _ _ m s =
 
     [
     SqlStmt SqlCreateSequence name $
@@ -30,26 +30,26 @@ createSequence _ _ m s =
     where
         incrementBy Nothing = "INCREMENT BY 1"
         incrementBy (Just i) = "INCREMENT BY " ++ show i
-    
+
         minValue Nothing = "NO MINVALUE"
         minValue (Just i) = "MINVALUE " ++ show i
-        
+
         maxValue Nothing = "NO MAXVALUE"
         maxValue (Just i) = "MAXVALUE " ++ show i
-        
+
         startValue Nothing = ""
         startValue (Just i) = "START WITH " ++ show i
-        
+
         cache Nothing = "CACHE 1"
         cache (Just i) = "CACHE " ++ show i
-        
+
         cycle Nothing = "NO CYCLE"
         cycle (Just False) = "NO CYCLE"
         cycle (Just True) = "CYCLE"
-        
+
         ownedByColumn Nothing = "OWNED BY NONE"
         ownedByColumn (Just n) = "OWNED BY " ++ toSql n
-        
+
         name = moduleName m <.> sequenceName s
-    
-    
+
+

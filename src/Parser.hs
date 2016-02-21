@@ -32,7 +32,7 @@ import Parser.Basic
 import Parser.Function
 import Parser.Module
 import Parser.Table
-  
+
 -- Setup --
 
 data Setup = Setup {
@@ -60,32 +60,32 @@ setupRolePrefix' setup = fromMaybe (SqlName "yamsql_") (setupRolePrefix setup)
 -- Template handling and applyTemplate
 
 data WithModule a = WithModule Module a deriving (Show)
-           
+
 class WithName a where
  name :: a -> String
 
 instance WithName (WithModule TableTpl) where
- name (WithModule m t) = toSql $ (Parser.Module.moduleName m) <.> tabletplTemplate t
+ name (WithModule m t) = toSql $ Parser.Module.moduleName m <.> tabletplTemplate t
 
 instance WithName (WithModule FunctionTpl) where
- name (WithModule m f) = toSql $ (Parser.Module.moduleName m) <.> functiontplTemplate f
+ name (WithModule m f) = toSql $ Parser.Module.moduleName m <.> functiontplTemplate f
 
 instance WithName (WithModule TableColumnTpl) where
- name (WithModule m f) = toSql $ (Parser.Module.moduleName m) <.> tablecolumntplTemplate f
+ name (WithModule m f) = toSql $ Parser.Module.moduleName m <.> tablecolumntplTemplate f
 
 withoutModule (WithModule _ t) = t
 
 --selectTemplates :: (WithName t) => Maybe [SqlName] -> [WithModule t] -> [t]
-selectTemplates ns ts = 
+selectTemplates ns ts =
   -- TODO: error handling here should be done using exceptions
   [ withoutModule $ selectUniqueReason ("table or function tpl " ++ n) $
-    filter (\t -> n == name t) ts 
+    filter (\t -> n == name t) ts
     | n <- map toSql $ maybeList ns ]
- 
+
 selectTemplate x ts = head' $ map withoutModule $ filter (\y -> name y == toSql x) ts
   where
     head' = selectUniqueReason ("Column template " ++ toSql x)
-    
+
 -- get things from Setup
 
 setupAllModules :: Setup -> [Module]
@@ -111,25 +111,25 @@ applyTpl s = s {
         map applyModule (setupModuleData $ setupInternal s)
     }
   }
-  
+
   where
-    
+
     applyModule m = m {
         moduleTables =  Just $
           map applyColumnTemplates
           $ maybeMap applyTableTemplates (moduleTables m),
-            
+
         moduleFunctions = Just $
           maybeMap applyFunctionTemplates (moduleFunctions m)
       }
-      
-    applyTableTemplates :: Table -> Table 
+
+    applyTableTemplates :: Table -> Table
     applyTableTemplates t = foldr applyTableTpl t (tableTpls t)
 
     tableTpls :: Table -> [TableTpl]
     tableTpls t = selectTemplates (tableTemplates t) (setupAllTableTemplates s)
-    
-    applyFunctionTemplates :: Function -> Function 
+
+    applyFunctionTemplates :: Function -> Function
     applyFunctionTemplates f = foldr applyFunctionTpl f (functionTpls f)
 
     functionTpls :: Function -> [FunctionTpl]
@@ -138,10 +138,10 @@ applyTpl s = s {
     applyColumnTemplates :: Table -> Table
     applyColumnTemplates t = t { tableColumns = map f (tableColumns t) }
      where
-       f x@(ColumnTpl{}) = applyColumnTpl (columnTpl x) x
+       f x@ColumnTpl{} = applyColumnTpl (columnTpl x) x
        f x = x
 
     columnTpl :: Column -> TableColumnTpl
-    columnTpl c@(ColumnTpl{}) = selectTemplate (columntplTemplate c) (setupAllColumnTemplates s)
+    columnTpl c@ColumnTpl{} = selectTemplate (columntplTemplate c) (setupAllColumnTemplates s)
     columnTpl _ = undefined
-    
+

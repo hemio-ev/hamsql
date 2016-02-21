@@ -9,10 +9,8 @@ import Control.Exception
 import Data.Yaml
 import qualified Data.ByteString.Char8 as B
 import System.FilePath.Posix (combine, dropFileName)
-import Control.Monad (filterM, liftM)
 import Text.Regex.Posix
 import System.Directory (doesFileExist, doesDirectoryExist, getDirectoryContents)
-import Data.Yaml ()
 import Data.Aeson.Types
 import Control.Monad
 import Data.List
@@ -96,7 +94,7 @@ getFilesInDir :: FilePath -> IO [FilePath]
 getFilesInDir path = do
     conts <- getDirectoryContents path
     let ordConts = sort conts
-    liftM (map (combine path)) (filterM doesFileExist' ordConts)
+    fmap (map (combine path)) (filterM doesFileExist' ordConts)
  where
   doesFileExist' relName = doesFileExist (combine path relName)
 
@@ -122,13 +120,13 @@ readModule opts md = do
     tables <- do
       files <- selectFilesInDir yamlEnding (combine md "tables.d")
       sequence [
-        readObjectFromFile opts f :: IO (Table)
+        readObjectFromFile opts f :: IO Table
         | f <- files ]
 
     functions <- do
       files <- selectFilesInDir pgsqlEnding (combine md "functions.d")
       sequence [
-        readObjectFromFile opts f :: IO (Function)
+        readObjectFromFile opts f :: IO Function
         | f <- files ]
 
     let moduleData' = moduleData {
@@ -152,6 +150,6 @@ readObjectFromFile opts file = do
   c <- B.readFile file
   catchErrors file $
    case decodeEither' c of
-    Left msg  -> err $ "in yaml-file: " ++ file ++ ": " ++ (show msg)
+    Left msg  -> err $ "in yaml-file: " ++ file ++ ": " ++ show msg
     Right obj -> obj
-  
+

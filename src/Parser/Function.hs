@@ -89,12 +89,12 @@ applyFunctionTpl t f = f {
 
     functionVariables =
       maybeJoin (functionVariables f) (functiontplVariables t),
-        
+
     functionBody =
       maybeStringL (functiontplBodyPrelude t) ++
       functionBody f ++
       maybeStringR (functiontplBodyPostlude t)
-        
+
   }
   where
     maybeStringL (Just xs) = xs ++ "\n"

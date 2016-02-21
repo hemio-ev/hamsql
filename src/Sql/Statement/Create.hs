@@ -32,7 +32,7 @@ emptyName = SqlName ""
 
 
 sqlAddTransact :: [SqlStatement] -> [SqlStatement]
-sqlAddTransact xs = 
+sqlAddTransact xs =
   [ SqlStmt SqlUnclassified emptyName "BEGIN TRANSACTION" ] ++
   xs ++
   [ SqlStmt SqlUnclassified emptyName "COMMIT" ]
@@ -45,14 +45,14 @@ sqlCreateDatabase deleteDatabase name = [
         sqlDelete deleteDatabase,
         SqlStmt SqlCreateDatabase name' $
           "CREATE DATABASE " ++ toSql name',
-        SqlStmt SqlCreateDatabase name' 
+        SqlStmt SqlCreateDatabase name'
           "ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC"
     ]
   where
     sqlDelete True = SqlStmt SqlDropDatabase name' $
       "DROP DATABASE IF EXISTS " ++ toSql name'
     sqlDelete False = SqlStmtEmpty
-    
+
     name' = SqlName name
 
 -- Setup
@@ -61,11 +61,11 @@ getSetupStatements :: OptCommon -> Setup -> [SqlStatement]
 getSetupStatements opts s = debug opts "stmtInstallSetup" $
   [ getStmt $ setupPreCode s ] ++ moduleStatements ++ [ getStmt $ setupPostCode s ]
   where
-    moduleStatements = 
+    moduleStatements =
       concatMap (getModuleStatements opts s) (setupModuleData $ setupInternal s)
     getStmt (Just code) = SqlStmt SqlPreInstall emptyName code
     getStmt Nothing = SqlStmtEmpty
-  
+
 -- Module
 
 getModuleStatements :: OptCommon -> Setup -> Module -> [SqlStatement]
@@ -126,7 +126,7 @@ getFunctionStatements opts setup m f =
 
     where
         name = (moduleName m) <.> functionName f
-      
+
         sqlStmtGrantExecute u = SqlStmt SqlPriv name $ sqlGrantExecute u
         sqlGrantExecute u = "GRANT EXECUTE ON FUNCTION \n" ++
             sqlFunctionIdentifier ++ "\nTO " ++ prefixedRole setup u
@@ -146,7 +146,7 @@ getFunctionStatements opts setup m f =
         stmtComment = SqlStmt SqlComment (functionName f) $
           "COMMENT ON FUNCTION " ++ sqlFunctionIdentifier ++
           " IS " ++ toSqlString (functionDescription f)
-            
+
         sqlSetOwner (Just o) = SqlStmt SqlPriv name $
             "ALTER FUNCTION " ++ sqlFunctionIdentifier ++
             "OWNER TO " ++ prefixedRole setup o
@@ -165,21 +165,21 @@ getFunctionStatements opts setup m f =
                 "\n)"
 
         -- function parameter
-        sqlParameter p = 
-            " " ++ toSql(variableName p) ++ 
+        sqlParameter p =
+            " " ++ toSql(variableName p) ++
             " " ++ toSql(variableType p)
 
-        sqlParameterDef p = 
-            " " ++ toSql(variableName p) ++ 
+        sqlParameterDef p =
+            " " ++ toSql(variableName p) ++
             " " ++ toSql(variableType p)
             ++ sqlParamDefault (variableDefault p)
             where
             sqlParamDefault Nothing = ""
-            sqlParamDefault (Just x) = " DEFAULT " ++ x 
-       
+            sqlParamDefault (Just x) = " DEFAULT " ++ x
+
         -- If function returns a table, use service for field definition 
         sqlReturnsColumns cs
-         | toSql (functionReturns f) == "TABLE" = 
+         | toSql (functionReturns f) == "TABLE" =
             " (\n" ++
             join ",\n" (maybeMap sqlReturnsColumn cs) ++
             ") "
@@ -188,7 +188,7 @@ getFunctionStatements opts setup m f =
         sqlReturnsColumn c = toSql (parameterName c) ++ " " ++ toSql(parameterType c)
 
         -- If language not defined, use service for variable definitions
-        sqlBody 
+        sqlBody
             | isNothing (functionLanguage f) =
                 "DECLARE\n" ++
                 sqlVariables (functionVariables f) ++
@@ -208,8 +208,8 @@ getFunctionStatements opts setup m f =
 
                 postludes :: [String]
                 postludes = catMaybes$maybeMap functiontplBodyPostlude (functionTemplateData f)
-    
-    
+
+
         -- Service for variable definitions
         sqlVariables Nothing = ""
         sqlVariables (Just vs) = join "" (map sqlVariable vs)
@@ -233,7 +233,7 @@ getFunctionStatements opts setup m f =
 
 getDomainStatements :: OptCommon -> Setup -> Module -> Domain -> [SqlStatement]
 getDomainStatements opt _ m d = debug opt "stmtCreateDomain" $
- 
+
   stmtCreateDomain
   :sqlDefault (domainDefault d)
   :(maybeMap sqlCheck (domainChecks d))
@@ -242,10 +242,10 @@ getDomainStatements opt _ m d = debug opt "stmtCreateDomain" $
 
     where
     fullName = (moduleName m) <.> domainName d
-    
+
     stmtCreateDomain = SqlStmt SqlCreateDomain fullName $
       "CREATE DOMAIN " ++ toSql fullName ++ " AS " ++ toSql (domainType d)
-    
+
     sqlCheck :: Check -> SqlStatement
     sqlCheck c = SqlStmt SqlCreateCheckConstr fullName (
       "ALTER DOMAIN " ++ toSql fullName ++ " ADD" ++
@@ -268,7 +268,7 @@ getTypeStatements opt s m t =
   ):
   stmtCommentOn "TYPE" fullName (typeDescription t)
   :[]
-  
+
   -- ALTER TYPE name ALTER ATTRIBUTE attribute_name [ SET DATA ] TYPE data_type
 
   where
@@ -288,10 +288,10 @@ getRoleStatements opts setup r =
             " " ++ sqlLogin (roleLogin r) ++
             sqlPassword (rolePassword r)
 
-        sqlRoleMembership group = 
+        sqlRoleMembership group =
             SqlStmt SqlRoleMembership (roleName r) $
             "GRANT " ++ prefix group ++ " TO " ++ prefix (roleName r);
-            
+
         sqlLogin (Just True) = "LOGIN"
         sqlLogin _           = "NOLOGIN"
 

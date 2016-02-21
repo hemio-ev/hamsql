@@ -31,7 +31,7 @@ createTable opts setup m t = debug opts "stmtCreateTable" $
 
     -- column comments
     map (\c -> stmtCommentOn "COLUMN"
-            (intName <.> columnName c) 
+            (intName <.> columnName c)
             (columnDescription c)) columns ++
     -- grant rights to roles
     maybeMap (sqlGrant "SELECT") (tablePrivSelect t) ++
@@ -52,41 +52,41 @@ createTable opts setup m t = debug opts "stmtCreateTable" $
     maybeMap sqlAddForeignKey' (tableForeignKeys t)
 
     where
-        intName = (moduleName m) <.> tableName t 
-      
+        intName = (moduleName m) <.> tableName t
+
         stmtCreateTable = SqlStmt SqlCreateTable intName $
           "CREATE TABLE " ++ toSql intName ++ " ()"
-              
+
         stmtCheck c = SqlStmt SqlAddTableContraint intName $
           "ALTER TABLE " ++ toSql intName ++
           " ADD CONSTRAINT " ++ name (checkName c) ++ " CHECK (" ++ checkCheck c ++ ")"
-                
+
         -- COLUMNS
 
         sqlAlterColumn c@(Column {}) =
             "ALTER TABLE " ++ toSql intName ++
             " ALTER COLUMN " ++ toSql (columnName c) ++ " "
         sqlAlterColumn _ = err "ColumnTemplates should not be present in SQL parsing"
-      
+
         stmtAddColumn c@(Column {}) = SqlStmt SqlAddColumn (intName <.> columnName c) $
             "ALTER TABLE " ++ toSql intName ++
             " ADD COLUMN " ++ toSql (columnName c) ++ " " ++ toSql (columnType c)
-            
+
         stmtAlterColumnType c = SqlStmt SqlAlterColumn intName $
             sqlAlterColumn c ++ "SET DATA TYPE " ++ toSql (columnType c)
-        
+
         stmtDropDefault c = SqlStmt SqlDropColumnDefault intName $
           sqlAlterColumn c ++ "DROP DEFAULT"
-        
+
         stmtAddColumnCheck c = maybeMap stmtCheck (columnChecks c)
-        
+
         stmtAlterColumnNull c = SqlStmt SqlAlterColumn intName $
-            sqlAlterColumn c ++ sqlSetNull (columnNull c) 
+            sqlAlterColumn c ++ sqlSetNull (columnNull c)
           where
             sqlSetNull Nothing = "SET NOT NULL"
             sqlSetNull (Just False) = "SET NOT NULL"
             sqlSetNull (Just True) = "DROP NOT NULL"
-        
+
         stmtAddColumnDefault c = sqlDefault (columnDefault c)
          where
           sqlDefault Nothing     = SqlStmtEmpty
@@ -96,20 +96,20 @@ createTable opts setup m t = debug opts "stmtCreateTable" $
         -- SERIAL
 
         columns = map injectSerialParameters (tableColumns t)
-        
+
         injectSerialParameters c
           | columnIsSerial c = c {
               columnType = SqlType "integer",
               columnDefault = Just $
-                "nextval('" ++ toSql (moduleName m <.> serialSequenceName c) ++ "')" 
+                "nextval('" ++ toSql (moduleName m <.> serialSequenceName c) ++ "')"
             }
           | otherwise = c
-          
+
         columnIsSerial c = toSql (columnType c) == "SERIAL"
         -- do not change this, it is PostgreSQL internal convention
         serialSequenceName c =
           tableName t // SqlName "_" // columnName c // SqlName "_seq"
-        
+
         sequences cs = map serial (filter columnIsSerial cs)
           where
             serial c = createSequence opts setup m $ Sequence {
@@ -122,15 +122,15 @@ createTable opts setup m t = debug opts "stmtCreateTable" $
               sequenceCycle       = Nothing,
               sequenceOwnedByColumn = Just $ intName <.> columnName c
             }
-        
+
         -- PRIMARY KEY
 
         sqlAddPrimaryKey :: [SqlName] -> SqlStatement
         sqlAddPrimaryKey ks = SqlStmt SqlCreatePrimaryKeyConstr intName $
           "ALTER TABLE " ++ toSql intName ++
-          " ADD CONSTRAINT " ++ name (SqlName "primary_key") ++ 
+          " ADD CONSTRAINT " ++ name (SqlName "primary_key") ++
           " PRIMARY KEY (" ++ join ", " (map toSql ks) ++ ")"
-            
+
         sqlUniqueConstraint :: UniqueKey -> SqlStatement
         sqlUniqueConstraint ks = SqlStmt SqlCreateUniqueConstr intName $
           "ALTER TABLE " ++ toSql intName ++
@@ -152,7 +152,7 @@ createTable opts setup m t = debug opts "stmtCreateTable" $
             " (" ++ toSql (last $ expSqlName ref) ++ ")" ++
             sqlOnRefUpdate (columnOnRefUpdate c) ++
             sqlOnRefDelete (columnOnRefDelete c)
-            
+
         sqlAddForeignKey' :: ForeignKey -> SqlStatement
         sqlAddForeignKey' fk = SqlStmt SqlCreateForeignKeyConstr intName $
             "ALTER TABLE " ++ toSql intName ++
@@ -161,8 +161,8 @@ createTable opts setup m t = debug opts "stmtCreateTable" $
             " REFERENCES " ++ toSql (foreignkeyRefTable fk) ++
             " (" ++ join ", " (map toSql $ foreignkeyRefColumns fk) ++ ")" ++
             sqlOnRefUpdate (foreignkeyOnUpdate fk) ++
-            sqlOnRefDelete (foreignkeyOnDelete fk)              
-                
+            sqlOnRefDelete (foreignkeyOnDelete fk)
+
         sqlOnRefUpdate Nothing = ""
         sqlOnRefUpdate (Just a) = " ON UPDATE " ++ a
         sqlOnRefDelete Nothing = ""
@@ -174,13 +174,13 @@ createTable opts setup m t = debug opts "stmtCreateTable" $
         sqlAddInheritance :: SqlName -> SqlStatement
         sqlAddInheritance n = SqlStmt SqlAlterTable intName $
           "ALTER TABLE " ++ toSql intName ++ " INHERIT " ++ toSql n
-                
+
         sqlColumnUnique c@(Column{ columnUnique = (Just True) }) = SqlStmt SqlCreateUniqueConstr intName $
           "ALTER TABLE " ++ toSql intName ++
-            " ADD CONSTRAINT " ++ name (columnName c) ++ 
+            " ADD CONSTRAINT " ++ name (columnName c) ++
             " UNIQUE (" ++ toSql (columnName c) ++ ")"
         sqlColumnUnique _ = SqlStmtEmpty
-        
+
         -- tools
 
         name a = toSql (tableName t // SqlName "-" // a)

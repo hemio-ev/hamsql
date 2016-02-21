@@ -4,7 +4,7 @@
 -- Some rights reserved. See COPYING, AUTHORS.
 
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE DeriveGeneric #-}
+
 
 
 module Documentation where
@@ -27,15 +27,15 @@ ensureFileExt ext xs
     xs
   | otherwise =
     xs ++ "." ++ ext
-  
 
-toSetupDoc :: OptDoc -> Setup -> IO (Text)
+
+toSetupDoc :: OptDoc -> Setup -> IO Text
 toSetupDoc optDoc s = do
-  let fileName =  (ensureFileExt "html") $ optTemplate optDoc
+  let fileName =  ensureFileExt "html" $ optTemplate optDoc
   template <- Data.Text.IO.readFile fileName
   let t = either error id $ compileTemplate template
   return $ renderTemplate t $ object [
-    "modules" .= (setupModuleData $ setupInternal s),
+    "modules" .= setupModuleData (setupInternal s),
     "setup" .= s
     ]
 
@@ -51,15 +51,15 @@ markdownToRST = undefined
 --        writerTOCDepth=3
 --    }) . readHtml def
 
-getDoc d = markdownToRST d
+getDoc = markdownToRST
 
-getGraphDoc :: OptDoc -> Setup -> IO (Text)
+getGraphDoc :: OptDoc -> Setup -> IO Text
 getGraphDoc optDoc s = do
-    let fileName =  (ensureFileExt "dot") $ optTemplate optDoc
+    let fileName =  ensureFileExt "dot" $ optTemplate optDoc
     template <- Data.Text.IO.readFile fileName
     let t = either error id $ compileTemplate template
     return $ renderTemplate t $ object [
-        "modules" .= (setupModuleData $ setupInternal s),
+        "modules" .= setupModuleData (setupInternal s),
         "setup" .= s
         ]
 

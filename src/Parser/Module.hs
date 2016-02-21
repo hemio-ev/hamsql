@@ -25,7 +25,7 @@ data Module = Module {
     moduleName              :: SqlName,
     moduleDescription       :: String,
     moduleDependencies      :: Maybe [SqlName],
-    
+
     moduleFunctions         :: Maybe [Function],
     moduleFunctionTemplates :: Maybe [FunctionTpl],
     moduleTables            :: Maybe [Table],
@@ -33,7 +33,7 @@ data Module = Module {
     moduleColumnTemplates   :: Maybe [TableColumnTpl],
     moduleRoles             :: Maybe [Role],
     moduleSequences         :: Maybe [Sequence],
-    
+
     modulePrivUsage         :: Maybe [SqlName],
     modulePrivSelectAll     :: Maybe [SqlName],
     modulePrivInsertAll     :: Maybe [SqlName],
@@ -49,13 +49,13 @@ data Module = Module {
 } deriving (Generic,Show, Data, Typeable)
 instance FromJSON Module where parseJSON = strictParseYaml
 instance ToJSON Module where toJSON = genericToJSON myOpt
-    
+
 moduleInternal :: Module -> ModuleInternal
 moduleInternal = fromJustReason "moduleInternal" . xmoduleInternal
-    
+
 data ModuleInternal = ModuleInternal {
   moduleLoadPath :: FilePath
 } deriving (Data, Generic, Show, Typeable)
-instance FromJSON ModuleInternal where parseJSON = strictParseYaml 
+instance FromJSON ModuleInternal where parseJSON = strictParseYaml
 instance ToJSON ModuleInternal where toJSON = genericToJSON myOpt
 

@@ -41,7 +41,7 @@ stmtDropTableConstraint (schema, table, constraint) = SqlStmt SqlDropTableConstr
 stmtDropDomain :: SqlName -> SqlStatement
 stmtDropDomain d = SqlStmt SqlDropDomain d $
   "DROP DOMAIN " ++ toSql d
-  
+
 stmtDropDomainConstraint :: (SqlName, SqlName, SqlName) -> SqlStatement
 stmtDropDomainConstraint (schema, domain, constraint) = SqlStmt SqlDropDomainConstraint
   (schema <.> domain) $
@@ -49,7 +49,7 @@ stmtDropDomainConstraint (schema, domain, constraint) = SqlStmt SqlDropDomainCon
       " DROP CONSTRAINT " ++ toSql constraint
 
 -- TYPE
-  
+
 stmtDropType :: SqlName -> SqlStatement
 stmtDropType t = SqlStmt SqlDropType t $
   "DROP TYPE " ++ toSql t

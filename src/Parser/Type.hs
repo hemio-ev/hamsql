@@ -18,7 +18,7 @@ data Type = Type {
 } deriving (Generic, Show, Data, Typeable)
 instance FromJSON Type where parseJSON = strictParseYaml
 instance ToJSON Type where toJSON = genericToJSON myOpt
-      
+
 data TypeElement = TypeElement {
     typeelementName :: SqlName,
     typeelementType :: SqlType

@@ -16,7 +16,7 @@ instance FromField SqlType where
     -- use existing parser for strings
     typeName <- fromField x y
     return $ SqlType (typeName::String)
-    
+
 instance FromField SqlName where
  fromField x y = do
     -- use existing parser for strings
@@ -27,7 +27,7 @@ afterDelete :: SqlStatement -> Bool
 afterDelete (SqlStmt t _ _) = f t
   where
       f :: SqlStatementType -> Bool
-      
+
       f SqlCreateSchema = True
       f SqlRoleMembership = True
       f SqlCreateFunction = True
@@ -49,7 +49,7 @@ data SqlStatement =
   SqlStmtEmpty
   deriving (Show)
 
-data SqlStatementType = 
+data SqlStatementType =
   SqlDropDatabase |
   SqlCreateDatabase |
   SqlPreInstall |
@@ -108,7 +108,7 @@ instance Ord SqlStatement where
   (<=) SqlStmtEmpty SqlStmtEmpty = True
   (<=) SqlStmtEmpty _ = False
   (<=) _ SqlStmtEmpty = True
-  
+
 typeEq :: SqlStatementType -> SqlStatement -> Bool
 typeEq t1 (SqlStmt t2 _ _) = t1 == t2
 typeEq t1 (SqlStmtFunction t2 _ _ _) = t1 == t2
@@ -125,11 +125,11 @@ replacesTypeOf t (SqlStmt _ x y) = SqlStmt t x y
 replacesTypeOf t (SqlStmtFunction _ x y z) = SqlStmtFunction t x y z
 
 instance SqlCode SqlStatement where
-  toSql (SqlStmtEmpty) = ""
+  toSql SqlStmtEmpty = ""
   toSql (SqlStmt SqlPreInstall _ xs) = xs ++ "\n"
   toSql (SqlStmt SqlPostInstall _ xs) = xs ++ "\n"
-  toSql (SqlStmt _ _ xs) = termin $ xs
-  toSql (SqlStmtFunction _ _ _ xs) = termin $ xs
+  toSql (SqlStmt _ _ xs) = termin xs
+  toSql (SqlStmtFunction _ _ _ xs) = termin xs
   (//) _ _ = undefined
 
 termin [] = undefined

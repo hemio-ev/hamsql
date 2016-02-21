@@ -9,7 +9,7 @@ import Data.Data
 import GHC.Generics
 
 import Parser.Basic
-      
+
 data Check = Check {
     checkName        :: SqlName,
     checkDescription :: String,

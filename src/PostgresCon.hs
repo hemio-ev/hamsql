@@ -45,13 +45,13 @@ pgsqlGetFullStatements opt optDb setup  = do
     rolePrefix = getPrefix (setupRolePrefix' setup)
     getPrefix :: SqlName -> String
     getPrefix (SqlName xs) = xs
- 
+
 pgsqlConnectUrl :: URL -> IO Connection
 pgsqlConnectUrl url = do
-  connResult <- try $ connectPostgreSQL $ (B.pack (exportURL url))
+  connResult <- try $ connectPostgreSQL (B.pack (exportURL url))
 
   return $ case connResult of
-    Left e@(SqlError{}) -> err $ "sql connection failed: " ++ B.unpack (sqlErrorMsg e)
+    Left e@SqlError{} -> err $ "sql connection failed: " ++ B.unpack (sqlErrorMsg e)
     Right conn -> conn
 
 
@@ -59,7 +59,7 @@ sqlManageSchemaJoin schemaid =
       " JOIN pg_namespace AS n " ++
       "  ON " ++ schemaid ++ " = n.oid AND " ++
       "  NOT n.nspname LIKE 'pg_%' AND " ++
-      "  NOT n.nspname IN ('information_schema', 'public') "    
+      "  NOT n.nspname IN ('information_schema', 'public') "
 
 -- DROP ROLE statements for all roles on the server prefixed with `prefix`
 pgsqlDeleteRoleStmt :: URL -> String -> IO [SqlStatement]
@@ -69,9 +69,9 @@ pgsqlDeleteRoleStmt url prefix = do
   result <- query conn "SELECT rolname FROM pg_roles WHERE rolname LIKE ?" $
     Only $ prefix ++ "%"
   let users = result
-  
+
   return $ map toStmt users
-  
+
   where
     toStmt :: Only String -> SqlStatement
     toStmt (Only user) = stmtDropRole $ SqlName user
@@ -86,13 +86,13 @@ pgsqlDeleteFunctionStmt conn =
       -- <https://github.com/lpsmith/postgresql-simple/issues/166>
       "ARRAY(SELECT UNNEST(p.proargtypes::regtype[]::varchar[])) " ++
       "FROM pg_proc AS p " ++
-      (sqlManageSchemaJoin "p.pronamespace")
-      
+      sqlManageSchemaJoin "p.pronamespace"
+
     return $ map toStmt result
-    
+
   where
     toStmt :: (SqlName, SqlName, PGArray SqlType) -> SqlStatement
-    toStmt (schema, function, args) = stmtDropFunction (schema, function, (fromPGArray args))
+    toStmt (schema, function, args) = stmtDropFunction (schema, function, fromPGArray args)
 
 -- DROP TABLE CONSTRAINT
 pgsqlDeleteTableConstraintStmt :: Connection -> IO [SqlStatement]
@@ -103,10 +103,10 @@ pgsqlDeleteTableConstraintStmt conn =
       "FROM pg_constraint AS c " ++
       "JOIN pg_class AS t " ++
       "  ON c.conrelid = t.oid " ++
-      (sqlManageSchemaJoin "c.connamespace")
+      sqlManageSchemaJoin "c.connamespace"
 
     return $ map f result
-    
+
   where
     f :: (SqlName, SqlName, SqlName) -> SqlStatement
     f = stmtDropTableConstraint
@@ -120,10 +120,10 @@ pgsqlDeleteDomainConstraintStmt conn =
       "FROM pg_constraint AS c " ++
       "JOIN pg_type AS d " ++
       "  ON c.contypid = d.oid " ++
-      (sqlManageSchemaJoin "c.connamespace")
+      sqlManageSchemaJoin "c.connamespace"
 
     return $ map f result
-    
+
   where
     f :: (SqlName, SqlName, SqlName) -> SqlStatement
     f = stmtDropDomainConstraint
@@ -133,7 +133,7 @@ pgsqlDeleteAllStmt :: Connection -> IO [SqlStatement]
 pgsqlDeleteAllStmt conn = do
   table_constraints <- pgsqlDeleteTableConstraintStmt conn
   domain_constraints <- pgsqlDeleteDomainConstraintStmt conn
-  
+
   return $ table_constraints ++ domain_constraints
 
 -- List existing objects
@@ -147,9 +147,9 @@ pgsqlListTables conn = do
     " WHERE table_type = 'BASE TABLE'" ++
     " AND table_schema NOT IN ('information_schema', 'pg_catalog')"
   return $ map toSqlName dat
-  
+
   where
-    toSqlName (s,t) = (SqlName s) <.> SqlName t
+    toSqlName (s,t) = SqlName s <.> SqlName t
 
 -- List TABLE COLUMN
 pgsqlListTableColumns :: Connection -> IO [(SqlName, SqlName)]
@@ -160,9 +160,9 @@ pgsqlListTableColumns conn = do
     --" WHERE table_type = 'BASE TABLE'" ++
     " WHERE table_schema NOT IN ('information_schema', 'pg_catalog')"
   return $ map toSqlName dat
-  
+
   where
-    toSqlName (s,t,u) = ((SqlName s) <.> SqlName t, SqlName u)
+    toSqlName (s,t,u) = (SqlName s <.> SqlName t, SqlName u)
 
 -- List DOMAIN
 pgsqlListDomains :: Connection -> IO [SqlName]
@@ -171,11 +171,11 @@ pgsqlListDomains conn = do
     "SELECT domain_schema, domain_name" ++
     " FROM information_schema.domains" ++
     " WHERE domain_schema NOT IN ('information_schema', 'pg_catalog')"
-  
+
   return $ map toSqlName dat
-  
+
   where
-    toSqlName (s,t) = (SqlName s) <.> SqlName t
+    toSqlName (s,t) = SqlName s <.> SqlName t
 
 pgsqlListTypes :: Connection -> IO [SqlName]
 pgsqlListTypes conn = do
@@ -183,32 +183,32 @@ pgsqlListTypes conn = do
     "SELECT user_defined_type_schema, user_defined_type_name" ++
     " FROM information_schema.user_defined_types" ++
     " WHERE user_defined_type_schema NOT IN ('information_schema', 'pg_catalog')"
-     
+
   return $ map toSqlName dat
-  
+
   where
-    toSqlName (s,t) = (SqlName s) <.> SqlName t
-    
+    toSqlName (s,t) = SqlName s <.> SqlName t
+
 -- Fix missing or spare objects
 
 pgsqlCorrectTables :: Connection -> [SqlStatement] -> IO [SqlStatement]
 pgsqlCorrectTables conn stmtsInstall = do
   existingNames <- pgsqlListTables conn
   let expected = filter (typeEq SqlCreateTable) stmtsInstall
-  let existing = map (SqlCreateTable `replacesTypeOf`) $ map stmtDropTable existingNames
- 
+  let existing = map ((SqlCreateTable `replacesTypeOf`) . stmtDropTable) existingNames
+
   let stmtsCreate =  expected \\ existing
   let stmtsDrop = map (SqlDropTable `replacesTypeOf`) $ existing \\ expected
-  
+
   return $ stmtsCreate ++ stmtsDrop
 
 normalizedFuncStmt :: Connection -> SqlStatement -> IO SqlStatement
 normalizedFuncStmt conn (SqlStmtFunction t n p c) = do
   x :: [(Int,Int)] <- query conn "SELECT ?, ?" (1::Int, 2::Int)
   p' :: [Only (PGArray SqlType)] <- query conn "SELECT ?::regtype[]::varchar[]" (Only $ fromList (map toSql p))
-  
-  return $ SqlStmtFunction t n (fromPGArray $ map fromOnly p'!!0) c
-  
+
+  return $ SqlStmtFunction t n (fromPGArray $ head (map fromOnly p')) c
+
 
 pgsqlCorrectFunctions :: Connection -> [SqlStatement] -> IO [SqlStatement]
 pgsqlCorrectFunctions conn xs = do
@@ -216,45 +216,45 @@ pgsqlCorrectFunctions conn xs = do
   drop <- pgsqlDeleteFunctionStmt conn
   let create = filter (typeEq SqlCreateFunction) xs
 
-  createNormalized <- sequence $ map (normalizedFuncStmt conn) create
-  let dropFiltered = drop \\ (map (SqlDropFunction `replacesTypeOf`) createNormalized)
+  createNormalized <- mapM (normalizedFuncStmt conn) create
+  let dropFiltered = drop \\ map (SqlDropFunction `replacesTypeOf`) createNormalized
   -- let d = map (normalizedFuncStmt conn) expected
-  
+
   return $ create ++ dropFiltered
 
 pgsqlCorrectTableColumns :: Connection -> [SqlStatement] -> IO [SqlStatement]
 pgsqlCorrectTableColumns conn stmtsInstall = do
   existingNames <- pgsqlListTableColumns conn
   let expected = filter (SqlAddColumn `typeEq`) stmtsInstall
-  let existing = map (SqlAddColumn `replacesTypeOf`) $ map stmtDropTableColumn existingNames
- 
+  let existing = map ((SqlAddColumn `replacesTypeOf`) . stmtDropTableColumn) existingNames
+
   let stmtsCreate =  expected \\ existing
   let stmtsDrop = map (SqlDropColumn `replacesTypeOf`) $ existing \\ expected
-  
+
   return $ stmtsCreate ++ stmtsDrop
-  
+
 pgsqlCorrectDomains :: Connection -> [SqlStatement] -> IO [SqlStatement]
 pgsqlCorrectDomains conn stmtsInstall = do
   existingNames <- pgsqlListDomains conn
   let expected = filter (SqlCreateDomain `typeEq`) stmtsInstall
-  let existing = map (SqlCreateDomain `replacesTypeOf`) $ map stmtDropDomain existingNames
- 
+  let existing = map ((SqlCreateDomain `replacesTypeOf`) . stmtDropDomain) existingNames
+
   let stmtsCreate =  expected \\ existing
   let stmtsDrop = map (SqlDropDomain `replacesTypeOf`) $ existing \\ expected
-  
+
   return $ stmtsCreate ++ stmtsDrop
 
 pgsqlCorrectTypes :: Connection -> [SqlStatement] -> IO [SqlStatement]
 pgsqlCorrectTypes conn stmtsInstall = do
   existingNames <- pgsqlListTypes conn
   let expected = filter (SqlCreateType `typeEq`) stmtsInstall
-  let existing = map (SqlCreateType `replacesTypeOf`) $ map stmtDropType existingNames
-  
+  let existing = map ((SqlCreateType `replacesTypeOf`) . stmtDropType) existingNames
+
   let stmtsCreate =  expected \\ existing
   let stmtsDrop = map (SqlDropType `replacesTypeOf`) $ existing \\ expected
-  
+
   return $ stmtsCreate ++ stmtsDrop
-  
+
 pgsqlUpdateFragile :: OptUpgrade -> Connection -> [SqlStatement] -> IO [SqlStatement]
 pgsqlUpdateFragile optUpgrade conn stmtsInstall = do
   tables <- pgsqlCorrectTables conn stmtsInstall
@@ -263,20 +263,20 @@ pgsqlUpdateFragile optUpgrade conn stmtsInstall = do
   types <- pgsqlCorrectTypes conn stmtsInstall
   functions <- pgsqlCorrectFunctions conn stmtsInstall
 
-  return $ if (optPermitDataDeletion optUpgrade)
-    then 
+  return $ if optPermitDataDeletion optUpgrade
+    then
       tables ++ columns ++ domains ++ types ++ functions
     else filter (\t -> typeEq SqlDropTable t || typeEq SqlDropColumn t)
       tables ++ columns ++ domains ++ types ++ functions
-  
+
 -- DB Utils
-  
-pgsqlHandleErr code e@(SqlError{}) =
+
+pgsqlHandleErr code e@SqlError{} =
   err $
     "sql error in following statement:\n" ++
     code ++ "\n" ++
     "sql error: " ++ B.unpack (sqlErrorMsg e) ++ " (Error Code: " ++ B.unpack (sqlState e) ++ ")"
-pgsqlHandleQry code e@(QueryError{}) = do
+pgsqlHandleQry code e@QueryError{} = do
   putStrLn $
     "Information for SQL query:\n" ++
     code ++ "\n" ++
@@ -286,10 +286,10 @@ pgsqlHandleQry code e@(QueryError{}) = do
 pgsqlExecWithoutTransact :: URL -> [SqlStatement] -> IO ()
 pgsqlExecWithoutTransact connUrl xs = do
     conn <- connectPostgreSQL (B.pack (exportURL connUrl))
-       
-    _ <- sequence [ 
+
+    _ <- sequence [
       do
-        let code = (Parser.Basic.toSql stmt)
+        let code = Parser.Basic.toSql stmt
         execResult <- catch (catch (execute_ conn (toQry code)) (pgsqlHandleErr code)) (pgsqlHandleQry code)
 
         return ()
@@ -307,15 +307,15 @@ pgsqlExecIntern :: Bool -> URL -> [SqlStatement] -> IO ()
 pgsqlExecIntern doCommit connUrl xs = do
     conn <- connectPostgreSQL (B.pack (exportURL connUrl))
     begin conn
-       
-    _ <- sequence [ 
+
+    _ <- sequence [
       do
-        let code = (Parser.Basic.toSql stmt)
+        let code = Parser.Basic.toSql stmt
         execResult <- catch (catch (execute_ conn (toQry code)) (pgsqlHandleErr code)) (pgsqlHandleQry code)
 
         return ()
       | stmt <- stmtsFilterExecutable xs ]
-    
+
     if doCommit then
       commit conn
     else

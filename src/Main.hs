@@ -30,31 +30,31 @@ run (Install opt optDb optInstall) = do
     pgsqlExecWithoutTransact
       ((getConUrl optDb) { url_path = "postgres" })
       (sqlCreateDatabase (optDeleteExistingDatabase optInstall) dbname)
-  else 
+  else
     when (optDeleteExistingDatabase optInstall) $
       warn' $ "WARNING [hamsql]: In --emulate and --print mode the" ++
         " DROP/CREATE DATABASE statements are skipped. You have to ensure that a empty " ++
         " database exists for those commands to make sense."
-    
+
   setup <- loadSetup opt (optSetup opt)
 
   statements <- pgsqlGetFullStatements opt optDb setup
-  
+
   useSqlStmts optDb (sort statements)
-  
+
 -- Upgrade
 run (Upgrade opt optDb optUpgrade) = do
     setup <- loadSetup opt (optSetup opt)
-  
+
     conn <- pgsqlConnectUrl (getConUrl optDb)
-    
-    deleteStmts <- pgsqlDeleteAllStmt conn   
+
+    deleteStmts <- pgsqlDeleteAllStmt conn
     createStmts <- pgsqlGetFullStatements opt optDb setup
-    
+
     fragile <- pgsqlUpdateFragile optUpgrade conn createStmts
-    
-    let stmts = (sort deleteStmts) ++ (sort $ fragile ++ (Data.List.filter afterDelete createStmts))
-    
+
+    let stmts = sort deleteStmts ++ sort (fragile ++ Data.List.filter afterDelete createStmts)
+
     useSqlStmts optDb stmts
 
 -- Doc
@@ -64,7 +64,7 @@ run (Doc opt optDoc) =
       setup <- loadSetup opt (optSetup opt)
       html <- toSetupDoc optDoc setup
       putStrLn $ getDoc $ unpack html
-      
+
     "dot" -> do
       setup <- loadSetup opt (optSetup opt)
       dot <- getGraphDoc optDoc setup

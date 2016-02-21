@@ -24,5 +24,5 @@ data Sequence = Sequence {
 } deriving (Generic, Show, Data, Typeable)
 instance FromJSON Sequence where parseJSON = strictParseYaml
 instance ToJSON Sequence where toJSON = genericToJSON myOpt
-      
+
 

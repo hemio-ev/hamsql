@@ -30,7 +30,7 @@ data Table = Table {
   tableTemplates    :: Maybe [SqlName],
   tableTemplateData :: Maybe [TableTpl]
 } deriving (Data, Generic, Show, Typeable)
-instance FromJSON Table where parseJSON = strictParseYaml 
+instance FromJSON Table where parseJSON = strictParseYaml
 instance ToJSON Table where toJSON = genericToJSON myOpt
 
 data TableTpl = TableTpl {
@@ -41,7 +41,7 @@ data TableTpl = TableTpl {
     tabletplColumns     :: Maybe [Column],
     tabletplChecks      :: Maybe [Check],
     tabletplPrivSelect  :: Maybe [SqlName],
-    tabletplPrivInsert  :: Maybe [SqlName], 
+    tabletplPrivInsert  :: Maybe [SqlName],
     tabletplPrivUpdate  :: Maybe [SqlName],
     tabletplPrivDelete  :: Maybe [SqlName]
 } deriving (Generic, Show, Typeable, Data)
@@ -73,11 +73,11 @@ data Column = Column {
     columntplUnique       :: Maybe Bool,
     columntplChecks       :: Maybe [Check]
 } deriving (Generic, Show, Typeable, Data)
-instance FromJSON Column where parseJSON = strictParseYaml.addColumnDefaultTag 
+instance FromJSON Column where parseJSON = strictParseYaml.addColumnDefaultTag
 instance ToJSON Column where toJSON = genericToJSON myOpt
 
 addColumnDefaultTag :: Value -> Value
-addColumnDefaultTag (Object o) = Object $ 
+addColumnDefaultTag (Object o) = Object $
  if member "tag" o then
   o
  else

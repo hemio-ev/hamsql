@@ -45,9 +45,9 @@ myOpt = defaultOptions { fieldLabelModifier     = snakeify . removeFirstPart
 outJson s = show $ toJSON s
 
 forceToJson :: ToJSON a => a -> IO ()
-forceToJson s = do
+forceToJson s =
   withFile "/dev/null" WriteMode
-   (\handle -> hPutStrLn handle $ show $ toJSON s)
+ (\handle -> hPrint handle (toJSON s))
 
 -- SqlCode (right now only SqlName)
 
@@ -58,7 +58,7 @@ instance Eq SqlName where
 
 instance SqlCode SqlName
   where
-    toSql (SqlName n) = 
+    toSql (SqlName n) =
       if '"' `elem` n then
         n
       else
@@ -78,7 +78,7 @@ expSqlName n = map SqlName (splitOn "." (getStr n))
 
 instance SqlCode SqlType
   where
-    toSql (SqlType n) = 
+    toSql (SqlType n) =
       if
         -- if quotes are contained
         -- assume that user cares for correct enquoting
@@ -88,7 +88,7 @@ instance SqlCode SqlType
         ('(' `elem` n && ')' `elem` n) ||
         -- if no dot is present, assume that buildin type
         -- like integer is meant
-        not ('.' `elem` n) ||
+        notElem '.' n ||
         -- if % is present, assume that something like
         -- table%ROWTYPE could be meant
         '%' `elem` n
@@ -108,12 +108,12 @@ toSql' :: [SqlName] -> String
 toSql' xs = join "." $ map quotedName xs
   where
     quotedName (SqlName s) = "\"" ++ s ++ "\""
-    
+
 class SqlCode a where
   toSql :: a -> String
   (//) :: a -> a -> a
 
- 
+
 -- SqlName
 newtype SqlName = SqlName String deriving (Generic,Ord,Show, Typeable, Data)
 instance FromJSON SqlName where parseJSON = genericParseJSON myOpt
@@ -129,14 +129,14 @@ strictParseYaml xs =
   parsed <- genericParseJSON myOpt xs
   let diff = minus (keysOfValue xs) (keysOfData parsed)
   return $
-   if diff == [] then
+   if null diff then
     parsed
    else
     throw $ YamsqlException $ "Found unknown keys: " ++ show diff
 
  where
   keysOfData u = sort $ "tag":map (snakeify.removeFirstPart) (constrFields (toConstr u))
-  
+
   keysOfValue :: Value -> [String]
   keysOfValue (Object xs) = sort $ map unpack $ keys xs
 
