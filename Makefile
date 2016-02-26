@@ -13,3 +13,4 @@ install:
 
 clean:
 	cabal clean
+	find src/ \( -name '*.hi' -or -name '*.o' \) -exec rm {} ';'

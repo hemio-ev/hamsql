@@ -302,18 +302,27 @@ pgsqlExecStmtList Unchanged [] failed conn = pgsqlExecStmtHandled conn (head fai
 pgsqlExecStmtList Changed   [] failed conn = void $ pgsqlExecStmtList Unchanged failed [] conn
 pgsqlExecStmtList status (x:xs) failed conn = do
     savepoint <- newSavepoint conn
-    result <- try $ pgsqlExecStmt conn x
 
-    case result of
-        Left SqlError {} -> do
-            rollbackToSavepoint conn savepoint
-            releaseSavepoint conn savepoint
-            pgsqlExecStmtList status xs (failed ++ [x]) conn
-        Right _ -> do
+    do
+        pgsqlExecStmt conn x
+        proceed savepoint
+
+     `catch` handleSqlError savepoint
+     `catch` handleQueryError savepoint
+
+    where
+        handleSqlError savepoint SqlError{} = skipQuery savepoint
+        handleQueryError savepoint QueryError{} = proceed savepoint
+
+        proceed savepoint = do
             releaseSavepoint conn savepoint
             pgsqlExecStmtList Changed xs failed conn
 
-    return ()
+        skipQuery savepoint = do
+            rollbackToSavepoint conn savepoint
+            releaseSavepoint conn savepoint
+            pgsqlExecStmtList status xs (failed ++ [x]) conn
+
 
 pgsqlExecStmt :: Connection -> SqlStatement -> IO ()
 pgsqlExecStmt conn stmt = do
