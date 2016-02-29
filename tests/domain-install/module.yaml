@@ -1,0 +1,28 @@
+name: domain-install
+description: Domain Install
+
+domains:
+# Simple domain dependency
+ - name: A1
+   description: A1
+   type: int
+ - name: A2
+   description: A2
+   type: domain-install.A1
+
+# Complicated domain dependecy
+ - name: B2
+   description: B2
+   type: domain-install.B1
+ - name: B1
+   description: B1
+   type: int
+
+tables:
+ - name: t1
+   description: x
+   primary_key: [a]
+   columns:
+    - name: a
+      type: int
+      description: A
