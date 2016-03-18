@@ -13,9 +13,15 @@ stmtDropRole role = SqlStmt SqlDropRole role $ "DROP ROLE " ++ toSql role
 
 stmtDropFunction :: (SqlName, SqlName, [SqlType]) -> SqlStatement
 stmtDropFunction (schema, function, args) =
-  SqlStmtFunction SqlDropFunction function args $
+  SqlStmtFunction SqlDropFunction (schema <.> function) args $
       "DROP FUNCTION " ++ toSql(schema <.> function) ++
       "(" ++ (join ", " (map toSql args)) ++ ")"
+
+stmtDropFunction' :: SqlStatement -> SqlStatement
+stmtDropFunction' (SqlStmtFunction _ n t _) =
+    SqlStmtFunction SqlDropFunction n t $
+      "DROP FUNCTION " ++ toSql n ++
+      "(" ++ (join ", " (map toSql t)) ++ ")"
 
 -- TABLE
 

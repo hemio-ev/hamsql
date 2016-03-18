@@ -18,6 +18,11 @@ domains:
    description: B1
    type: int
 
+# Limited type
+ - name: L1
+   description: limited varchar
+   type: varchar(25)
+
 tables:
  - name: t1
    description: x

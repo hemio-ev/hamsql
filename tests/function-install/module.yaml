@@ -1,0 +1,7 @@
+name: function-install
+description: Function Install
+
+domains:
+ - name: user
+   type: varchar(10)
+   description: Keyword Name

@@ -311,17 +311,20 @@ pgsqlExecStmtList status (x:xs) failed conn = do
      `catch` handleQueryError savepoint
 
     where
-        handleSqlError savepoint SqlError{} = skipQuery savepoint
+        handleSqlError savepoint SqlError{sqlState=err}
+         | err == "42P13" = skipQuery savepoint [stmtDropFunction' x, x]
+         | otherwise      = skipQuery savepoint [x]
+
         handleQueryError savepoint QueryError{} = proceed savepoint
 
         proceed savepoint = do
             releaseSavepoint conn savepoint
             pgsqlExecStmtList Changed xs failed conn
 
-        skipQuery savepoint = do
+        skipQuery savepoint stmts = do
             rollbackToSavepoint conn savepoint
             releaseSavepoint conn savepoint
-            pgsqlExecStmtList status xs (failed ++ [x]) conn
+            pgsqlExecStmtList status xs (failed ++ stmts) conn
 
 
 pgsqlExecStmt :: Connection -> SqlStatement -> IO ()

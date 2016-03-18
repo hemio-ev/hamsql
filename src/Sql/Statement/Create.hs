@@ -131,7 +131,7 @@ getFunctionStatements opts setup m f =
         sqlGrantExecute u = "GRANT EXECUTE ON FUNCTION \n" ++
             sqlFunctionIdentifier ++ "\nTO " ++ prefixedRole setup u
 
-        stmtCreateFunction = SqlStmtFunction SqlCreateFunction (functionName f)
+        stmtCreateFunction = SqlStmtFunction SqlCreateFunction name
             (maybeMap variableType (functionParameters f))
             $
             "CREATE OR REPLACE FUNCTION " ++ sqlFunctionIdentifierDef ++
@@ -185,7 +185,7 @@ getFunctionStatements opts setup m f =
             ") "
          | otherwise = ""
 
-        sqlReturnsColumn c = toSql (parameterName c) ++ " " ++ toSql(parameterType c)
+        sqlReturnsColumn c = toSql (parameterName c) ++ " " ++ toSql (parameterType c)
 
         -- If language not defined, use service for variable definitions
         sqlBody

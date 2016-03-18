@@ -59,7 +59,7 @@ class test:
 
     def _get_domains(self):
         self.cur.execute("""
-            SELECT domain_catalog, domain_name, domain_schema, udt_name, domain_default
+            SELECT domain_catalog, domain_name, domain_schema, udt_name, character_maximum_length, domain_default
                 FROM information_schema.domains
                 WHERE domain_schema <> 'information_schema'
             """)

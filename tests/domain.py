@@ -4,12 +4,13 @@ t = utils.test("postgres://postgres@/hamsql-test", "domain.yml")
 
 t.domains = \
  [
-  ('hamsql-test', 'A1', 'domain-install', 'int4', None) ,
-  ('hamsql-test', 'A2', 'domain-install', 'A1', None) ,
-  ('hamsql-test', 'B1', 'domain-install', 'int4', None) ,
-  ('hamsql-test', 'B2', 'domain-install', 'B1', None) ,
+  ('hamsql-test', 'A1', 'domain-install', 'int4', None, None) ,
+  ('hamsql-test', 'A2', 'domain-install', 'A1', None, None) ,
+  ('hamsql-test', 'B1', 'domain-install', 'int4', None, None) ,
+  ('hamsql-test', 'L1', 'domain-install', 'varchar', 25, None) ,
+  ('hamsql-test', 'B2', 'domain-install', 'B1', None, None) ,
  ]
- 
+
 t.tables = \
  [
   ('domain-install', 't1', 'BASE TABLE') ,
