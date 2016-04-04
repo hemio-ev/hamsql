@@ -46,7 +46,7 @@ sqlManageSchemaJoin schemaid =
       " JOIN pg_namespace AS n " ++
       "  ON " ++ schemaid ++ " = n.oid AND " ++
       "  NOT n.nspname LIKE 'pg_%' AND " ++
-      "  NOT n.nspname IN ('information_schema', 'public') "
+      "  n.nspname NOT IN ('information_schema') "
 
 -- DROP ROLE statements for all roles on the server prefixed with `prefix`
 pgsqlDeleteRoleStmt :: URL -> String -> IO [SqlStatement]
@@ -91,7 +91,6 @@ pgsqlDeleteTableConstraintStmt conn =
       "JOIN pg_class AS t " ++
       "  ON c.conrelid = t.oid " ++
       sqlManageSchemaJoin "c.connamespace"
-
     return $ map f result
 
   where
@@ -250,11 +249,17 @@ pgsqlUpdateFragile optUpgrade conn stmtsInstall = do
   types <- pgsqlCorrectTypes conn stmtsInstall
   functions <- pgsqlCorrectFunctions conn stmtsInstall
 
-  return $ if optPermitDataDeletion optUpgrade
-    then
-      tables ++ columns ++ domains ++ types ++ functions
-    else filter (\t -> typeEq SqlDropTable t || typeEq SqlDropColumn t)
-      tables ++ columns ++ domains ++ types ++ functions
+  let stmts = tables ++ columns ++ domains ++ types ++ functions
+
+  return $
+    if optPermitDataDeletion optUpgrade
+      then
+        stmts
+      else
+        filter (\t ->
+          not (typeEq SqlDropTable t)
+          && not (typeEq SqlDropColumn t))
+        stmts
 
 -- DB Utils
 
