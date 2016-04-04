@@ -272,10 +272,15 @@ getConUrl xs = fromJustReason "Not a valid URL" (importURL $ optConnection xs)
 pgsqlConnectUrl :: URL -> IO Connection
 pgsqlConnectUrl url = do
   connResult <- try $ connectPostgreSQL (B.pack (exportURL url))
+  let conn = getConn connResult
+  _ <- execute_ conn "SET client_min_messages TO WARNING"
 
-  return $ case connResult of
-    Left e@SqlError{} -> err $ "sql connection failed: " ++ B.unpack (sqlErrorMsg e)
-    Right conn -> conn
+  return conn
+
+ where
+  getConn res = case res of
+     Left e@SqlError{} -> err $ "sql connection failed: " ++ B.unpack (sqlErrorMsg e)
+     Right conn -> conn
 
 pgsqlHandleErr :: SqlStatement -> SqlError -> IO ()
 pgsqlHandleErr code e = do

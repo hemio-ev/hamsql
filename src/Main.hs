@@ -32,7 +32,7 @@ run (Install opt optDb optInstall) = do
       (sqlCreateDatabase (optDeleteExistingDatabase optInstall) dbname)
   else
     when (optDeleteExistingDatabase optInstall) $
-      warn' $ "WARNING [hamsql]: In --emulate and --print mode the" ++
+      warn' $ "In --emulate and --print mode the" ++
         " DROP/CREATE DATABASE statements are skipped. You have to ensure that a empty " ++
         " database exists for those commands to make sense."
 

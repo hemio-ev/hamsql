@@ -1,6 +1,7 @@
 v0.6.0-unreleased
-  - Resolve complicated dependency issues
-  - Resolve change of function return type (if function can be dropped)
+  - Adds resolve complicated dependency issues
+  - Adds resolve change of function return type (if function can be dropped)
+  - Changes connection options to suppress SQL NOTICE messages
   - Fixes fundamental logic error in pgsqlUpdateFragile
     Without --perimit-data-deletion upgrades would not create objects etc.
   - Fixes constraints in schema public are not deleted
