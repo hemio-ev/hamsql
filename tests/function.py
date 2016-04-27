@@ -10,5 +10,8 @@ t.domains = \
 t.run_cmd('install', delete_db=True)
 t.check()
 
+t.run_cmd('upgrade')
+t.check()
+
 t.evaluate()
 

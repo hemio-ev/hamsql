@@ -73,7 +73,8 @@ pgsqlDeleteFunctionStmt conn =
       -- <https://github.com/lpsmith/postgresql-simple/issues/166>
       "ARRAY(SELECT UNNEST(p.proargtypes::regtype[]::varchar[])) " ++
       "FROM pg_proc AS p " ++
-      sqlManageSchemaJoin "p.pronamespace"
+      sqlManageSchemaJoin "p.pronamespace " ++
+      "WHERE p.probin IS NULL"
 
     return $ map toStmt result
 

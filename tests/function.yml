@@ -1,5 +1,9 @@
 modules: 
  - function-install
+ - public
 module_dirs:
  - .
 
+pre_code: |
+     -- UUIDs
+     CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

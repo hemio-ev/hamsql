@@ -26,10 +26,10 @@ class test:
             params += [ '--delete-existing-database' ]
 
         print("---")
-        r = subprocess.run(params)
+        r = subprocess.run(params, stderr=subprocess.PIPE)
         
         if r.returncode != returncode:
-            print("ERROR")
+            print("ERROR", r.stderr)
             if returncode:
                 self.code = r.returncode
             else:
