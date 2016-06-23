@@ -62,13 +62,7 @@ run (Doc opt optDoc) =
   case optFormat optDoc of
     "html" -> do
       setup <- loadSetup opt (optSetup opt)
-      html <- toSetupDoc optDoc setup
-      putStrLn $ getDoc $ unpack html
-
-    "dot" -> do
-      setup <- loadSetup opt (optSetup opt)
-      dot <- getGraphDoc optDoc setup
-      putStrLn $ unpack dot
+      return ()
 
 useSqlStmts :: OptCommonDb -> [SqlStatement] -> IO ()
 useSqlStmts optDb stmts

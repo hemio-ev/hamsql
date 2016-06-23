@@ -16,7 +16,7 @@ import           Data.List
 import           Data.String
 import           Database.PostgreSQL.Simple
 import           Database.PostgreSQL.Simple.Transaction
-import           Database.PostgreSQL.Simple.Types       (PGArray, fromPGArray)
+import           Database.PostgreSQL.Simple.Types       (PGArray(..), fromPGArray)
 import           Network.URL
 
 import Option
@@ -26,8 +26,6 @@ import Sql
 import Sql.Statement.Create
 import Sql.Statement.Drop
 import Utils
-
-import Data.Vector (fromList)
 
 pgsqlGetFullStatements :: OptCommon -> OptCommonDb -> Setup -> IO [SqlStatement]
 pgsqlGetFullStatements opt optDb setup  = do
@@ -192,7 +190,7 @@ pgsqlCorrectTables conn stmtsInstall = do
 normalizedFuncStmt :: Connection -> SqlStatement -> IO SqlStatement
 normalizedFuncStmt conn (SqlStmtFunction t n p c) = do
   x :: [(Int,Int)] <- query conn "SELECT ?, ?" (1::Int, 2::Int)
-  p' :: [Only (PGArray SqlType)] <- query conn "SELECT ?::regtype[]::varchar[]" (Only $ fromList (map toSql p))
+  p' :: [Only (PGArray SqlType)] <- query conn "SELECT ?::regtype[]::varchar[]" (Only $ PGArray $ map toSql p)
 
   return $ SqlStmtFunction t n (fromPGArray $ head (map fromOnly p')) c
 
