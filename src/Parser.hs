@@ -9,7 +9,6 @@
 {-# LANGUAGE FlexibleInstances  #-}
 {-# LANGUAGE OverloadedStrings  #-}
 
-
 module Parser where
 
 import           Control.Exception
@@ -36,11 +35,11 @@ import Utils
 -- Setup --
 
 data Setup = Setup {
-  setupModules    :: [String],
+  setupModules    :: [SqlName],
   setupModuleDirs :: [FilePath],
   setupRolePrefix :: Maybe SqlName,
-  setupPreCode    :: Maybe String,
-  setupPostCode   :: Maybe String,
+  setupPreCode    :: Maybe Text,
+  setupPostCode   :: Maybe Text,
   xsetupInternal  :: Maybe SetupInternal
 } deriving (Generic,Show,Data,Typeable)
 instance FromJSON Setup where parseJSON = strictParseYaml
@@ -62,7 +61,7 @@ setupRolePrefix' setup = fromMaybe (SqlName "yamsql_") (setupRolePrefix setup)
 data WithModule a = WithModule Module a deriving (Show)
 
 class WithName a where
- name :: a -> String
+ name :: a -> Text
 
 instance WithName (WithModule TableTpl) where
  name (WithModule m t) = toSql $ Parser.Module.moduleName m <.> tabletplTemplate t
@@ -78,13 +77,13 @@ withoutModule (WithModule _ t) = t
 --selectTemplates :: (WithName t) => Maybe [SqlName] -> [WithModule t] -> [t]
 selectTemplates ns ts =
   -- TODO: error handling here should be done using exceptions
-  [ withoutModule $ selectUniqueReason ("table or function tpl " ++ n) $
+  [ withoutModule $ selectUniqueReason ("table or function tpl " <> n) $
     filter (\t -> n == name t) ts
     | n <- map toSql $ maybeList ns ]
 
 selectTemplate x ts = head' $ map withoutModule $ filter (\y -> name y == toSql x) ts
   where
-    head' = selectUniqueReason ("Column template " ++ toSql x)
+    head' = selectUniqueReason ("Column template " <> toSql x)
 
 -- get things from Setup
 

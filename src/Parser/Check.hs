@@ -1,3 +1,9 @@
+-- This file is part of HamSql
+--
+-- Copyright 2014-2016 by it's authors.
+-- Some rights reserved. See COPYING, AUTHORS.
+
+{-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric      #-}
 
@@ -9,11 +15,12 @@ import Data.Typeable
 import GHC.Generics
 
 import Parser.Basic
+import Utils
 
 data Check = Check {
     checkName        :: SqlName,
-    checkDescription :: String,
-    checkCheck       :: String
+    checkDescription :: Text,
+    checkCheck       :: Text
 } deriving (Generic, Show, Typeable, Data)
 instance FromJSON Check where parseJSON = strictParseYaml
 instance ToJSON Check where toJSON = genericToJSON myOpt

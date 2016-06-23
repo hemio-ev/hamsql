@@ -11,7 +11,9 @@ module PostgresCon where
 
 import           Control.Exception
 import           Control.Monad                          (void, when)
+import qualified Data.Text as T
 import qualified Data.ByteString.Char8                  as B
+import Data.Text.Encoding (decodeUtf8)
 import           Data.List
 import           Data.String
 import           Database.PostgreSQL.Simple
@@ -35,30 +37,30 @@ pgsqlGetFullStatements opt optDb setup  = do
   return $ main_stmts ++ role_delete_stmts
 
   where
-    rolePrefix :: String
+    rolePrefix :: Text
     rolePrefix = getPrefix (setupRolePrefix' setup)
-    getPrefix :: SqlName -> String
+    getPrefix :: SqlName -> Text
     getPrefix (SqlName xs) = xs
 
 sqlManageSchemaJoin schemaid =
-      " JOIN pg_namespace AS n " ++
-      "  ON " ++ schemaid ++ " = n.oid AND " ++
-      "  NOT n.nspname LIKE 'pg_%' AND " ++
+      " JOIN pg_namespace AS n " <\>
+      "  ON" <-> schemaid <-> "= n.oid AND " <\>
+      "  NOT n.nspname LIKE 'pg_%' AND " <\>
       "  n.nspname NOT IN ('information_schema') "
 
 -- DROP ROLE statements for all roles on the server prefixed with `prefix`
-pgsqlDeleteRoleStmt :: URL -> String -> IO [SqlStatement]
+pgsqlDeleteRoleStmt :: URL -> Text -> IO [SqlStatement]
 pgsqlDeleteRoleStmt url prefix = do
   conn <- pgsqlConnectUrl url
 
   result <- query conn "SELECT rolname FROM pg_roles WHERE rolname LIKE ?" $
-    Only $ prefix ++ "%"
+    Only $ prefix <> "%"
   let users = result
 
   return $ map toStmt users
 
   where
-    toStmt :: Only String -> SqlStatement
+    toStmt :: Only Text -> SqlStatement
     toStmt (Only user) = stmtDropRole $ SqlName user
 
 -- DROP FUNCTION
@@ -66,12 +68,11 @@ pgsqlDeleteFunctionStmt :: Connection -> IO [SqlStatement]
 pgsqlDeleteFunctionStmt conn =
   do
     result <- query_ conn $ toQry $
-      "SELECT n.nspname, p.proname, " ++
+      "SELECT n.nspname, p.proname, " <>
       -- This part of the query includes a workaround for
       -- <https://github.com/lpsmith/postgresql-simple/issues/166>
-      "ARRAY(SELECT UNNEST(p.proargtypes::regtype[]::varchar[])) " ++
-      "FROM pg_proc AS p " ++
-      sqlManageSchemaJoin "p.pronamespace " ++
+      "ARRAY(SELECT UNNEST(p.proargtypes::regtype[]::varchar[]))" <\>
+      "FROM pg_proc AS p" <-> sqlManageSchemaJoin "p.pronamespace" <\>
       "WHERE p.probin IS NULL"
 
     return $ map toStmt result
@@ -85,11 +86,10 @@ pgsqlDeleteTableConstraintStmt :: Connection -> IO [SqlStatement]
 pgsqlDeleteTableConstraintStmt conn =
   do
     result <- query_ conn $ toQry $
-      "SELECT n.nspname, t.relname, c.conname " ++
-      "FROM pg_constraint AS c " ++
-      "JOIN pg_class AS t " ++
-      "  ON c.conrelid = t.oid " ++
-      sqlManageSchemaJoin "c.connamespace"
+      "SELECT n.nspname, t.relname, c.conname" <\>
+      "FROM pg_constraint AS c" <\>
+      "JOIN pg_class AS t" <\>
+      " ON c.conrelid = t.oid" <-> sqlManageSchemaJoin "c.connamespace"
     return $ map f result
 
   where
@@ -101,11 +101,10 @@ pgsqlDeleteDomainConstraintStmt :: Connection -> IO [SqlStatement]
 pgsqlDeleteDomainConstraintStmt conn =
   do
     result <- query_ conn $ toQry $
-      "SELECT n.nspname, d.typname, c.conname " ++
-      "FROM pg_constraint AS c " ++
-      "JOIN pg_type AS d " ++
-      "  ON c.contypid = d.oid " ++
-      sqlManageSchemaJoin "c.connamespace"
+      "SELECT n.nspname, d.typname, c.conname" <\>
+      "FROM pg_constraint AS c " <\>
+      "JOIN pg_type AS d " <\>
+      " ON c.contypid = d.oid" <-> sqlManageSchemaJoin "c.connamespace"
 
     return $ map f result
 
@@ -126,10 +125,10 @@ pgsqlDeleteAllStmt conn = do
 -- List TABLE
 pgsqlListTables :: Connection -> IO [SqlName]
 pgsqlListTables conn = do
-  dat :: [(String,String)] <- query_ conn $ toQry $
-    "SELECT table_schema, table_name" ++
-    " FROM information_schema.tables" ++
-    " WHERE table_type = 'BASE TABLE'" ++
+  dat :: [(Text,Text)] <- query_ conn $ toQry $
+    "SELECT table_schema, table_name" <\>
+    "FROM information_schema.tables" <\>
+    "WHERE table_type = 'BASE TABLE'" <\>
     " AND table_schema NOT IN ('information_schema', 'pg_catalog')"
   return $ map toSqlName dat
 
@@ -139,9 +138,9 @@ pgsqlListTables conn = do
 -- List TABLE COLUMN
 pgsqlListTableColumns :: Connection -> IO [(SqlName, SqlName)]
 pgsqlListTableColumns conn = do
-  dat :: [(String, String, String)] <- query_ conn $ toQry $
-    "SELECT table_schema, table_name, column_name" ++
-    " FROM information_schema.columns" ++
+  dat :: [(Text, Text, Text)] <- query_ conn $ toQry $
+    "SELECT table_schema, table_name, column_name" <\>
+    " FROM information_schema.columns" <\>
     --" WHERE table_type = 'BASE TABLE'" ++
     " WHERE table_schema NOT IN ('information_schema', 'pg_catalog')"
   return $ map toSqlName dat
@@ -152,9 +151,9 @@ pgsqlListTableColumns conn = do
 -- List DOMAIN
 pgsqlListDomains :: Connection -> IO [SqlName]
 pgsqlListDomains conn = do
-  dat :: [(String,String)] <- query_ conn $ toQry $
-    "SELECT domain_schema, domain_name" ++
-    " FROM information_schema.domains" ++
+  dat :: [(Text, Text)] <- query_ conn $ toQry $
+    "SELECT domain_schema, domain_name" <\>
+    " FROM information_schema.domains" <\>
     " WHERE domain_schema NOT IN ('information_schema', 'pg_catalog')"
 
   return $ map toSqlName dat
@@ -164,9 +163,9 @@ pgsqlListDomains conn = do
 
 pgsqlListTypes :: Connection -> IO [SqlName]
 pgsqlListTypes conn = do
-  dat :: [(String,String)] <- query_ conn $ toQry $
-    "SELECT user_defined_type_schema, user_defined_type_name" ++
-    " FROM information_schema.user_defined_types" ++
+  dat :: [(Text, Text)] <- query_ conn $ toQry $
+    "SELECT user_defined_type_schema, user_defined_type_name" <\>
+    " FROM information_schema.user_defined_types" <\>
     " WHERE user_defined_type_schema NOT IN ('information_schema', 'pg_catalog')"
 
   return $ map toSqlName dat
@@ -262,8 +261,8 @@ pgsqlUpdateFragile optUpgrade conn stmtsInstall = do
 
 -- DB Utils
 
-toQry :: String -> Query
-toQry = fromString
+toQry :: Text -> Query
+toQry = fromString . T.unpack
 
 getConUrl :: OptCommonDb -> URL
 getConUrl xs = fromJustReason "Not a valid URL" (importURL $ optConnection xs)
@@ -278,15 +277,15 @@ pgsqlConnectUrl url = do
 
  where
   getConn res = case res of
-     Left e@SqlError{} -> err $ "sql connection failed: " ++ B.unpack (sqlErrorMsg e)
+     Left e@SqlError{} -> err $ "sql connection failed:" <-> decodeUtf8 (sqlErrorMsg e)
      Right conn -> conn
 
 pgsqlHandleErr :: SqlStatement -> SqlError -> IO ()
 pgsqlHandleErr code e = do
     err $
-        "sql error in following statement:\n" ++
-        toSql code ++ "\n" ++
-        "sql error: " ++ B.unpack (sqlErrorMsg e) ++ " (Error Code: " ++ B.unpack (sqlState e) ++ ")"
+        "sql error in following statement:" <\>
+        toSql code <\>
+        "sql error:" <-> decodeUtf8 (sqlErrorMsg e) <-> "(Error Code: " <> decodeUtf8 (sqlState e) <> ")"
     return ()
 
 pgsqlExecWithoutTransact :: URL -> [SqlStatement] -> IO Connection

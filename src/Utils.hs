@@ -3,23 +3,29 @@
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 
-module Utils where
+{-# LANGUAGE OverloadedStrings  #-}
+
+module Utils (module Utils, Text (..), (<>)) where
 
 import Control.Monad
 import Data.Char
 import Data.List        (group, intercalate, sort)
+import qualified Data.Text as T
+import Data.Text (Text(..), pack)
+import Data.Monoid ((<>))
 import Debug.Trace
 import System.Exit
-import System.IO
+import System.IO (stderr)
+import Data.Text.IO
 import System.IO.Unsafe
 
 import Option
 
 join = intercalate
 
-err :: String -> a
+err :: Text -> a
 err xs = unsafePerformIO $ do
-  hPutStrLn stderr ("error: " ++ xs)
+  hPutStrLn stderr ("error: " <> xs)
   exitWith $ ExitFailure 1
 
 inf = msg "info"
@@ -30,7 +36,7 @@ msg typ xs ys = unsafePerformIO $ do
   msg' typ xs
   return ys
 
-msg' typ xs = hPutStrLn stderr (typ ++ ": " ++ xs)
+msg' typ xs = hPutStrLn stderr (typ <> ": " <> xs)
 
 debug opt
   | optVerbose opt = msg "debug"
@@ -38,7 +44,7 @@ debug opt
       where
         id' _ = id
 
-info :: OptCommon -> String -> IO ()
+info :: OptCommon -> Text -> IO ()
 info opts xs = when(optVerbose opts) $
     msg' "debug" xs
 
@@ -75,18 +81,24 @@ maybeMap :: (a -> b) -> Maybe [a] -> [b]
 maybeMap _ Nothing = []
 maybeMap f (Just xs) = map f xs
 
-upper :: String -> String
-upper = map toUpper
-
-fromJustReason :: String -> Maybe a -> a
+fromJustReason :: Text -> Maybe a -> a
 fromJustReason _ (Just x) = x
-fromJustReason reason Nothing = err $ "fromJust failed: " ++ reason
+fromJustReason reason Nothing = err $ "fromJust failed: " <> reason
 
-selectUniqueReason :: String -> [a] -> a
+selectUniqueReason :: Text -> [a] -> a
 selectUniqueReason _ [x] = x
-selectUniqueReason msg [] = err $ "No element found while trying to find exactly one: " ++ msg
+selectUniqueReason msg [] = err $ "No element found while trying to find exactly one: " <> msg
 selectUniqueReason msg xs = err $
-  "More then one element (" ++ show (length xs) ++") found while trying to extrac one: " ++ msg
+  "More then one element (" <> tshow (length xs) <> ") found while trying to extrac one: " <> msg
 
-tr x = trace (show x ++ "\n") x
+tshow :: (Show a) => a -> Text
+tshow = pack . show
+
+tr x = trace (show x <> "\n") x
+
+isIn :: Char -> Text -> Bool
+isIn c t = (T.singleton c) `T.isInfixOf` t
+
+(<->) a b = a <> " " <> b
+(<\>) a b = a <> "\n" <> b
 

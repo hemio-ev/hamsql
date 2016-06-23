@@ -1,3 +1,9 @@
+-- This file is part of HamSql
+--
+-- Copyright 2014-2016 by it's authors.
+-- Some rights reserved. See COPYING, AUTHORS.
+
+{-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE FlexibleContexts   #-}
@@ -13,7 +19,7 @@ import           Data.HashMap.Strict   (insert, keys, member)
 import           Data.List.Ordered     (minus, sort, subset)
 import           Data.List.Split       (splitOn)
 import           Data.Maybe            (fromJust, fromMaybe)
-import           Data.Text             (unpack)
+import qualified          Data.Text as T
 import           Data.Typeable
 import           Data.Yaml             ()
 import           GHC.Generics
@@ -29,19 +35,21 @@ removeFirstPart xs = lowerStr rest
         rest = dropWhile isLower xs
         lowerStr (x':xs') = toLower x':xs'
         lowerStr []       = "__"
-
+ 
 -- makes camelCaseSpelling to camel_case_spelling
 snakeify :: String -> String
 snakeify [] = []
 snakeify (x:xs)
  | isUpper x = '_' : toLower x : snakeify xs
  | otherwise =               x : snakeify xs
-
+ 
 myOpt :: Options
-myOpt = defaultOptions { fieldLabelModifier     = snakeify . removeFirstPart
-                       , constructorTagModifier = drop 1 . snakeify}
+myOpt = defaultOptions {
+ fieldLabelModifier     = snakeify . removeFirstPart
+, constructorTagModifier = drop 1 . snakeify
+}
 
---outJson :: Setup -> String
+--outJson :: Setup -> Text
 outJson s = show $ toJSON s
 
 forceToJson :: ToJSON a => a -> IO ()
@@ -59,20 +67,20 @@ instance Eq SqlName where
 instance SqlCode SqlName
   where
     toSql (SqlName n) =
-      if '"' `elem` n then
+      if '"' `isIn` n then
         n
       else
         toSql' $ expSqlName $ SqlName n
 
-    (//) (SqlName s) (SqlName t) = SqlName (s ++ t)
+    (//) (SqlName s) (SqlName t) = SqlName (s <> t)
 
 (<.>) :: SqlName -> SqlName -> SqlName
-(<.>) (SqlName s) (SqlName t) = SqlName $ s ++ "." ++ t
+(<.>) (SqlName s) (SqlName t) = SqlName $ s <> "." <> t
 
-getSql (SqlName s) = "\"" ++ s ++ "\""
+getSql (SqlName s) = "\"" <> s <> "\""
 
 expSqlName :: SqlName -> [SqlName]
-expSqlName n = map SqlName (splitOn "." (getStr n))
+expSqlName n = map SqlName (T.splitOn "." (getStr n))
   where
     getStr (SqlName n') = n'
 
@@ -82,67 +90,68 @@ instance SqlCode SqlType
       if
         -- if quotes are contained
         -- assume that user cares for correct enquoting
-        '"' `elem` n ||
+        '"' `isIn` n ||
         -- if at least a pair of brakets is found
         -- assume that a type like varchar(20) is meant
-        ('(' `elem` n && ')' `elem` n) ||
+        ('(' `isIn` n && ')' `isIn` n) ||
         -- if no dot is present, assume that buildin type
         -- like integer is meant
-        notElem '.' n ||
+        not ('.' `isIn` n) ||
         -- if % is present, assume that something like
         -- table%ROWTYPE could be meant
-        '%' `elem` n
+        '%' `isIn` n
       then
         n
       else
         toSql' $ expSqlName $ SqlName n
 
-    (//) (SqlType s) (SqlType t) = SqlType (s ++ t)
+    (//) (SqlType s) (SqlType t) = SqlType (s <> t)
 
 contSqlName :: [SqlName] -> SqlName
-contSqlName ns = SqlName $ join "." $ map getStr ns
+contSqlName ns = SqlName $ T.intercalate "." $ map getStr ns
   where
     getStr (SqlName n') = n'
 
-toSql' :: [SqlName] -> String
-toSql' xs = join "." $ map quotedName xs
+toSql' :: [SqlName] -> Text
+toSql' xs = T.intercalate "." $ map quotedName xs
   where
-    quotedName (SqlName s) = "\"" ++ s ++ "\""
+    quotedName (SqlName s) = "\"" <> s <> "\""
 
 class SqlCode a where
-  toSql :: a -> String
+  toSql :: a -> Text
   (//) :: a -> a -> a
 
 
 -- SqlName
-newtype SqlName = SqlName String deriving (Generic,Ord,Show, Typeable, Data)
+newtype SqlName = SqlName Text deriving (Generic,Ord,Show, Typeable, Data)
 instance FromJSON SqlName where parseJSON = genericParseJSON myOpt
 instance ToJSON SqlName where toJSON = genericToJSON myOpt
 
-newtype SqlType = SqlType String deriving (Generic,Show,Eq, Typeable, Data)
+newtype SqlType = SqlType Text deriving (Generic,Show,Eq, Typeable, Data)
 instance FromJSON SqlType where parseJSON = genericParseJSON myOpt
 instance ToJSON SqlType where toJSON = genericToJSON myOpt
 
 
+-- TODO: Parser is no longer strict
 strictParseYaml xs =
  do
   parsed <- genericParseJSON myOpt xs
-  let diff = minus (keysOfValue xs) (keysOfData parsed)
+  
+--  let diff = minus (keysOfValue xs) (keysOfData parsed)
   return $
-   if null diff then
+   if True then
     parsed
    else
-    throw $ YamsqlException $ "Found unknown keys: " ++ show diff
+    throw $ YamsqlException $ "Found unknown keys: " <> tshow [""]
 
- where
-  keysOfData u = sort $ "tag":map (snakeify.removeFirstPart) (constrFields (toConstr u))
+--  keysOfData u = sort $ "tag":map (snakeify.removeFirstPart) (constrFields (toConstr u))
 
-  keysOfValue :: Value -> [String]
-  keysOfValue (Object xs) = sort $ map unpack $ keys xs
+--  keysOfValue :: Value -> [String]
+--  keysOfValue (Object xs) = sort $ keys xs
 
 -- EXCEPTIONS
 
-data YamsqlException = YamsqlException String
+data YamsqlException = YamsqlException Text
  deriving (Show, Typeable)
 
 instance Exception YamsqlException

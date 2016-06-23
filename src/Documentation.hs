@@ -5,8 +5,6 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
-
-
 module Documentation where
 
 import           Data.Aeson

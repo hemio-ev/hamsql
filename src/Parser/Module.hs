@@ -1,3 +1,9 @@
+-- This file is part of HamSql
+--
+-- Copyright 2014-2016 by it's authors.
+-- Some rights reserved. See COPYING, AUTHORS.
+
+{-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric      #-}
 
@@ -23,7 +29,7 @@ import Utils
 
 data Module = Module {
     moduleName              :: SqlName,
-    moduleDescription       :: String,
+    moduleDescription       :: Text,
     moduleDependencies      :: Maybe [SqlName],
 
     moduleFunctions         :: Maybe [Function],
@@ -44,7 +50,7 @@ data Module = Module {
     modulePrivAllAll        :: Maybe [SqlName],
     moduleDomains           :: Maybe [Domain],
     moduleTypes             :: Maybe [Type],
-    moduleExecPostInstall   :: Maybe String,
+    moduleExecPostInstall   :: Maybe Text,
     xmoduleInternal         :: Maybe ModuleInternal
 } deriving (Generic,Show, Data, Typeable)
 instance FromJSON Module where parseJSON = strictParseYaml

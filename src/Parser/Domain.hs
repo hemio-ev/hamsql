@@ -16,9 +16,9 @@ import Utils
 
 data Domain = Domain {
     domainName        :: SqlName,
-    domainDescription :: String,
+    domainDescription :: Text,
     domainType        :: SqlType,
-    domainDefault     :: Maybe String,
+    domainDefault     :: Maybe Text,
     domainChecks      :: Maybe [Check]
 } deriving (Generic, Show, Data, Typeable)
 instance FromJSON Domain where parseJSON = strictParseYaml

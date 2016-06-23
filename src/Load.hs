@@ -1,14 +1,18 @@
 -- This file is part of HamSql
 --
--- Copyright 2014 by it's authors.
+-- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
+
+{-# LANGUAGE OverloadedStrings  #-}
 
 module Load where
 
 import           Control.Exception
 import           Control.Monad
 import           Data.Aeson.Types
-import qualified Data.ByteString.Char8 as B
+
+import qualified Data.Text as T
+import qualified Data.ByteString as B
 import           Data.List
 import           Data.Yaml
 import           System.Directory      (doesDirectoryExist, doesFileExist,
@@ -43,7 +47,7 @@ initSetupInternal s' = s' {
 -- Tries to loads all defined modules from defined module dirs
 loadSetupModules :: OptCommon -> FilePath -> Setup -> IO Setup
 loadSetupModules opts path s = do
-  moduleData <- sequence [ loadModule path name | name <- setupModules s ]
+  moduleData <- sequence [ loadModule path (getName name) | name <- setupModules s ]
   return s {
           xsetupInternal = Just (setupInternal s) {
             setupModuleData = moduleData
@@ -51,7 +55,7 @@ loadSetupModules opts path s = do
       }
 
   where
-    loadModule :: FilePath -> String -> IO Module
+    loadModule :: FilePath -> FilePath -> IO Module
     loadModule path name = do
       modulePath <- findModulePath name moduleDirs
       moduleData <- readModule opts modulePath
@@ -62,12 +66,14 @@ loadSetupModules opts path s = do
         }
 
     moduleDirs = map (combine path) (setupModuleDirs s)
+    -- TODO: make global
+    getName (SqlName n) = T.unpack n
 
-findModulePath :: String -> [FilePath] -> IO FilePath
+findModulePath :: FilePath -> [FilePath] -> IO FilePath
 findModulePath moduleName search = findDir search
   where
     findDir [] =
-      err $ "Module '" ++ moduleName ++ "' not found in " ++ show search
+      err $ "Module '" <> tshow moduleName <> "' not found in " <> tshow search
     findDir (d:ds) = do
       let dir = combine d moduleName
       dirExists <- doesDirectoryExist (dir :: FilePath)
@@ -82,14 +88,14 @@ catchErrors filePath x = do
  return $
   case y of
    Left (YamsqlException exc) -> err $
-    "In file '" ++ filePath ++ "': " ++ exc
+    "In file '" <> tshow filePath <> "': " <> exc
    Right _ -> x
 
-yamlEnding :: String -> Bool
-yamlEnding xs = xs =~ "\\.yaml$" || xs =~ "\\.yml$"
+yamlEnding :: FilePath -> Bool
+yamlEnding xs = xs =~ ("\\.yaml$"::String) || xs =~ ("\\.yml$"::String)
 
-pgsqlEnding :: String -> Bool
-pgsqlEnding xs = xs =~ "\\.sql$"
+pgsqlEnding :: FilePath -> Bool
+pgsqlEnding xs = xs =~ ("\\.sql$"::String)
 
 getFilesInDir :: FilePath -> IO [FilePath]
 getFilesInDir path = do
@@ -108,13 +114,13 @@ selectFilesInDir ending dir = do
     files <- getFilesInDir dir
     return $ filter ending files
 
-errorCheck :: String -> Bool -> IO ()
+errorCheck :: Text -> Bool -> IO ()
 errorCheck msg False = err msg
 errorCheck _   True  = return ()
 
 readModule :: OptCommon -> FilePath -> IO Module
 readModule opts md = do
-    doesDirectoryExist md >>= errorCheck ("module dir does not exist: " ++ md)
+    doesDirectoryExist md >>= errorCheck ("module dir does not exist: " <> tshow md)
 
     moduleData <- readObjectFromFile opts moduleConfig
 
@@ -142,15 +148,15 @@ readModule opts md = do
 
 readObjectFromFile :: (FromJSON a, ToJSON a) => OptCommon -> FilePath -> IO a
 readObjectFromFile opts file = do
-  info opts $ "Reading and parsing yaml-file '" ++ file ++ "'"
+  info opts $ "Reading and parsing yaml-file '" <> tshow file <> "'"
 
   fileExists <- doesFileExist file
   unless fileExists $
-    err $ "Expected file existance: '" ++ file ++ "'"
+    err $ "Expected file existance: '" <> tshow file <> "'"
 
   c <- B.readFile file
   catchErrors file $
    case decodeEither' c of
-    Left msg  -> err $ "in yaml-file: " ++ file ++ ": " ++ show msg
+    Left msg  -> err $ "in yaml-file: " <> tshow file <> ": " <> tshow msg
     Right obj -> obj
 

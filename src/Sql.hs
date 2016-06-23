@@ -3,30 +3,29 @@
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 
+{-# LANGUAGE OverloadedStrings #-}
+
 module Sql where
 
---import Option
+import Data.Text (Text)
+import qualified Data.Text as T
+import Database.PostgreSQL.Simple.FromField
+
 import Parser.Basic
 import Utils
 
-
-import Database.PostgreSQL.Simple.FromField
-
---import Data.Maybe
---import Data.List
-import Data.String.Utils (replace)
 
 instance FromField SqlType where
  fromField x y = do
     -- use existing parser for strings
     typeName <- fromField x y
-    return $ SqlType (typeName::String)
+    return $ SqlType (typeName::Text)
 
 instance FromField SqlName where
  fromField x y = do
     -- use existing parser for strings
     typeName <- fromField x y
-    return $ SqlName (typeName::String)
+    return $ SqlName (typeName::Text)
 
 afterDelete :: SqlStatement -> Bool
 afterDelete (SqlStmt t _ _) = f t
@@ -49,8 +48,8 @@ afterDelete _ = False
 -- SQL statements
 
 data SqlStatement =
-  SqlStmt SqlStatementType SqlName String |
-  SqlStmtFunction SqlStatementType SqlName [SqlType] String |
+  SqlStmt SqlStatementType SqlName Text |
+  SqlStmtFunction SqlStatementType SqlName [SqlType] Text |
   SqlStmtEmpty
   deriving (Show)
 
@@ -131,26 +130,26 @@ replacesTypeOf t (SqlStmtFunction _ x y z) = SqlStmtFunction t x y z
 
 instance SqlCode SqlStatement where
   toSql SqlStmtEmpty = ""
-  toSql (SqlStmt SqlPreInstall _ xs) = xs ++ "\n"
-  toSql (SqlStmt SqlPostInstall _ xs) = xs ++ "\n"
+  toSql (SqlStmt SqlPreInstall _ xs) = xs <> "\n"
+  toSql (SqlStmt SqlPostInstall _ xs) = xs <> "\n"
   toSql (SqlStmt _ _ xs) = termin xs
   toSql (SqlStmtFunction _ _ _ xs) = termin xs
   (//) _ _ = undefined
 
-termin [] = undefined
-termin ys = ys ++ statementTermin
+termin "" = undefined
+termin ys = ys <> statementTermin
 
-statementTermin :: String
+statementTermin :: Text
 statementTermin = ";\n"
 
-sqlFromStmt :: SqlStatement -> String
+sqlFromStmt :: SqlStatement -> Text
 sqlFromStmt (SqlStmt _ _ str) = str
 sqlFromStmt (SqlStmtFunction _ _ _ str) = str
 sqlFromStmt SqlStmtEmpty = undefined
 
-sqlPrinter :: [SqlStatement] -> String
-sqlPrinter xs = join "" $ map toSql xs
+sqlPrinter :: [SqlStatement] -> Text
+sqlPrinter xs = T.concat $ map toSql xs
 
-toSqlString :: String -> String
-toSqlString xs = "'" ++ replace "'" "''" xs ++ "'"
+toSqlString :: Text -> Text
+toSqlString xs = "'" <> T.replace "'" "''" xs <> "'"
 

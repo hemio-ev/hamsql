@@ -16,7 +16,7 @@ import Utils
 
 data Table = Table {
   tableName         :: SqlName,
-  tableDescription  :: String,
+  tableDescription  :: Text,
   tableColumns      :: [Column],
   tablePrimaryKey   :: [SqlName],
   tableUnique       :: Maybe [UniqueKey],
@@ -35,7 +35,7 @@ instance ToJSON Table where toJSON = genericToJSON myOpt
 
 data TableTpl = TableTpl {
     tabletplTemplate    :: SqlName,
-    tabletplDescription :: String,
+    tabletplDescription :: Text,
     tabletplForeignKeys :: Maybe [ForeignKey],
     tabletplInherits    :: Maybe [SqlName],
     tabletplColumns     :: Maybe [Column],
@@ -51,12 +51,12 @@ instance ToJSON TableTpl where toJSON = genericToJSON myOpt
 data Column = Column {
     columnName        :: SqlName,
     columnType        :: SqlType,
-    columnDescription :: String,
-    columnDefault     :: Maybe String,
+    columnDescription :: Text,
+    columnDefault     :: Maybe Text,
     columnNull        :: Maybe Bool,
     columnReferences  :: Maybe SqlName,
-    columnOnRefDelete :: Maybe String,
-    columnOnRefUpdate :: Maybe String,
+    columnOnRefDelete :: Maybe Text,
+    columnOnRefUpdate :: Maybe Text,
     columnUnique      :: Maybe Bool,
     columnChecks      :: Maybe [Check]
 } | ColumnTpl {
@@ -64,12 +64,12 @@ data Column = Column {
     columntplTemplateData :: Maybe TableColumnTpl,
     columntplName         :: Maybe SqlName,
     columntplType         :: Maybe SqlType,
-    columntplDescription  :: Maybe String,
-    columntplDefault      :: Maybe String,
+    columntplDescription  :: Maybe Text,
+    columntplDefault      :: Maybe Text,
     columntplNull         :: Maybe Bool,
     columntplReferences   :: Maybe SqlName,
-    columntplOnRefDelete  :: Maybe String,
-    columntplOnRefUpdate  :: Maybe String,
+    columntplOnRefDelete  :: Maybe Text,
+    columntplOnRefUpdate  :: Maybe Text,
     columntplUnique       :: Maybe Bool,
     columntplChecks       :: Maybe [Check]
 } deriving (Generic, Show, Typeable, Data)
@@ -90,12 +90,12 @@ data TableColumnTpl = TableColumnTpl {
     tablecolumntplTemplate    :: SqlName,
     tablecolumntplName        :: SqlName,
     tablecolumntplType        :: SqlType,
-    tablecolumntplDescription :: String,
-    tablecolumntplDefault     :: Maybe String,
+    tablecolumntplDescription :: Text,
+    tablecolumntplDefault     :: Maybe Text,
     tablecolumntplNull        :: Maybe Bool,
     tablecolumntplReferences  :: Maybe SqlName,
-    tablecolumntplOnRefDelete :: Maybe String,
-    tablecolumntplOnRefUpdate :: Maybe String,
+    tablecolumntplOnRefDelete :: Maybe Text,
+    tablecolumntplOnRefUpdate :: Maybe Text,
     tablecolumntplUnique      :: Maybe Bool,
     tablecolumntplChecks      :: Maybe [Check]
 } deriving (Generic, Show, Typeable, Data)
@@ -144,8 +144,8 @@ data ForeignKey = ForeignKey {
   foreignkeyColumns    :: [SqlName],
   foreignkeyRefTable   :: SqlName,
   foreignkeyRefColumns :: [SqlName],
-  foreignkeyOnDelete   :: Maybe String,
-  foreignkeyOnUpdate   :: Maybe String
+  foreignkeyOnDelete   :: Maybe Text,
+  foreignkeyOnUpdate   :: Maybe Text
 } deriving (Generic, Show, Typeable, Data)
 instance FromJSON ForeignKey where parseJSON = strictParseYaml
 instance ToJSON ForeignKey where toJSON = genericToJSON myOpt

@@ -13,7 +13,7 @@ import Utils
 
 data Type = Type {
     typeName        :: SqlName,
-    typeDescription :: String,
+    typeDescription :: Text,
     typeElements    :: [TypeElement]
 } deriving (Generic, Show, Data, Typeable)
 instance FromJSON Type where parseJSON = strictParseYaml

@@ -1,4 +1,13 @@
+-- This file is part of HamSql
+--
+-- Copyright 2014-2016 by it's authors.
+-- Some rights reserved. See COPYING, AUTHORS.
+
+{-# LANGUAGE OverloadedStrings  #-}
+
 module Sql.Statement.CreateTable where
+
+import qualified Data.Text as T
 
 import Option
 import Parser
@@ -55,33 +64,33 @@ createTable opts setup m t = debug opts "stmtCreateTable" $
         intName = (moduleName m) <.> tableName t
 
         stmtCreateTable = SqlStmt SqlCreateTable intName $
-          "CREATE TABLE " ++ toSql intName ++ " ()"
+          "CREATE TABLE " <> toSql intName <> " ()"
 
         stmtCheck c = SqlStmt SqlAddTableContraint intName $
-          "ALTER TABLE " ++ toSql intName ++
-          " ADD CONSTRAINT " ++ name (checkName c) ++ " CHECK (" ++ checkCheck c ++ ")"
+          "ALTER TABLE " <> toSql intName <>
+          " ADD CONSTRAINT " <> name (checkName c) <> " CHECK (" <> checkCheck c <> ")"
 
         -- COLUMNS
 
         sqlAlterColumn c@(Column {}) =
-            "ALTER TABLE " ++ toSql intName ++
-            " ALTER COLUMN " ++ toSql (columnName c) ++ " "
+            "ALTER TABLE " <> toSql intName <>
+            " ALTER COLUMN " <> toSql (columnName c) <> " "
         sqlAlterColumn _ = err "ColumnTemplates should not be present in SQL parsing"
 
         stmtAddColumn c@(Column {}) = SqlStmt SqlAddColumn (intName <.> columnName c) $
-            "ALTER TABLE " ++ toSql intName ++
-            " ADD COLUMN " ++ toSql (columnName c) ++ " " ++ toSql (columnType c)
+            "ALTER TABLE " <> toSql intName <>
+            " ADD COLUMN " <> toSql (columnName c) <> " " <> toSql (columnType c)
 
         stmtAlterColumnType c = SqlStmt SqlAlterColumn intName $
-            sqlAlterColumn c ++ "SET DATA TYPE " ++ toSql (columnType c)
+            sqlAlterColumn c <> "SET DATA TYPE " <> toSql (columnType c)
 
         stmtDropDefault c = SqlStmt SqlDropColumnDefault intName $
-          sqlAlterColumn c ++ "DROP DEFAULT"
+          sqlAlterColumn c <> "DROP DEFAULT"
 
         stmtAddColumnCheck c = maybeMap stmtCheck (columnChecks c)
 
         stmtAlterColumnNull c = SqlStmt SqlAlterColumn intName $
-            sqlAlterColumn c ++ sqlSetNull (columnNull c)
+            sqlAlterColumn c <> sqlSetNull (columnNull c)
           where
             sqlSetNull Nothing = "SET NOT NULL"
             sqlSetNull (Just False) = "SET NOT NULL"
@@ -91,7 +100,7 @@ createTable opts setup m t = debug opts "stmtCreateTable" $
          where
           sqlDefault Nothing     = SqlStmtEmpty
           sqlDefault (Just d)    = SqlStmt SqlAddDefault (intName <.> columnName c) $
-            sqlAlterColumn c ++ "SET DEFAULT " ++ d
+            sqlAlterColumn c <> "SET DEFAULT " <> d
 
         -- SERIAL
 
@@ -101,7 +110,7 @@ createTable opts setup m t = debug opts "stmtCreateTable" $
           | columnIsSerial c = c {
               columnType = SqlType "integer",
               columnDefault = Just $
-                "nextval('" ++ toSql (moduleName m <.> serialSequenceName c) ++ "')"
+                "nextval('" <> toSql (moduleName m <.> serialSequenceName c) <> "')"
             }
           | otherwise = c
 
@@ -127,58 +136,58 @@ createTable opts setup m t = debug opts "stmtCreateTable" $
 
         sqlAddPrimaryKey :: [SqlName] -> SqlStatement
         sqlAddPrimaryKey ks = SqlStmt SqlCreatePrimaryKeyConstr intName $
-          "ALTER TABLE " ++ toSql intName ++
-          " ADD CONSTRAINT " ++ name (SqlName "primary_key") ++
-          " PRIMARY KEY (" ++ join ", " (map toSql ks) ++ ")"
+          "ALTER TABLE " <> toSql intName <>
+          " ADD CONSTRAINT " <> name (SqlName "primary_key") <>
+          " PRIMARY KEY (" <> T.intercalate ", " (map toSql ks) <> ")"
 
         sqlUniqueConstraint :: UniqueKey -> SqlStatement
         sqlUniqueConstraint ks = SqlStmt SqlCreateUniqueConstr intName $
-          "ALTER TABLE " ++ toSql intName ++
-          " ADD CONSTRAINT " ++ name (uniquekeyName ks) ++
-          " UNIQUE (" ++ join ", " (map toSql (uniquekeyColumns ks)) ++ ")"
+          "ALTER TABLE " <> toSql intName <>
+          " ADD CONSTRAINT " <> name (uniquekeyName ks) <>
+          " UNIQUE (" <> T.intercalate ", " (map toSql (uniquekeyColumns ks)) <> ")"
 
         sqlCheck c =
-            " CONSTRAINT " ++ name (checkName c) ++ " CHECK (" ++ checkCheck c ++ ")"
+            " CONSTRAINT " <> name (checkName c) <> " CHECK (" <> checkCheck c <> ")"
 
         sqlAddForeignKey :: Column -> SqlStatement
         sqlAddForeignKey c@(Column { columnReferences = Nothing }) =
           SqlStmtEmpty
         sqlAddForeignKey c@(Column { columnReferences = (Just ref) }) =
           SqlStmt SqlCreateForeignKeyConstr intName $
-            "ALTER TABLE " ++ toSql intName ++
-            " ADD CONSTRAINT " ++ name (columnName c) ++
-            " FOREIGN KEY (" ++ toSql (columnName c) ++ ")" ++
-            " REFERENCES " ++ toSql' (init $ expSqlName ref) ++
-            " (" ++ toSql (last $ expSqlName ref) ++ ")" ++
-            sqlOnRefUpdate (columnOnRefUpdate c) ++
+            "ALTER TABLE " <> toSql intName <>
+            " ADD CONSTRAINT " <> name (columnName c) <>
+            " FOREIGN KEY (" <> toSql (columnName c) <> ")" <>
+            " REFERENCES " <> toSql' (init $ expSqlName ref) <>
+            " (" <> toSql (last $ expSqlName ref) <> ")" <>
+            sqlOnRefUpdate (columnOnRefUpdate c) <>
             sqlOnRefDelete (columnOnRefDelete c)
 
         sqlAddForeignKey' :: ForeignKey -> SqlStatement
         sqlAddForeignKey' fk = SqlStmt SqlCreateForeignKeyConstr intName $
-            "ALTER TABLE " ++ toSql intName ++
-            " ADD CONSTRAINT " ++ name (foreignkeyName fk) ++
-            " FOREIGN KEY (" ++ join ", " (map toSql (foreignkeyColumns fk)) ++ ")" ++
-            " REFERENCES " ++ toSql (foreignkeyRefTable fk) ++
-            " (" ++ join ", " (map toSql $ foreignkeyRefColumns fk) ++ ")" ++
-            sqlOnRefUpdate (foreignkeyOnUpdate fk) ++
+            "ALTER TABLE " <> toSql intName <>
+            " ADD CONSTRAINT " <> name (foreignkeyName fk) <>
+            " FOREIGN KEY (" <> T.intercalate ", " (map toSql (foreignkeyColumns fk)) <> ")" <>
+            " REFERENCES " <> toSql (foreignkeyRefTable fk) <>
+            " (" <> T.intercalate ", " (map toSql $ foreignkeyRefColumns fk) <> ")" <>
+            sqlOnRefUpdate (foreignkeyOnUpdate fk) <>
             sqlOnRefDelete (foreignkeyOnDelete fk)
 
         sqlOnRefUpdate Nothing = ""
-        sqlOnRefUpdate (Just a) = " ON UPDATE " ++ a
+        sqlOnRefUpdate (Just a) = " ON UPDATE " <> a
         sqlOnRefDelete Nothing = ""
-        sqlOnRefDelete (Just a) = " ON DELETE " ++ a
+        sqlOnRefDelete (Just a) = " ON DELETE " <> a
 
-        sqlGrant right role = SqlStmt SqlPriv intName ("GRANT " ++ right ++ " ON TABLE " ++
-            toSql (tableName t) ++ " TO " ++ prefixedRole setup role)
+        sqlGrant right role = SqlStmt SqlPriv intName ("GRANT " <> right <> " ON TABLE " <>
+            toSql (tableName t) <> " TO " <> prefixedRole setup role)
 
         sqlAddInheritance :: SqlName -> SqlStatement
         sqlAddInheritance n = SqlStmt SqlAlterTable intName $
-          "ALTER TABLE " ++ toSql intName ++ " INHERIT " ++ toSql n
+          "ALTER TABLE " <> toSql intName <> " INHERIT " <> toSql n
 
         sqlColumnUnique c@(Column{ columnUnique = (Just True) }) = SqlStmt SqlCreateUniqueConstr intName $
-          "ALTER TABLE " ++ toSql intName ++
-            " ADD CONSTRAINT " ++ name (columnName c) ++
-            " UNIQUE (" ++ toSql (columnName c) ++ ")"
+          "ALTER TABLE " <> toSql intName <>
+            " ADD CONSTRAINT " <> name (columnName c) <>
+            " UNIQUE (" <> toSql (columnName c) <> ")"
         sqlColumnUnique _ = SqlStmtEmpty
 
         -- tools

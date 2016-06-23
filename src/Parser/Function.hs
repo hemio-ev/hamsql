@@ -1,3 +1,9 @@
+-- This file is part of HamSql
+--
+-- Copyright 2014-2016 by it's authors.
+-- Some rights reserved. See COPYING, AUTHORS.
+
+{-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric      #-}
 
@@ -15,7 +21,7 @@ data Function = Function {
     -- function name
     functionName            :: SqlName,
     -- description what the function is good for
-    functionDescription     :: String,
+    functionDescription     :: Text,
     -- return type of the function, TABLE is special (see return_columns)
     functionReturns         :: SqlType,
     -- parameters the function takes
@@ -39,9 +45,9 @@ data Function = Function {
     -- language in which the body is written
     -- if not defined, pgsql is assumed an variables must be defined via variables
     -- if pgsql is given explicitly, variables are your problem...
-    functionLanguage        :: Maybe String,
+    functionLanguage        :: Maybe Text,
     -- the code of the function (body)
-    functionBody            :: String
+    functionBody            :: Text
 } deriving (Generic,Show, Data, Typeable)
 instance FromJSON Function where parseJSON = strictParseYaml
 instance ToJSON Function where toJSON = genericToJSON myOpt
@@ -51,10 +57,10 @@ data FunctionTpl = FunctionTpl {
     -- template name, used to refere the template via templates
     functiontplTemplate        :: SqlName,
     -- description what the template is good for
-    functiontplDescription     :: String,
+    functiontplDescription     :: Text,
     -- language of the function has to be the same as for used templates
     -- TODO: implement checks to avoid explosions here ;)
-    functiontplLanguage        :: Maybe String,
+    functiontplLanguage        :: Maybe Text,
     -- parameters are joined with function definition parameters
     functiontplParameters      :: Maybe [Variable],
     -- variables are appended to the functions variables
@@ -66,9 +72,9 @@ data FunctionTpl = FunctionTpl {
     -- defines owner, can be overwritten by function definition
     functiontplOwner           :: Maybe SqlName,
     -- code added before the body of the function
-    functiontplBodyPrelude     :: Maybe String,
+    functiontplBodyPrelude     :: Maybe Text,
     -- code added after the body of the function
-    functiontplBodyPostlude    :: Maybe String
+    functiontplBodyPostlude    :: Maybe Text
 } deriving (Generic,Show, Data, Typeable)
 instance FromJSON FunctionTpl where parseJSON = strictParseYaml
 instance ToJSON FunctionTpl where toJSON = genericToJSON myOpt
@@ -91,14 +97,14 @@ applyFunctionTpl t f = f {
       maybeJoin (functionVariables f) (functiontplVariables t),
 
     functionBody =
-      maybeStringL (functiontplBodyPrelude t) ++
-      functionBody f ++
+      maybeStringL (functiontplBodyPrelude t) <>
+      functionBody f <>
       maybeStringR (functiontplBodyPostlude t)
 
   }
   where
-    maybeStringL (Just xs) = xs ++ "\n"
+    maybeStringL (Just xs) = xs <> "\n"
     maybeStringL Nothing = ""
-    maybeStringR (Just xs) = "\n" ++ xs
+    maybeStringR (Just xs) = "\n" <> xs
     maybeStringR Nothing = ""
 

@@ -3,9 +3,13 @@
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 
+{-# LANGUAGE OverloadedStrings   #-}
+
 import Control.Monad       (void, when)
 import Data.List
-import Data.Text           (unpack)
+
+import qualified Data.Text as T
+import qualified Data.Text.IO as T.IO
 import Network.URL
 import Options.Applicative (execParser)
 
@@ -14,6 +18,7 @@ import Load
 import Option
 import PostgresCon
 import Sql
+import Parser.Basic
 import Sql.Statement.Create
 import Utils
 
@@ -24,7 +29,7 @@ run :: Command -> IO ()
 
 -- Install
 run (Install opt optDb optInstall) = do
-  let dbname = url_path $ getConUrl optDb
+  let dbname = SqlName $ T.pack $ url_path $ getConUrl optDb
 
   if not (optEmulate optDb || optPrint optDb) then
     void $ pgsqlExecWithoutTransact
@@ -32,9 +37,9 @@ run (Install opt optDb optInstall) = do
       (sqlCreateDatabase (optDeleteExistingDatabase optInstall) dbname)
   else
     when (optDeleteExistingDatabase optInstall) $
-      warn' $ "In --emulate and --print mode the" ++
-        " DROP/CREATE DATABASE statements are skipped. You have to ensure that a empty " ++
-        " database exists for those commands to make sense."
+      warn' $ "In --emulate and --print mode the" <->
+        "DROP/CREATE DATABASE statements are skipped. You have to ensure that a empty" <->
+        "database exists for those commands to make sense."
 
   setup <- loadSetup opt (optSetup opt)
 
@@ -66,7 +71,7 @@ run (Doc opt optDoc) =
 
 useSqlStmts :: OptCommonDb -> [SqlStatement] -> IO ()
 useSqlStmts optDb stmts
-  | optPrint optDb = putStrLn $ sqlPrinter $ sqlAddTransact stmts
+  | optPrint optDb = T.IO.putStrLn $ sqlPrinter $ sqlAddTransact stmts
   | optEmulate optDb = void $ pgsqlExec (getConUrl optDb) stmts
   | otherwise = void $ pgsqlExec (getConUrl optDb) stmts
 
