@@ -19,7 +19,9 @@ import           Data.String
 import           Database.PostgreSQL.Simple
 import           Database.PostgreSQL.Simple.Transaction
 import           Database.PostgreSQL.Simple.Types       (PGArray(..), fromPGArray)
-import           Network.URL
+
+import      Network.URI (URI, uriToString, parseAbsoluteURI)
+import    qualified       Network.URI as URI
 
 import Option
 import Parser
@@ -49,7 +51,7 @@ sqlManageSchemaJoin schemaid =
       "  n.nspname NOT IN ('information_schema') "
 
 -- DROP ROLE statements for all roles on the server prefixed with `prefix`
-pgsqlDeleteRoleStmt :: URL -> Text -> IO [SqlStatement]
+pgsqlDeleteRoleStmt :: URI -> Text -> IO [SqlStatement]
 pgsqlDeleteRoleStmt url prefix = do
   conn <- pgsqlConnectUrl url
 
@@ -264,12 +266,12 @@ pgsqlUpdateFragile optUpgrade conn stmtsInstall = do
 toQry :: Text -> Query
 toQry = fromString . T.unpack
 
-getConUrl :: OptCommonDb -> URL
-getConUrl xs = fromJustReason "Not a valid URL" (importURL $ optConnection xs)
+getConUrl :: OptCommonDb -> URI
+getConUrl xs = fromJustReason "Not a valid URI" (parseAbsoluteURI $ optConnection xs)
 
-pgsqlConnectUrl :: URL -> IO Connection
+pgsqlConnectUrl :: URI -> IO Connection
 pgsqlConnectUrl url = do
-  connResult <- try $ connectPostgreSQL (B.pack (exportURL url))
+  connResult <- try $ connectPostgreSQL (B.pack $ uriToString id url $ "")
   let conn = getConn connResult
   _ <- execute_ conn "SET client_min_messages TO WARNING"
 
@@ -288,13 +290,13 @@ pgsqlHandleErr code e = do
         "sql error:" <-> decodeUtf8 (sqlErrorMsg e) <-> "(Error Code: " <> decodeUtf8 (sqlState e) <> ")"
     return ()
 
-pgsqlExecWithoutTransact :: URL -> [SqlStatement] -> IO Connection
+pgsqlExecWithoutTransact :: URI -> [SqlStatement] -> IO Connection
 pgsqlExecWithoutTransact = pgsqlExecIntern PgSqlWithoutTransaction
 
-pgsqlExec :: URL -> [SqlStatement] -> IO Connection
+pgsqlExec :: URI -> [SqlStatement] -> IO Connection
 pgsqlExec = pgsqlExecIntern PgSqlWithTransaction
 
-pgsqlExecAndRollback :: URL -> [SqlStatement] -> IO ()
+pgsqlExecAndRollback :: URI -> [SqlStatement] -> IO ()
 pgsqlExecAndRollback url stmts = do
     conn <- pgsqlExecIntern PgSqlWithTransaction url stmts
     rollback conn
@@ -345,7 +347,7 @@ pgsqlExecStmtHandled :: Connection -> SqlStatement -> IO ()
 pgsqlExecStmtHandled conn stmt = pgsqlExecStmt conn stmt
     `catch` pgsqlHandleErr stmt
 
-pgsqlExecIntern :: PgSqlMode -> URL -> [SqlStatement] -> IO Connection
+pgsqlExecIntern :: PgSqlMode -> URI -> [SqlStatement] -> IO Connection
 pgsqlExecIntern mode connUrl xs = do
     conn <- pgsqlConnectUrl connUrl
 

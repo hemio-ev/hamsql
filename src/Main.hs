@@ -10,7 +10,7 @@ import Data.List
 
 import qualified Data.Text as T
 import qualified Data.Text.IO as T.IO
-import Network.URL
+import Network.URI
 import Options.Applicative (execParser)
 
 import Documentation
@@ -29,11 +29,11 @@ run :: Command -> IO ()
 
 -- Install
 run (Install opt optDb optInstall) = do
-  let dbname = SqlName $ T.pack $ url_path $ getConUrl optDb
+  let dbname = SqlName $ T.pack $ tail $ uriPath $ getConUrl optDb
 
   if not (optEmulate optDb || optPrint optDb) then
     void $ pgsqlExecWithoutTransact
-      ((getConUrl optDb) { url_path = "postgres" })
+      ((getConUrl optDb) { uriPath = "/postgres" })
       (sqlCreateDatabase (optDeleteExistingDatabase optInstall) dbname)
   else
     when (optDeleteExistingDatabase optInstall) $
