@@ -4,13 +4,18 @@
 -- Some rights reserved. See COPYING, AUTHORS.
 
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Documentation where
 
+import           Data.FileEmbed
 import qualified Data.Text             as T
+import           Data.Text.Encoding
 import qualified Data.Text.IO          as T.IO
 import           Text.Pandoc.Templates
 import           System.FilePath
+
+import qualified Data.ByteString
 
 import Option
 import Parser
@@ -19,10 +24,15 @@ import Parser.Module
 import Utils
 
 templateFromFile :: FilePath -> IO Template
+templateFromFile "DEFAULT.rst" = do
+  return templateDefaultModule
 templateFromFile fname = do
   str <- T.IO.readFile fname
-  return $
-   case compileTemplate str of
+  return $ templateCompile str
+
+templateCompile :: Text -> Template
+templateCompile str =
+  case compileTemplate str of
     (Left e) -> err $ tshow e
     (Right t) -> t
 
@@ -39,3 +49,8 @@ docWriteModule optDoc t m = T.IO.writeFile path (renderTemplate t m)
    </> getName (moduleName m)
    <.> takeExtension (optTemplate optDoc)
   getName (SqlName n) = T.unpack n
+
+templateDefaultModule :: Template
+templateDefaultModule = templateCompile $
+  decodeUtf8 $(embedFile "data/doc-template.rst")
+

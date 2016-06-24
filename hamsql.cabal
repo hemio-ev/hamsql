@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                hamsql
-version:             0.5.0.0
+version:             0.6.0
 synopsis:            HamSql
 description:         A YamSql interpreter
 homepage:            https://github.com/qua-bla/hamsql
@@ -13,7 +13,7 @@ maintainer:          quabla@hemio.de
 copyright:           Michael Herold et al.
 -- category:            
 build-type:          Simple
-extra-source-files:  README.md
+extra-source-files:  README.md, data/*
 cabal-version:       >=1.10
 
 executable hamsql
@@ -21,6 +21,6 @@ executable hamsql
   Hs-Source-Dirs:      src
   -- other-modules:       
   other-extensions:    DeriveGeneric, OverloadedStrings, FlexibleInstances
-  build-depends:       base, bytestring, filepath, regex-posix, directory, aeson, text, unordered-containers, split, data-ordlist, postgresql-simple, yaml, optparse-applicative, frontmatter, network-uri, pandoc
+  build-depends:       base, bytestring, filepath, regex-posix, directory, aeson, text, unordered-containers, split, data-ordlist, postgresql-simple, yaml, optparse-applicative, frontmatter, network-uri, pandoc, file-embed
 
   default-language:    Haskell2010

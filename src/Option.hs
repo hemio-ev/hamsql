@@ -137,7 +137,7 @@ parserOptDoc = OptDoc
     <*> strOption
         (long "template" <>
         short 't' <>
-        val "doc-template.rst" <>
+        val "DEFAULT.rst" <>
         action "file -X '!*.html'" <>
         action "file -X '!*.md'" <>
         action "file -X '!*.rst'" <>
