@@ -11,17 +11,17 @@ module PostgresCon where
 
 import           Control.Exception
 import           Control.Monad                          (void, when)
-import qualified Data.Text as T
 import qualified Data.ByteString.Char8                  as B
-import Data.Text.Encoding (decodeUtf8)
 import           Data.List
 import           Data.String
+import qualified Data.Text                              as T
+import           Data.Text.Encoding                     (decodeUtf8)
 import           Database.PostgreSQL.Simple
 import           Database.PostgreSQL.Simple.Transaction
-import           Database.PostgreSQL.Simple.Types       (PGArray(..), fromPGArray)
+import           Database.PostgreSQL.Simple.Types       (PGArray (..), fromPGArray)
 
-import      Network.URI (URI, uriToString, parseAbsoluteURI)
-import    qualified       Network.URI as URI
+import           Network.URI (URI, parseAbsoluteURI, uriToString)
+import qualified Network.URI as URI
 
 import Option
 import Parser
@@ -271,7 +271,7 @@ getConUrl xs = fromJustReason "Not a valid URI" (parseAbsoluteURI $ optConnectio
 
 pgsqlConnectUrl :: URI -> IO Connection
 pgsqlConnectUrl url = do
-  connResult <- try $ connectPostgreSQL (B.pack $ uriToString id url $ "")
+  connResult <- try $ connectPostgreSQL (B.pack $ uriToString id url "")
   let conn = getConn connResult
   _ <- execute_ conn "SET client_min_messages TO WARNING"
 

@@ -3,17 +3,17 @@
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 
-{-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Load where
 
-import           Control.Exception
-import           Control.Monad
-import           Data.Aeson.Types
+import Control.Exception
+import Control.Monad
+import Data.Aeson.Types
 
-import qualified Data.Text as T
-import qualified Data.ByteString as B
+import qualified Data.ByteString       as B
 import           Data.List
+import qualified Data.Text             as T
 import           Data.Yaml
 import           System.Directory      (doesDirectoryExist, doesFileExist,
                                         getDirectoryContents)

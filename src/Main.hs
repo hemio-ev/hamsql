@@ -3,22 +3,22 @@
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 
-{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE OverloadedStrings #-}
 
-import Control.Monad       (void, when)
+import Control.Monad (void, when)
 import Data.List
 
-import qualified Data.Text as T
-import qualified Data.Text.IO as T.IO
-import Network.URI
-import Options.Applicative (execParser)
+import qualified Data.Text           as T
+import qualified Data.Text.IO        as T.IO
+import           Network.URI
+import           Options.Applicative (execParser)
 
 import Documentation
 import Load
 import Option
+import Parser.Basic
 import PostgresCon
 import Sql
-import Parser.Basic
 import Sql.Statement.Create
 import Utils
 

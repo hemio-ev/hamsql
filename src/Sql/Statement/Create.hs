@@ -3,13 +3,13 @@
 -- Copyright 2014-2015 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 
-{-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Sql.Statement.Create where
 
-import qualified Data.Text as T
-import Data.List
-import Data.Maybe
+import           Data.List
+import           Data.Maybe
+import qualified Data.Text  as T
 
 import Option
 import Parser

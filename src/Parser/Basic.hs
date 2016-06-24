@@ -3,10 +3,10 @@
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 
-{-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE FlexibleContexts   #-}
+{-# LANGUAGE OverloadedStrings  #-}
 
 module Parser.Basic where
 
@@ -19,7 +19,7 @@ import           Data.HashMap.Strict   (insert, keys, member)
 import           Data.List.Ordered     (minus, sort, subset)
 import           Data.List.Split       (splitOn)
 import           Data.Maybe            (fromJust, fromMaybe)
-import qualified          Data.Text as T
+import qualified Data.Text             as T
 import           Data.Typeable
 import           Data.Yaml             ()
 import           GHC.Generics
@@ -35,14 +35,14 @@ removeFirstPart xs = lowerStr rest
         rest = dropWhile isLower xs
         lowerStr (x':xs') = toLower x':xs'
         lowerStr []       = "__"
- 
+
 -- makes camelCaseSpelling to camel_case_spelling
 snakeify :: String -> String
 snakeify [] = []
 snakeify (x:xs)
  | isUpper x = '_' : toLower x : snakeify xs
  | otherwise =               x : snakeify xs
- 
+
 myOpt :: Options
 myOpt = defaultOptions {
  fieldLabelModifier     = snakeify . removeFirstPart
@@ -136,7 +136,7 @@ instance ToJSON SqlType where toJSON = genericToJSON myOpt
 strictParseYaml xs =
  do
   parsed <- genericParseJSON myOpt xs
-  
+
 --  let diff = minus (keysOfValue xs) (keysOfData parsed)
   return $
    if True then

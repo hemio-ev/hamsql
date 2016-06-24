@@ -3,21 +3,21 @@
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 
-{-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Utils (module Utils, Text (..), (<>)) where
 
-import Control.Monad
-import Data.Char
-import Data.List        (group, intercalate, sort)
-import qualified Data.Text as T
-import Data.Text (Text(..), pack)
-import Data.Monoid ((<>))
-import Debug.Trace
-import System.Exit
-import System.IO (stderr)
-import Data.Text.IO
-import System.IO.Unsafe
+import           Control.Monad
+import           Data.Char
+import           Data.List        (group, intercalate, sort)
+import           Data.Monoid      ((<>))
+import           Data.Text        (Text (..), pack)
+import qualified Data.Text        as T
+import           Data.Text.IO
+import           Debug.Trace
+import           System.Exit
+import           System.IO        (stderr)
+import           System.IO.Unsafe
 
 import Option
 
@@ -97,7 +97,7 @@ tshow = pack . show
 tr x = trace (show x <> "\n") x
 
 isIn :: Char -> Text -> Bool
-isIn c t = (T.singleton c) `T.isInfixOf` t
+isIn c t = T.singleton c `T.isInfixOf` t
 
 (<->) a b = a <> " " <> b
 (<\>) a b = a <> "\n" <> b

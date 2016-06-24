@@ -7,9 +7,9 @@
 
 module Sql where
 
-import Data.Text (Text)
-import qualified Data.Text as T
-import Database.PostgreSQL.Simple.FromField
+import           Data.Text                            (Text)
+import qualified Data.Text                            as T
+import           Database.PostgreSQL.Simple.FromField
 
 import Parser.Basic
 import Utils
