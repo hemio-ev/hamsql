@@ -10,9 +10,11 @@ module Documentation where
 import qualified Data.Text             as T
 import qualified Data.Text.IO          as T.IO
 import           Text.Pandoc.Templates
+import           System.FilePath
 
 import Option
 import Parser
+import Parser.Basic (SqlName (..))
 import Parser.Module
 import Utils
 
@@ -27,10 +29,13 @@ templateFromFile fname = do
 docWrite :: OptDoc -> Setup -> IO ()
 docWrite optDoc s = do
   t <- templateFromFile (optTemplate optDoc)
-  _ <- mapM (docWriteModule t) (setupModuleData (setupInternal s))
+  _ <- mapM (docWriteModule optDoc t) (setupModuleData (setupInternal s))
   return ()
 
-docWriteModule :: Template -> Module -> IO ()
-docWriteModule t m =
-  error $ renderTemplate t m
-
+docWriteModule :: OptDoc -> Template -> Module -> IO ()
+docWriteModule optDoc t m = T.IO.writeFile path (renderTemplate t m)
+ where
+  path = optOutputDir optDoc
+   </> getName (moduleName m)
+   <.> takeExtension (optTemplate optDoc)
+  getName (SqlName n) = T.unpack n
