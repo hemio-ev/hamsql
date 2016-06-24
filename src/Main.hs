@@ -64,10 +64,9 @@ run (Upgrade opt optDb optUpgrade) = do
 
 -- Doc
 run (Doc opt optDoc) =
-  case optFormat optDoc of
-    "html" -> do
-      setup <- loadSetup opt (optSetup opt)
-      return ()
+  do
+    setup <- loadSetup opt (optSetup opt)
+    docWrite optDoc setup
 
 useSqlStmts :: OptCommonDb -> [SqlStatement] -> IO ()
 useSqlStmts optDb stmts

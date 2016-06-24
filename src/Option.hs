@@ -67,9 +67,8 @@ parserOptCommon = OptCommon
         (long "setup" <>
         short 's' <>
         help "Setup file (yaml)" <>
-        val "setup.yaml" <>
+        val "setup.yml" <>
         action "file -X '!*.yml'" <>
-        action "file -X '!*.yaml'" <>
         action "directory"
         )
     <*> boolFlag
@@ -122,25 +121,26 @@ parserOptUpgrade = OptUpgrade
 
 -- Command Doc
 data OptDoc = OptDoc {
-    optFormat   :: String,
-    optTemplate :: FilePath
+    optOutputDir :: FilePath,
+    optTemplate  :: FilePath
 }
     deriving Show
 
 parserOptDoc :: Parser OptDoc
 parserOptDoc = OptDoc
     <$> strOption
-        (long "format" <>
-        short 'f' <>
-        val "html" <>
-        completeWith ["dot","html"]
+        (long "output-dir" <>
+        short 'o' <>
+        val "doc/" <>
+        action "directory"
         )
     <*> strOption
         (long "template" <>
         short 't' <>
-        val "doc-template" <>
+        val "doc-template.rst" <>
         action "file -X '!*.html'" <>
-        action "file -X '!*.dot'" <>
+        action "file -X '!*.md'" <>
+        action "file -X '!*.rst'" <>
         action "directory"
         )
 
