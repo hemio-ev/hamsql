@@ -32,19 +32,18 @@ $endfor$
 .. BEGIN FKs
 
 $if(tables.foreign_keys)$
-Foreign keys:
-
+Foreign keys
 $for(tables.foreign_keys)$
-- $tables.foreign_keys.name$
+ - $tables.foreign_keys.name$
 
-  Local Columns
+   Local Columns
 $for(tables.foreign_keys.columns)$
-   - $tables.foreign_keys.columns$
+    - $tables.foreign_keys.columns$
 $endfor$
 
-  Referenced Columns
+   Referenced Columns
 $for(tables.foreign_keys.ref_columns)$
-   - :ref:`$tables.foreign_keys.ref_table$.$tables.foreign_keys.ref_columns$ <COLUMN-$tables.foreign_keys.ref_table$.$tables.foreign_keys.ref_columns$>`
+    - :ref:`$tables.foreign_keys.ref_table$.$tables.foreign_keys.ref_columns$ <COLUMN-$tables.foreign_keys.ref_table$.$tables.foreign_keys.ref_columns$>`
 $endfor$
 
 $endfor$
@@ -60,29 +59,29 @@ $endfor$
 $endif$
 
 Columns
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-
 $for(tables.columns)$
-
-.. _COLUMN-$name$.$tables.name$.$tables.columns.name$:
-
-- ``$tables.columns.name$`` $if(tables.columns.null)$*NULL* | $endif$*$tables.columns.type$*
-    $tables.columns.description$
+ - .. _COLUMN-$name$.$tables.name$.$tables.columns.name$:
+   
+   ``$tables.columns.name$`` $if(tables.columns.null)$*NULL* | $endif$:ref:`$tables.columns.type$ <DOMAIN-$tables.columns.type$>`
+     $tables.columns.description$
 
 $if(tables.columns.default)$
-  - Default: :python:`$tables.columns.default$`
+   Default
+    .. code-block:: sql
+
+     $tables.columns.default$
 $endif$
 
 $if(tables.columns.references)$
-  - References: :ref:`$tables.columns.references$ <COLUMN-$tables.columns.references$>`
+   References :ref:`$tables.columns.references$ <COLUMN-$tables.columns.references$>`
 $endif$
 
 $if(tables.columns.on_ref_delete)$
-  - On Delete: $tables.columns.on_ref_delete$
+   On Delete: $tables.columns.on_ref_delete$
 $endif$
 
 $if(tables.columns.on_ref_update)$
-  - On Update: $tables.columns.on_ref_update$
+   On Update: $tables.columns.on_ref_update$
 $endif$
 
 $endfor$
@@ -139,7 +138,7 @@ $if(functions.returns_columns)$
 Returned columns
 $for(functions.returns_columns)$
  - ``$functions.returns_columns.name$`` :ref:`$functions.returns_columns.type$ <DOMAIN-$functions.returns_columns.type$>`
-   $functions.returns_columns.description$
+    $functions.returns_columns.description$
 $endfor$
 $endif$
 
@@ -177,9 +176,12 @@ $domains.description$
 $if(domains.checks)$
 Checks
 $for(domains.checks)$
- - | *$domains.checks.name$*
-   | ``$domains.checks.check$``
-   | $domains.checks.description$
+ - ``$domains.checks.name$``
+    $domains.checks.description$
+
+   .. code-block:: sql
+
+    $domains.checks.check$
 
 $endfor$
 $endif$
