@@ -3,7 +3,8 @@ update-and-build: update build
 update:
 	cabal update
 	cabal sandbox init
-	cabal install --only-dependencies --force-reinstalls
+	cabal configure --disable-optimization
+	cabal install --only-dependencies
 
 build:
 	cabal build
