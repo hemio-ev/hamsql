@@ -12,8 +12,10 @@ import Control.Monad
 import Data.Aeson.Types
 
 import qualified Data.ByteString       as B
+import           Data.Frontmatter
 import           Data.List
 import qualified Data.Text             as T
+import           Data.Text.Encoding    (decodeUtf8)
 import           Data.Yaml
 import           System.Directory      (doesDirectoryExist, doesFileExist,
                                         getDirectoryContents)
@@ -133,7 +135,7 @@ readModule opts md = do
     functions <- do
       files <- selectFilesInDir pgsqlEnding (combine md "functions.d")
       sequence [
-        readObjectFromFile opts f :: IO Function
+        readFunctionFromFile opts f :: IO Function
         | f <- files ]
 
     let moduleData' = moduleData {
@@ -148,15 +150,32 @@ readModule opts md = do
 
 readObjectFromFile :: (FromJSON a, ToJSON a) => OptCommon -> FilePath -> IO a
 readObjectFromFile opts file = do
-  info opts $ "Reading and parsing yaml-file '" <> tshow file <> "'"
+    b <- readYamSqlFile opts file
+    readObject file b
 
-  fileExists <- doesFileExist file
-  unless fileExists $
-    err $ "Expected file existance: '" <> tshow file <> "'"
+readObject :: (FromJSON a, ToJSON a) => FilePath -> B.ByteString -> IO a
+readObject file b =
+    catchErrors file $
+        case decodeEither' b of
+            Left msg  -> err $ "in yaml-file: " <> tshow file <> ": " <> tshow msg
+            Right obj -> obj
 
-  c <- B.readFile file
-  catchErrors file $
-   case decodeEither' c of
-    Left msg  -> err $ "in yaml-file: " <> tshow file <> ": " <> tshow msg
-    Right obj -> obj
+readFunctionFromFile :: OptCommon -> FilePath -> IO Function
+readFunctionFromFile opts file = do
+    b <- readYamSqlFile opts file
+
+    case parseFrontmatter b of
+        Done body yaml -> do
+            f <- readObject file yaml
+            return $ f { functionBody = Just (decodeUtf8 body) }
+        _ -> err $ "Unkown error in frontmatter format in " <> tshow file
+
+readYamSqlFile :: OptCommon -> FilePath -> IO B.ByteString
+readYamSqlFile opts file = do
+    info opts $ "Reading file '" <> tshow file <> "'"
+    fileExists <- doesFileExist file
+    unless fileExists $
+        err $ "Expected file existance: '" <> tshow file <> "'"
+
+    B.readFile file
 

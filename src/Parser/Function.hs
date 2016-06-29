@@ -47,7 +47,7 @@ data Function = Function {
     -- if pgsql is given explicitly, variables are your problem...
     functionLanguage        :: Maybe Text,
     -- the code of the function (body)
-    functionBody            :: Text
+    functionBody            :: Maybe Text
 } deriving (Generic,Show, Data, Typeable)
 instance FromJSON Function where parseJSON = strictParseYaml
 instance ToJSON Function where toJSON = genericToJSON myOpt
@@ -96,9 +96,9 @@ applyFunctionTpl t f = f {
     functionVariables =
       maybeJoin (functionVariables f) (functiontplVariables t),
 
-    functionBody =
+    functionBody = Just $
       maybeStringL (functiontplBodyPrelude t) <>
-      functionBody f <>
+      maybeText (functionBody f) <>
       maybeStringR (functiontplBodyPostlude t)
 
   }

@@ -68,6 +68,10 @@ maybeLeftJoin :: Maybe [a] -> [a] -> Maybe [a]
 maybeLeftJoin Nothing ys = Just ys
 maybeLeftJoin xs ys = Just (maybeList xs ++ ys)
 
+maybeText :: Maybe Text -> Text
+maybeText Nothing = ""
+maybeText (Just text) = ""
+
 -- Takes the right value, if Just there
 maybeRight :: Maybe a -> Maybe a -> Maybe a
 maybeRight _ (Just r) = Just r

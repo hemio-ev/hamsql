@@ -47,6 +47,7 @@ myOpt :: Options
 myOpt = defaultOptions {
  fieldLabelModifier     = snakeify . removeFirstPart
 , constructorTagModifier = drop 1 . snakeify
+--, sumEncoding = ObjectWithSingleField
 }
 
 --outJson :: Setup -> Text
@@ -131,23 +132,21 @@ newtype SqlType = SqlType Text deriving (Generic,Show,Eq, Typeable, Data)
 instance FromJSON SqlType where parseJSON = genericParseJSON myOpt
 instance ToJSON SqlType where toJSON = genericToJSON myOpt
 
-
--- TODO: Parser is no longer strict
 strictParseYaml xs =
  do
   parsed <- genericParseJSON myOpt xs
 
---  let diff = minus (keysOfValue xs) (keysOfData parsed)
+  let diff = minus (keysOfValue xs) (keysOfData parsed)
   return $
-   if True then
+   if null diff then
     parsed
    else
-    throw $ YamsqlException $ "Found unknown keys: " <> tshow [""]
+    throw $ YamsqlException $ "Found unknown keys: " <> tshow diff
+ where
+  keysOfData u = sort $ "tag":map (snakeify.removeFirstPart) (constrFields (toConstr u))
 
---  keysOfData u = sort $ "tag":map (snakeify.removeFirstPart) (constrFields (toConstr u))
-
---  keysOfValue :: Value -> [String]
---  keysOfValue (Object xs) = sort $ keys xs
+  keysOfValue :: Value -> [String]
+  keysOfValue (Object xs) = map T.unpack $ sort $ keys xs
 
 -- EXCEPTIONS
 

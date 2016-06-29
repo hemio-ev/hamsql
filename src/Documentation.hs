@@ -4,7 +4,7 @@
 -- Some rights reserved. See COPYING, AUTHORS.
 
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
 module Documentation where
 
@@ -12,19 +12,19 @@ import           Data.FileEmbed
 import qualified Data.Text             as T
 import           Data.Text.Encoding
 import qualified Data.Text.IO          as T.IO
-import           Text.Pandoc.Templates
 import           System.FilePath
+import           Text.Pandoc.Templates
 
 import qualified Data.ByteString
 
 import Option
 import Parser
-import Parser.Basic (SqlName (..))
+import Parser.Basic  (SqlName (..))
 import Parser.Module
 import Utils
 
 templateFromFile :: FilePath -> IO Template
-templateFromFile "DEFAULT.rst" = do
+templateFromFile "DEFAULT.rst" =
   return templateDefaultModule
 templateFromFile fname = do
   str <- T.IO.readFile fname

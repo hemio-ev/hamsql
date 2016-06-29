@@ -201,7 +201,7 @@ getFunctionStatements opts setup m f =
             where
                 body =
                     T.intercalate "\n" preludes <>
-                    functionBody f <>
+                    maybeText (functionBody f) <>
                     T.intercalate "\n" postludes
 
                 preludes :: [Text]
