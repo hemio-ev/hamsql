@@ -16,7 +16,7 @@ data Check = Check {
     checkName        :: SqlName,
     checkDescription :: Text,
     checkCheck       :: Text
-} deriving (Generic, Show, Data)
+} deriving (Generic, Show, Typeable, Data)
 instance FromJSON Check where parseJSON = strictParseYaml
 instance ToJSON Check where toJSON = genericToJSON myOpt
 

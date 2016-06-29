@@ -16,9 +16,9 @@ import qualified Data.Text.IO          as T.IO
 import           System.FilePath
 import           Text.Pandoc.Templates
 
-import Database.YamSql (Module (..), SqlName (..))
+import Database.HamSql.Setup
+import Database.YamSql       (Module (..), SqlName (..))
 import Option
-import Parser
 import Utils
 
 templateFromFile :: FilePath -> IO Template

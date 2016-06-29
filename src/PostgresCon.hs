@@ -23,9 +23,9 @@ import           Database.PostgreSQL.Simple.Types       (PGArray (..), fromPGArr
 import           Network.URI (URI, parseAbsoluteURI, uriToString)
 import qualified Network.URI as URI
 
+import Database.HamSql.Setup
 import Database.YamSql
 import Option
-import Parser
 import Sql
 import Sql.Statement.Create
 import Sql.Statement.Drop

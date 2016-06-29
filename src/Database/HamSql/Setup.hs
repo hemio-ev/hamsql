@@ -9,26 +9,11 @@
 {-# LANGUAGE FlexibleInstances  #-}
 {-# LANGUAGE OverloadedStrings  #-}
 
-module Parser where
+module Database.HamSql.Setup where
 
-import           Control.Exception
-import qualified Data.ByteString.Char8 as B
-import           Data.Char
-import           Data.Data
-import           Data.HashMap.Strict   (insert, keys, member)
-import           Data.List.Ordered     (minus, sort, subset)
-import           Data.List.Split       (splitOn)
-import           Data.Maybe            (fromJust, fromMaybe)
-import           Data.Text             (unpack)
-import           Data.Typeable
-import           Data.Yaml             ()
-import           GHC.Generics
-import           System.IO
+import Data.Maybe (fromJust, fromMaybe)
 
-import Database.YamSql.Internal.Basic
-import Database.YamSql.Internal.Function
-import Database.YamSql.Internal.Module
-import Database.YamSql.Internal.Table
+import Database.YamSql
 import Utils
 
 -- Setup --
@@ -63,13 +48,13 @@ class WithName a where
  name :: a -> Text
 
 instance WithName (WithModule TableTpl) where
- name (WithModule m t) = toSql $ Database.YamSql.Internal.Module.moduleName m <.> tabletplTemplate t
+ name (WithModule m t) = toSql $ moduleName m <.> tabletplTemplate t
 
 instance WithName (WithModule FunctionTpl) where
- name (WithModule m f) = toSql $ Database.YamSql.Internal.Module.moduleName m <.> functiontplTemplate f
+ name (WithModule m f) = toSql $ moduleName m <.> functiontplTemplate f
 
 instance WithName (WithModule TableColumnTpl) where
- name (WithModule m f) = toSql $ Database.YamSql.Internal.Module.moduleName m <.> tablecolumntplTemplate f
+ name (WithModule m f) = toSql $ moduleName m <.> tablecolumntplTemplate f
 
 withoutModule (WithModule _ t) = t
 

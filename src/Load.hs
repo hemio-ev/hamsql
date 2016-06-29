@@ -22,9 +22,9 @@ import           System.Directory      (doesDirectoryExist, doesFileExist,
 import           System.FilePath.Posix (combine, dropFileName, takeExtension,
                                         takeFileName)
 
+import Database.HamSql.Setup
 import Database.YamSql
 import Option
-import Parser
 import Utils
 
 loadSetup :: OptCommon -> FilePath -> IO Setup

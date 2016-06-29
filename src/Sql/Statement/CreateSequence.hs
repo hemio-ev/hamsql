@@ -7,9 +7,9 @@
 
 module Sql.Statement.CreateSequence where
 
+import Database.HamSql.Setup
 import Database.YamSql
 import Option
-import Parser
 import Sql
 import Utils
 
