@@ -12,6 +12,7 @@ import Control.Monad
 import Data.Aeson.Types
 
 import qualified Data.ByteString       as B
+import           Data.Char
 import           Data.Frontmatter
 import           Data.List
 import qualified Data.Text             as T
@@ -19,8 +20,8 @@ import           Data.Text.Encoding    (decodeUtf8)
 import           Data.Yaml
 import           System.Directory      (doesDirectoryExist, doesFileExist,
                                         getDirectoryContents)
-import           System.FilePath.Posix (combine, dropFileName)
-import           Text.Regex.Posix
+import           System.FilePath.Posix (combine, dropFileName, takeExtension,
+                                        takeFileName)
 
 import Option
 import Parser
@@ -94,10 +95,11 @@ catchErrors filePath x = do
    Right _ -> x
 
 yamlEnding :: FilePath -> Bool
-yamlEnding xs = xs =~ ("\\.yaml$"::String) || xs =~ ("\\.yml$"::String)
+yamlEnding xs = takeExtension xs == ".yaml" || takeExtension xs == "yml"
 
 pgsqlEnding :: FilePath -> Bool
-pgsqlEnding xs = xs =~ ("\\.sql$"::String)
+pgsqlEnding xs = isAlphaNum (last fn) && head fn /= '.'
+ where fn = takeFileName xs
 
 getFilesInDir :: FilePath -> IO [FilePath]
 getFilesInDir path = do
@@ -168,7 +170,7 @@ readFunctionFromFile opts file = do
         Done body yaml -> do
             f <- readObject file yaml
             return $ f { functionBody = Just (decodeUtf8 body) }
-        _ -> err $ "Unkown error in frontmatter format in " <> tshow file
+        _ -> readObject file b
 
 readYamSqlFile :: OptCommon -> FilePath -> IO B.ByteString
 readYamSqlFile opts file = do
