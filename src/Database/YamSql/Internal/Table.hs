@@ -2,16 +2,16 @@
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE OverloadedStrings  #-}
 
-module Parser.Table where
+module Database.YamSql.Internal.Table where
 
-import Data.Aeson.Types
+import Data.Aeson          (Object (..), Value (..))
 import Data.Data
 import Data.HashMap.Strict (insert, keys, member)
 import Data.Typeable
 import GHC.Generics
 
-import Parser.Basic
-import Parser.Check
+import Database.YamSql.Internal.Basic
+import Database.YamSql.Internal.Check
 import Utils
 
 data Table = Table {

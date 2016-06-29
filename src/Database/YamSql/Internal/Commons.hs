@@ -7,14 +7,9 @@
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE OverloadedStrings  #-}
 
-module Parser.Commons where
+module Database.YamSql.Internal.Commons where
 
-import Data.Aeson.Types
-import Data.Data
-import Data.Typeable
-import GHC.Generics
-
-import Parser.Basic
+import Database.YamSql.Internal.Basic
 import Utils
 
 data Variable = Variable {

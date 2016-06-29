@@ -7,21 +7,16 @@
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE OverloadedStrings  #-}
 
-module Parser.Check where
+module Database.YamSql.Internal.Check where
 
-import Data.Aeson.Types
-import Data.Data
-import Data.Typeable
-import GHC.Generics
-
-import Parser.Basic
+import Database.YamSql.Internal.Basic
 import Utils
 
 data Check = Check {
     checkName        :: SqlName,
     checkDescription :: Text,
     checkCheck       :: Text
-} deriving (Generic, Show, Typeable, Data)
+} deriving (Generic, Show, Data)
 instance FromJSON Check where parseJSON = strictParseYaml
 instance ToJSON Check where toJSON = genericToJSON myOpt
 

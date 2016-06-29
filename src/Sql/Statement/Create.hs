@@ -11,17 +11,9 @@ import           Data.List
 import           Data.Maybe
 import qualified Data.Text  as T
 
+import Database.YamSql
 import Option
 import Parser
-import Parser.Basic
-import Parser.Check
-import Parser.Commons
-import Parser.Domain
-import Parser.Function
-import Parser.Module
-import Parser.Role
-import Parser.Table
-import Parser.Type
 import Sql
 import Sql.Statement.Commons
 import Utils

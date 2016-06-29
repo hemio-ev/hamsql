@@ -1,14 +1,9 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric      #-}
 
-module Parser.Sequence where
+module Database.YamSql.Internal.Sequence where
 
-import Data.Aeson.Types
-import Data.Data
-import Data.Typeable
-import GHC.Generics
-
-import Parser.Basic
+import Database.YamSql.Internal.Basic
 import Utils
 
 data Sequence = Sequence {

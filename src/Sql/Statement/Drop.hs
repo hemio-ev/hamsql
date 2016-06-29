@@ -9,7 +9,7 @@ module Sql.Statement.Drop where
 
 import qualified Data.Text as T
 
-import Parser.Basic
+import Database.YamSql
 import Sql
 import Utils
 

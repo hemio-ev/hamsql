@@ -9,13 +9,9 @@ module Sql.Statement.CreateTable where
 
 import qualified Data.Text as T
 
+import Database.YamSql
 import Option
 import Parser
-import Parser.Basic
-import Parser.Check
-import Parser.Module
-import Parser.Sequence
-import Parser.Table
 import Sql
 import Sql.Statement.Commons
 import Sql.Statement.CreateSequence

@@ -12,7 +12,6 @@
 module Parser where
 
 import           Control.Exception
-import           Data.Aeson.Types
 import qualified Data.ByteString.Char8 as B
 import           Data.Char
 import           Data.Data
@@ -26,10 +25,10 @@ import           Data.Yaml             ()
 import           GHC.Generics
 import           System.IO
 
-import Parser.Basic
-import Parser.Function
-import Parser.Module
-import Parser.Table
+import Database.YamSql.Internal.Basic
+import Database.YamSql.Internal.Function
+import Database.YamSql.Internal.Module
+import Database.YamSql.Internal.Table
 import Utils
 
 -- Setup --
@@ -64,13 +63,13 @@ class WithName a where
  name :: a -> Text
 
 instance WithName (WithModule TableTpl) where
- name (WithModule m t) = toSql $ Parser.Module.moduleName m <.> tabletplTemplate t
+ name (WithModule m t) = toSql $ Database.YamSql.Internal.Module.moduleName m <.> tabletplTemplate t
 
 instance WithName (WithModule FunctionTpl) where
- name (WithModule m f) = toSql $ Parser.Module.moduleName m <.> functiontplTemplate f
+ name (WithModule m f) = toSql $ Database.YamSql.Internal.Module.moduleName m <.> functiontplTemplate f
 
 instance WithName (WithModule TableColumnTpl) where
- name (WithModule m f) = toSql $ Parser.Module.moduleName m <.> tablecolumntplTemplate f
+ name (WithModule m f) = toSql $ Database.YamSql.Internal.Module.moduleName m <.> tablecolumntplTemplate f
 
 withoutModule (WithModule _ t) = t
 

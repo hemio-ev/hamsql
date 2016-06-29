@@ -21,6 +21,6 @@ executable hamsql
   Hs-Source-Dirs:      src
   -- other-modules:       
   other-extensions:    DeriveGeneric, OverloadedStrings, FlexibleInstances
-  build-depends:       base, bytestring, filepath, directory, aeson, text, unordered-containers, split, data-ordlist, postgresql-simple, yaml, optparse-applicative, frontmatter, network-uri, pandoc, file-embed
+  build-depends:       aeson, base, bytestring, filepath, directory, text, unordered-containers, split, data-ordlist, postgresql-simple, yaml, optparse-applicative, frontmatter, network-uri, pandoc, file-embed
 
   default-language:    Haskell2010

@@ -7,14 +7,10 @@
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE OverloadedStrings  #-}
 
-module Parser.Function where
+module Database.YamSql.Internal.Function where
 
-import Data.Aeson.Types
-import Data.Data
-import GHC.Generics
-
-import Parser.Basic
-import Parser.Commons
+import Database.YamSql.Internal.Basic
+import Database.YamSql.Internal.Commons
 import Utils
 
 data Function = Function {

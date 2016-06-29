@@ -12,9 +12,6 @@ cabal.sandbox.config
 cabal.config
 
 # project specific
-Main
 *.sql
 *.json
 *.html
-url/
-carnivora/

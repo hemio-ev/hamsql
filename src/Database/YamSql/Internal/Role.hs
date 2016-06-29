@@ -1,14 +1,16 @@
+-- This file is part of HamSql
+--
+-- Copyright 2014-2016 by it's authors.
+-- Some rights reserved. See COPYING, AUTHORS.
+
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE OverloadedStrings  #-}
 
-module Parser.Trigger where
+module Database.YamSql.Internal.Role where
 
-import Data.Aeson.Types
-import Data.Data
-import Data.Typeable
-import GHC.Generics
-
-import Parser.Basic
+import Database.YamSql.Internal.Basic
+import Utils
 
 data Role = Role {
     roleName        :: SqlName,

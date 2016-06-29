@@ -7,8 +7,8 @@
 
 module Sql.Statement.Commons where
 
+import Database.YamSql
 import Parser
-import Parser.Basic
 import Sql
 import Utils
 

@@ -23,9 +23,9 @@ import           Database.PostgreSQL.Simple.Types       (PGArray (..), fromPGArr
 import           Network.URI (URI, parseAbsoluteURI, uriToString)
 import qualified Network.URI as URI
 
+import Database.YamSql
 import Option
 import Parser
-import Parser.Basic
 import Sql
 import Sql.Statement.Create
 import Sql.Statement.Drop
@@ -339,7 +339,7 @@ pgsqlExecStmtList status (x:xs) failed conn = do
 
 pgsqlExecStmt :: Connection -> SqlStatement -> IO ()
 pgsqlExecStmt conn stmt = do
-    let code = Parser.Basic.toSql stmt
+    let code = toSql stmt
     execute_ conn (toQry code)
     return ()
 

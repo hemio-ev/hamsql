@@ -13,10 +13,10 @@ import qualified Data.Text.IO        as T.IO
 import           Network.URI
 import           Options.Applicative (execParser)
 
+import Database.YamSql
 import Documentation
 import Load
 import Option
-import Parser.Basic
 import PostgresCon
 import Sql
 import Sql.Statement.Create

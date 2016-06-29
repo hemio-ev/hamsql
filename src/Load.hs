@@ -9,7 +9,6 @@ module Load where
 
 import Control.Exception
 import Control.Monad
-import Data.Aeson.Types
 
 import qualified Data.ByteString       as B
 import           Data.Char
@@ -23,17 +22,9 @@ import           System.Directory      (doesDirectoryExist, doesFileExist,
 import           System.FilePath.Posix (combine, dropFileName, takeExtension,
                                         takeFileName)
 
+import Database.YamSql
 import Option
 import Parser
-import Parser.Basic
-import Parser.Check
-import Parser.Commons
-import Parser.Domain
-import Parser.Function
-import Parser.Module
-import Parser.Role
-import Parser.Table
-import Parser.Type
 import Utils
 
 loadSetup :: OptCommon -> FilePath -> IO Setup

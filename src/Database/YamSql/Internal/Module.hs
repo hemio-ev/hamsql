@@ -7,22 +7,17 @@
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE OverloadedStrings  #-}
 
-module Parser.Module where
+module Database.YamSql.Internal.Module (Module(..), ModuleInternal(..), module Database.YamSql.Internal.Check, module Database.YamSql.Internal.Domain, module Database.YamSql.Internal.Function, module Database.YamSql.Internal.Role, module Database.YamSql.Internal.Sequence, module Database.YamSql.Internal.Table, module Database.YamSql.Internal.Type) where
 
-import Data.Aeson.Types
-import Data.Data
-import Data.Typeable
-import GHC.Generics
-
-import Parser.Basic
-import Parser.Check
-import Parser.Commons
-import Parser.Domain
-import Parser.Function
-import Parser.Role
-import Parser.Sequence
-import Parser.Table
-import Parser.Type
+import Database.YamSql.Internal.Basic
+import Database.YamSql.Internal.Check
+import Database.YamSql.Internal.Commons
+import Database.YamSql.Internal.Domain
+import Database.YamSql.Internal.Function
+import Database.YamSql.Internal.Role
+import Database.YamSql.Internal.Sequence
+import Database.YamSql.Internal.Table
+import Database.YamSql.Internal.Type
 import Utils
 
 -- Module --

@@ -1,15 +1,10 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric      #-}
 
-module Parser.Domain where
+module Database.YamSql.Internal.Domain where
 
-import Data.Aeson.Types
-import Data.Data
-import Data.Typeable
-import GHC.Generics
-
-import Parser.Basic
-import Parser.Check
+import Database.YamSql.Internal.Basic
+import Database.YamSql.Internal.Check
 import Utils
 
 -- Domains --

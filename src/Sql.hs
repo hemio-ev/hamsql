@@ -11,7 +11,7 @@ import           Data.Text                            (Text)
 import qualified Data.Text                            as T
 import           Database.PostgreSQL.Simple.FromField
 
-import Parser.Basic
+import Database.YamSql.Internal.Basic
 import Utils
 
 

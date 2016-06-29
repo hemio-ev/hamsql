@@ -8,10 +8,11 @@
 {-# LANGUAGE FlexibleContexts   #-}
 {-# LANGUAGE OverloadedStrings  #-}
 
-module Parser.Basic where
+module Database.YamSql.Internal.Basic (module Database.YamSql.Internal.Basic, genericParseJSON, genericToJSON, ToJSON(..), FromJSON(..), Generic(..), Data(..), Typeable(..)) where
 
 import           Control.Exception
-import           Data.Aeson.Types
+import           Data.Aeson.Types      (Options (..), defaultOptions, genericParseJSON,
+                                        genericToJSON)
 import qualified Data.ByteString.Char8 as B
 import           Data.Char
 import           Data.Data
@@ -21,7 +22,7 @@ import           Data.List.Split       (splitOn)
 import           Data.Maybe            (fromJust, fromMaybe)
 import qualified Data.Text             as T
 import           Data.Typeable
-import           Data.Yaml             ()
+import           Data.Yaml
 import           GHC.Generics
 import           System.IO
 

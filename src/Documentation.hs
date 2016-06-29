@@ -8,6 +8,7 @@
 
 module Documentation where
 
+import qualified Data.ByteString
 import           Data.FileEmbed
 import qualified Data.Text             as T
 import           Data.Text.Encoding
@@ -15,12 +16,9 @@ import qualified Data.Text.IO          as T.IO
 import           System.FilePath
 import           Text.Pandoc.Templates
 
-import qualified Data.ByteString
-
+import Database.YamSql (Module (..), SqlName (..))
 import Option
 import Parser
-import Parser.Basic  (SqlName (..))
-import Parser.Module
 import Utils
 
 templateFromFile :: FilePath -> IO Template
