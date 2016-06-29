@@ -8,7 +8,7 @@
 {-# LANGUAGE FlexibleContexts   #-}
 {-# LANGUAGE OverloadedStrings  #-}
 
-module Database.YamSql.Internal.Basic (module Database.YamSql.Internal.Basic, genericParseJSON, genericToJSON, ToJSON(..), FromJSON(..), Generic(..), Data(..), Typeable(..)) where
+module Database.YamSql.Internal.Basic (module Database.HamSql.Internal.Utils, module Database.YamSql.Internal.Basic, genericParseJSON, genericToJSON, ToJSON(..), FromJSON(..), Generic(..), Data(..), Typeable(..)) where
 
 import           Control.Exception
 import           Data.Aeson.Types      (Options (..), defaultOptions, genericParseJSON,
@@ -26,7 +26,7 @@ import           Data.Yaml
 import           GHC.Generics
 import           System.IO
 
-import Utils
+import Database.HamSql.Internal.Utils
 
 -- removes first part of camel case. e.g.:
 -- columnDescriptionField |-> descriptionField

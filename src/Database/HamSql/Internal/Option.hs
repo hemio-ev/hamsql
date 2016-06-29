@@ -3,7 +3,7 @@
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 
-module Option where
+module Database.HamSql.Internal.Option where
 
 import Options.Applicative
 

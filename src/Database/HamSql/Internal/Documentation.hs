@@ -6,7 +6,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
-module Documentation where
+module Database.HamSql.Internal.Documentation where
 
 import qualified Data.ByteString
 import           Data.FileEmbed
@@ -18,8 +18,8 @@ import           Text.Pandoc.Templates
 
 import Database.HamSql.Setup
 import Database.YamSql       (Module (..), SqlName (..))
-import Option
-import Utils
+import Database.HamSql.Internal.Utils
+import Database.HamSql.Internal.Option
 
 templateFromFile :: FilePath -> IO Template
 templateFromFile "DEFAULT.rst" =

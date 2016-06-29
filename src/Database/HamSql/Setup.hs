@@ -14,7 +14,7 @@ module Database.HamSql.Setup where
 import Data.Maybe (fromJust, fromMaybe)
 
 import Database.YamSql
-import Utils
+import Database.HamSql.Internal.Utils
 
 -- Setup --
 

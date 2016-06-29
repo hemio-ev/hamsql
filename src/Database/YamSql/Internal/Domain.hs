@@ -5,7 +5,6 @@ module Database.YamSql.Internal.Domain where
 
 import Database.YamSql.Internal.Basic
 import Database.YamSql.Internal.Check
-import Utils
 
 -- Domains --
 

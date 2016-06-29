@@ -9,13 +9,13 @@ module Sql.Statement.CreateTable where
 
 import qualified Data.Text as T
 
-import Database.HamSql.Setup
+--import Database.HamSql
 import Database.YamSql
-import Option
-import Sql
+import Database.HamSql.Internal.Sql
+import Database.HamSql.Internal.Option
+import Database.HamSql.Setup
 import Sql.Statement.Commons
 import Sql.Statement.CreateSequence
-import Utils
 
 createTable :: OptCommon -> Setup -> Module -> Table -> [SqlStatement]
 createTable opts setup m t = debug opts "stmtCreateTable" $

@@ -14,13 +14,10 @@ import           Network.URI
 import           Options.Applicative (execParser)
 
 import Database.YamSql
-import Documentation
-import Load
-import Option
-import PostgresCon
-import Sql
+import Database.HamSql
+import Database.HamSql.Internal.Utils
+import Database.HamSql.Internal.Sql
 import Sql.Statement.Create
-import Utils
 
 main :: IO ()
 main = execParser parserInfoHamsql >>= run

@@ -10,7 +10,6 @@
 module Database.YamSql.Internal.Role where
 
 import Database.YamSql.Internal.Basic
-import Utils
 
 data Role = Role {
     roleName        :: SqlName,

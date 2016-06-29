@@ -11,14 +11,14 @@ import           Data.List
 import           Data.Maybe
 import qualified Data.Text  as T
 
-import Database.HamSql.Setup
 import Database.YamSql
-import Option
-import Sql
+import Database.HamSql.Internal.Sql
 import Sql.Statement.Commons
 import Sql.Statement.CreateSequence
 import Sql.Statement.CreateTable
-import Utils
+import Database.HamSql.Internal.Option
+import Database.HamSql.Setup
+--import Database.HamSql
 
 emptyName = SqlName ""
 

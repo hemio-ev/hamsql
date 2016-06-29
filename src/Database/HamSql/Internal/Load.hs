@@ -5,7 +5,7 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Load where
+module Database.HamSql.Internal.Load where
 
 import Control.Exception
 import Control.Monad
@@ -24,8 +24,8 @@ import           System.FilePath.Posix (combine, dropFileName, takeExtension,
 
 import Database.HamSql.Setup
 import Database.YamSql
-import Option
-import Utils
+import Database.HamSql.Internal.Option
+import Database.HamSql.Internal.Utils
 
 loadSetup :: OptCommon -> FilePath -> IO Setup
 loadSetup opts filePath = do

@@ -5,7 +5,7 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Utils (module Utils, Text (..), (<>)) where
+module Database.HamSql.Internal.Utils (module Database.HamSql.Internal.Utils, Text (..), (<>)) where
 
 import           Control.Monad
 import           Data.Char
@@ -19,7 +19,7 @@ import           System.Exit
 import           System.IO        (stderr)
 import           System.IO.Unsafe
 
-import Option
+import Database.HamSql.Internal.Option
 
 join = intercalate
 

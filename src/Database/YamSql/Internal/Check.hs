@@ -10,7 +10,6 @@
 module Database.YamSql.Internal.Check where
 
 import Database.YamSql.Internal.Basic
-import Utils
 
 data Check = Check {
     checkName        :: SqlName,

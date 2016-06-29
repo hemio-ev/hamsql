@@ -10,7 +10,6 @@
 module Database.YamSql.Internal.Commons where
 
 import Database.YamSql.Internal.Basic
-import Utils
 
 data Variable = Variable {
     variableName        :: SqlName,

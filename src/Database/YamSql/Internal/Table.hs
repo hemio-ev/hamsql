@@ -12,7 +12,6 @@ import GHC.Generics
 
 import Database.YamSql.Internal.Basic
 import Database.YamSql.Internal.Check
-import Utils
 
 data Table = Table {
   tableName         :: SqlName,

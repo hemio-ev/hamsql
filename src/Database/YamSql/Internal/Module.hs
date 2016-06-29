@@ -18,7 +18,6 @@ import Database.YamSql.Internal.Role
 import Database.YamSql.Internal.Sequence
 import Database.YamSql.Internal.Table
 import Database.YamSql.Internal.Type
-import Utils
 
 -- Module --
 

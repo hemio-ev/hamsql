@@ -11,7 +11,6 @@ module Database.YamSql.Internal.Function where
 
 import Database.YamSql.Internal.Basic
 import Database.YamSql.Internal.Commons
-import Utils
 
 data Function = Function {
     -- function name

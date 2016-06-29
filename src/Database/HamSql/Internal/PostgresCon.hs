@@ -7,7 +7,7 @@
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module PostgresCon where
+module Database.HamSql.Internal.PostgresCon where
 
 import           Control.Exception
 import           Control.Monad                          (void, when)
@@ -23,13 +23,13 @@ import           Database.PostgreSQL.Simple.Types       (PGArray (..), fromPGArr
 import           Network.URI (URI, parseAbsoluteURI, uriToString)
 import qualified Network.URI as URI
 
-import Database.HamSql.Setup
 import Database.YamSql
-import Option
-import Sql
+import Database.HamSql.Internal.Sql
+import Database.HamSql.Internal.Utils
+import Database.HamSql.Internal.Option
 import Sql.Statement.Create
 import Sql.Statement.Drop
-import Utils
+import Database.HamSql.Setup
 
 pgsqlGetFullStatements :: OptCommon -> OptCommonDb -> Setup -> IO [SqlStatement]
 pgsqlGetFullStatements opt optDb setup  = do

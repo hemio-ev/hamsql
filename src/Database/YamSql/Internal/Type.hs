@@ -13,7 +13,6 @@ import Data.Typeable
 import GHC.Generics
 
 import Database.YamSql.Internal.Basic
-import Utils
 
 data Type = Type {
     typeName        :: SqlName,

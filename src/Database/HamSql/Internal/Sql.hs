@@ -5,14 +5,14 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Sql where
+module Database.HamSql.Internal.Sql where
 
 import           Data.Text                            (Text)
 import qualified Data.Text                            as T
 import           Database.PostgreSQL.Simple.FromField
 
 import Database.YamSql.Internal.Basic
-import Utils
+import Database.HamSql.Internal.Utils
 
 
 instance FromField SqlType where

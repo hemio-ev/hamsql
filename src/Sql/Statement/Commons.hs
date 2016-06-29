@@ -9,8 +9,8 @@ module Sql.Statement.Commons where
 
 import Database.HamSql.Setup
 import Database.YamSql
-import Sql
-import Utils
+import Database.HamSql.Internal.Sql
+--import Database.HamSql
 
 stmtCommentOn :: Text -> SqlName -> Text -> SqlStatement
 stmtCommentOn on obj com = SqlStmt SqlComment (SqlName $ toSql obj) $

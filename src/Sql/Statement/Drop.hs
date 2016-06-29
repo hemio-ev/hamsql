@@ -10,8 +10,8 @@ module Sql.Statement.Drop where
 import qualified Data.Text as T
 
 import Database.YamSql
-import Sql
-import Utils
+import Database.HamSql.Internal.Sql
+--import Database.HamSql
 
 -- ROLE
 

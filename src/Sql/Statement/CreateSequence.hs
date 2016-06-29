@@ -7,11 +7,11 @@
 
 module Sql.Statement.CreateSequence where
 
-import Database.HamSql.Setup
+--import Database.HamSql
 import Database.YamSql
-import Option
-import Sql
-import Utils
+import Database.HamSql.Internal.Sql
+import Database.HamSql.Internal.Option
+import Database.HamSql.Setup
 
 (+++) a b = a <> " " <> b
 

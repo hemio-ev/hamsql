@@ -4,7 +4,6 @@
 module Database.YamSql.Internal.Sequence where
 
 import Database.YamSql.Internal.Basic
-import Utils
 
 data Sequence = Sequence {
     sequenceName          :: SqlName,
