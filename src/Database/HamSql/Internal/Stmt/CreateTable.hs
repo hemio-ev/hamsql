@@ -5,7 +5,7 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Sql.Statement.CreateTable where
+module Database.HamSql.Internal.Stmt.CreateTable where
 
 import qualified Data.Text as T
 
@@ -14,8 +14,8 @@ import Database.YamSql
 import Database.HamSql.Internal.Sql
 import Database.HamSql.Internal.Option
 import Database.HamSql.Setup
-import Sql.Statement.Commons
-import Sql.Statement.CreateSequence
+import Database.HamSql.Internal.Stmt.Commons
+import Database.HamSql.Internal.Stmt.CreateSequence
 
 createTable :: OptCommon -> Setup -> Module -> Table -> [SqlStatement]
 createTable opts setup m t = debug opts "stmtCreateTable" $

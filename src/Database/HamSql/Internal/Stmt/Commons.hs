@@ -5,7 +5,7 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Sql.Statement.Commons where
+module Database.HamSql.Internal.Stmt.Commons where
 
 import Database.HamSql.Setup
 import Database.YamSql

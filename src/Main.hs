@@ -17,7 +17,7 @@ import Database.YamSql
 import Database.HamSql
 import Database.HamSql.Internal.Utils
 import Database.HamSql.Internal.Sql
-import Sql.Statement.Create
+import Database.HamSql.SqlStatement
 
 main :: IO ()
 main = execParser parserInfoHamsql >>= run

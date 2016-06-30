@@ -5,6 +5,11 @@ v0.6.0-unreleased
   - Fixes fundamental logic error in pgsqlUpdateFragile
     Without --perimit-data-deletion upgrades would not create objects etc.
   - Fixes constraints in schema public are not deleted
+  - Renames Module to Schema
+  - Copletely new Library structure
+  - Reworked Documentation feature
+  - Removes avoidable dependencies
+  - Mostly uses Data.Text instead of String
 v0.5.0
   - Adds proper deletion of obsolete functions
   - Changes to no data deletion as default for upgrades

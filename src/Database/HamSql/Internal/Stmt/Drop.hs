@@ -5,7 +5,7 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Sql.Statement.Drop where
+module Database.HamSql.Internal.Stmt.Drop where
 
 import qualified Data.Text as T
 

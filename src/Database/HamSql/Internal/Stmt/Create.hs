@@ -5,7 +5,7 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Sql.Statement.Create where
+module Database.HamSql.Internal.Stmt.Create where
 
 import           Data.List
 import           Data.Maybe
@@ -13,9 +13,9 @@ import qualified Data.Text  as T
 
 import Database.YamSql
 import Database.HamSql.Internal.Sql
-import Sql.Statement.Commons
-import Sql.Statement.CreateSequence
-import Sql.Statement.CreateTable
+import Database.HamSql.Internal.Stmt.Commons
+import Database.HamSql.Internal.Stmt.CreateSequence
+import Database.HamSql.Internal.Stmt.CreateTable
 import Database.HamSql.Internal.Option
 import Database.HamSql.Setup
 --import Database.HamSql

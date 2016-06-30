@@ -5,7 +5,7 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Sql.Statement.CreateSequence where
+module Database.HamSql.Internal.Stmt.CreateSequence where
 
 --import Database.HamSql
 import Database.YamSql

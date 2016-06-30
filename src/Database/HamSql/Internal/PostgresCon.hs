@@ -27,8 +27,7 @@ import Database.YamSql
 import Database.HamSql.Internal.Sql
 import Database.HamSql.Internal.Utils
 import Database.HamSql.Internal.Option
-import Sql.Statement.Create
-import Sql.Statement.Drop
+import Database.HamSql.SqlStatement
 import Database.HamSql.Setup
 
 pgsqlGetFullStatements :: OptCommon -> OptCommonDb -> Setup -> IO [SqlStatement]
