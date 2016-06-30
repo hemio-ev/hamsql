@@ -19,8 +19,8 @@ import Database.HamSql.Internal.Utils
 -- Setup --
 
 data Setup = Setup {
-  setupModules    :: [SqlName],
-  setupModuleDirs :: [FilePath],
+  setupSchemas    :: [SqlName],
+  setupSchemaDirs :: [FilePath],
   setupRolePrefix :: Maybe SqlName,
   setupPreCode    :: Maybe Text,
   setupPostCode   :: Maybe Text,
@@ -30,7 +30,7 @@ instance FromJSON Setup where parseJSON = strictParseYaml
 instance ToJSON Setup where toJSON = genericToJSON myOpt
 
 data SetupInternal = SetupInternal {
-  setupModuleData :: [Module]
+  setupSchemaData :: [Schema]
 } deriving (Generic,Show, Data, Typeable)
 instance FromJSON SetupInternal where parseJSON = strictParseYaml
 instance ToJSON SetupInternal where toJSON = genericToJSON myOpt
@@ -42,68 +42,68 @@ setupRolePrefix' setup = fromMaybe (SqlName "yamsql_") (setupRolePrefix setup)
 
 -- Template handling and applyTemplate
 
-data WithModule a = WithModule Module a deriving (Show)
+data WithSchema a = WithSchema Schema a deriving (Show)
 
 class WithName a where
  name :: a -> Text
 
-instance WithName (WithModule TableTpl) where
- name (WithModule m t) = toSql $ moduleName m <.> tabletplTemplate t
+instance WithName (WithSchema TableTpl) where
+ name (WithSchema m t) = toSql $ schemaName m <.> tabletplTemplate t
 
-instance WithName (WithModule FunctionTpl) where
- name (WithModule m f) = toSql $ moduleName m <.> functiontplTemplate f
+instance WithName (WithSchema FunctionTpl) where
+ name (WithSchema m f) = toSql $ schemaName m <.> functiontplTemplate f
 
-instance WithName (WithModule TableColumnTpl) where
- name (WithModule m f) = toSql $ moduleName m <.> tablecolumntplTemplate f
+instance WithName (WithSchema TableColumnTpl) where
+ name (WithSchema m f) = toSql $ schemaName m <.> tablecolumntplTemplate f
 
-withoutModule (WithModule _ t) = t
+withoutSchema (WithSchema _ t) = t
 
---selectTemplates :: (WithName t) => Maybe [SqlName] -> [WithModule t] -> [t]
+--selectTemplates :: (WithName t) => Maybe [SqlName] -> [WithSchema t] -> [t]
 selectTemplates ns ts =
   -- TODO: error handling here should be done using exceptions
-  [ withoutModule $ selectUniqueReason ("table or function tpl " <> n) $
+  [ withoutSchema $ selectUniqueReason ("table or function tpl " <> n) $
     filter (\t -> n == name t) ts
     | n <- map toSql $ maybeList ns ]
 
-selectTemplate x ts = head' $ map withoutModule $ filter (\y -> name y == toSql x) ts
+selectTemplate x ts = head' $ map withoutSchema $ filter (\y -> name y == toSql x) ts
   where
     head' = selectUniqueReason ("Column template " <> toSql x)
 
 -- get things from Setup
 
-setupAllModules :: Setup -> [Module]
-setupAllModules = setupModuleData . setupInternal
+setupAllSchemas :: Setup -> [Schema]
+setupAllSchemas = setupSchemaData . setupInternal
 
-setupAllFunctionTemplates :: Setup -> [WithModule FunctionTpl]
+setupAllFunctionTemplates :: Setup -> [WithSchema FunctionTpl]
 setupAllFunctionTemplates s = concat [
-  maybeMap (WithModule m) (moduleFunctionTemplates m) | m <- setupAllModules s ]
+  maybeMap (WithSchema m) (schemaFunctionTemplates m) | m <- setupAllSchemas s ]
 
-setupAllTableTemplates    :: Setup -> [WithModule TableTpl]
+setupAllTableTemplates    :: Setup -> [WithSchema TableTpl]
 setupAllTableTemplates s = concat [
-  maybeMap (WithModule m) (moduleTableTemplates m) | m <- setupAllModules s ]
+  maybeMap (WithSchema m) (schemaTableTemplates m) | m <- setupAllSchemas s ]
 
-setupAllColumnTemplates   :: Setup -> [WithModule TableColumnTpl]
+setupAllColumnTemplates   :: Setup -> [WithSchema TableColumnTpl]
 setupAllColumnTemplates s = concat [
-  maybeMap (WithModule m) (moduleColumnTemplates m) | m <- setupAllModules s ]
+  maybeMap (WithSchema m) (schemaColumnTemplates m) | m <- setupAllSchemas s ]
 
 applyTpl :: Setup -> Setup
 applyTpl s = s {
     -- TODO: possible overwrite here!
     xsetupInternal = Just SetupInternal {
-      setupModuleData =
-        map applyModule (setupModuleData $ setupInternal s)
+      setupSchemaData =
+        map applySchema (setupSchemaData $ setupInternal s)
     }
   }
 
   where
 
-    applyModule m = m {
-        moduleTables =  Just $
+    applySchema m = m {
+        schemaTables =  Just $
           map applyColumnTemplates
-          $ maybeMap applyTableTemplates (moduleTables m),
+          $ maybeMap applyTableTemplates (schemaTables m),
 
-        moduleFunctions = Just $
-          maybeMap applyFunctionTemplates (moduleFunctions m)
+        schemaFunctions = Just $
+          maybeMap applyFunctionTemplates (schemaFunctions m)
       }
 
     applyTableTemplates :: Table -> Table

@@ -16,13 +16,13 @@ import           System.FilePath
 import           Text.Pandoc.Templates
 
 import Database.HamSql.Setup
-import Database.YamSql       (Module (..), SqlName (..))
+import Database.YamSql       (Schema (..), SqlName (..))
 import Database.HamSql.Internal.Utils
 import Database.HamSql.Internal.Option
 
 templateFromFile :: FilePath -> IO Template
 templateFromFile "DEFAULT.rst" =
-  return templateDefaultModule
+  return templateDefaultSchema
 templateFromFile fname = do
   str <- T.IO.readFile fname
   return $ templateCompile str
@@ -36,18 +36,18 @@ templateCompile str =
 docWrite :: OptDoc -> Setup -> IO ()
 docWrite optDoc s = do
   t <- templateFromFile (optTemplate optDoc)
-  _ <- mapM (docWriteModule optDoc t) (setupModuleData (setupInternal s))
+  _ <- mapM (docWriteSchema optDoc t) (setupSchemaData (setupInternal s))
   return ()
 
-docWriteModule :: OptDoc -> Template -> Module -> IO ()
-docWriteModule optDoc t m = T.IO.writeFile path (renderTemplate t m)
+docWriteSchema :: OptDoc -> Template -> Schema -> IO ()
+docWriteSchema optDoc t m = T.IO.writeFile path (renderTemplate t m)
  where
   path = optOutputDir optDoc
-   </> getName (moduleName m)
+   </> getName (schemaName m)
    <.> takeExtension (optTemplate optDoc)
   getName (SqlName n) = T.unpack n
 
-templateDefaultModule :: Template
-templateDefaultModule = templateCompile $
+templateDefaultSchema :: Template
+templateDefaultSchema = templateCompile $
   decodeUtf8 $(embedFile "data/doc-template.rst")
 

@@ -15,7 +15,7 @@ import Database.HamSql.Setup
 
 (+++) a b = a <> " " <> b
 
-createSequence :: OptCommon -> Setup -> Module -> Sequence -> [SqlStatement]
+createSequence :: OptCommon -> Setup -> Schema -> Sequence -> [SqlStatement]
 createSequence _ _ m s =
 
     [
@@ -56,6 +56,6 @@ createSequence _ _ m s =
         ownedByColumn Nothing = "OWNED BY NONE"
         ownedByColumn (Just n) = "OWNED BY " <> toSql n
 
-        name = moduleName m <.> sequenceName s
+        name = schemaName m <.> sequenceName s
 
 

@@ -1,7 +1,7 @@
-modules: 
+schemas: 
  - function-install
  - public
-module_dirs:
+schema_dirs:
  - .
 
 pre_code: |

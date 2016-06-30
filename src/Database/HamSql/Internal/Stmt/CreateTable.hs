@@ -17,7 +17,7 @@ import Database.HamSql.Setup
 import Database.HamSql.Internal.Stmt.Commons
 import Database.HamSql.Internal.Stmt.CreateSequence
 
-createTable :: OptCommon -> Setup -> Module -> Table -> [SqlStatement]
+createTable :: OptCommon -> Setup -> Schema -> Table -> [SqlStatement]
 createTable opts setup m t = debug opts "stmtCreateTable" $
     [
     -- table with columns
@@ -57,7 +57,7 @@ createTable opts setup m t = debug opts "stmtCreateTable" $
     maybeMap sqlAddForeignKey' (tableForeignKeys t)
 
     where
-        intName = (moduleName m) <.> tableName t
+        intName = (schemaName m) <.> tableName t
 
         stmtCreateTable = SqlStmt SqlCreateTable intName $
           "CREATE TABLE " <> toSql intName <> " ()"
@@ -106,7 +106,7 @@ createTable opts setup m t = debug opts "stmtCreateTable" $
           | columnIsSerial c = c {
               columnType = SqlType "integer",
               columnDefault = Just $
-                "nextval('" <> toSql (moduleName m <.> serialSequenceName c) <> "')"
+                "nextval('" <> toSql (schemaName m <.> serialSequenceName c) <> "')"
             }
           | otherwise = c
 

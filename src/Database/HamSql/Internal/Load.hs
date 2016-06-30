@@ -30,44 +30,44 @@ import Database.HamSql.Internal.Utils
 loadSetup :: OptCommon -> FilePath -> IO Setup
 loadSetup opts filePath = do
   setup <- readObjectFromFile opts filePath
-  setup' <- loadSetupModules opts (dropFileName filePath) (initSetupInternal setup)
+  setup' <- loadSetupSchemas opts (dropFileName filePath) (initSetupInternal setup)
   return $ applyTpl setup'
 
 initSetupInternal s' = s' {
-  setupModules = removeDuplicates $ setupModules s',
-  xsetupInternal = Just SetupInternal { setupModuleData = [] }
+  setupSchemas = removeDuplicates $ setupSchemas s',
+  xsetupInternal = Just SetupInternal { setupSchemaData = [] }
 }
 
 -- Tries to loads all defined modules from defined module dirs
-loadSetupModules :: OptCommon -> FilePath -> Setup -> IO Setup
-loadSetupModules opts path s = do
-  moduleData <- sequence [ loadModule path (T.unpack $ unsafePlainName name) | name <- setupModules s ]
+loadSetupSchemas :: OptCommon -> FilePath -> Setup -> IO Setup
+loadSetupSchemas opts path s = do
+  schemaData <- sequence [ loadSchema path (T.unpack $ unsafePlainName name) | name <- setupSchemas s ]
   return s {
           xsetupInternal = Just (setupInternal s) {
-            setupModuleData = moduleData
+            setupSchemaData = schemaData
           }
       }
 
   where
-    loadModule :: FilePath -> FilePath -> IO Module
-    loadModule path name = do
-      modulePath <- findModulePath name moduleDirs
-      moduleData <- readModule opts modulePath
-      return moduleData {
-          xmoduleInternal = Just ModuleInternal {
-            moduleLoadPath = modulePath
+    loadSchema :: FilePath -> FilePath -> IO Schema
+    loadSchema path name = do
+      schemaPath <- findSchemaPath name schemaDirs
+      schemaData <- readSchema opts schemaPath
+      return schemaData {
+          xmoduleInternal = Just SchemaInternal {
+            schemaLoadPath = schemaPath
           }
         }
 
-    moduleDirs = map (combine path) (setupModuleDirs s)
+    schemaDirs = map (combine path) (setupSchemaDirs s)
 
-findModulePath :: FilePath -> [FilePath] -> IO FilePath
-findModulePath moduleName search = findDir search
+findSchemaPath :: FilePath -> [FilePath] -> IO FilePath
+findSchemaPath schemaName search = findDir search
   where
     findDir [] =
-      err $ "Module '" <> tshow moduleName <> "' not found in " <> tshow search
+      err $ "Schema '" <> tshow schemaName <> "' not found in " <> tshow search
     findDir (d:ds) = do
-      let dir = combine d moduleName
+      let dir = combine d schemaName
       dirExists <- doesDirectoryExist (dir :: FilePath)
       if dirExists then
          return dir
@@ -111,11 +111,11 @@ errorCheck :: Text -> Bool -> IO ()
 errorCheck msg False = err msg
 errorCheck _   True  = return ()
 
-readModule :: OptCommon -> FilePath -> IO Module
-readModule opts md = do
+readSchema :: OptCommon -> FilePath -> IO Schema
+readSchema opts md = do
     doesDirectoryExist md >>= errorCheck ("module dir does not exist: " <> tshow md)
 
-    moduleData <- readObjectFromFile opts moduleConfig
+    schemaData <- readObjectFromFile opts schemaConfig
 
     tables <- do
       files <- selectFilesInDir yamlEnding (combine md "tables.d")
@@ -129,15 +129,15 @@ readModule opts md = do
         readFunctionFromFile opts f :: IO Function
         | f <- files ]
 
-    let moduleData' = moduleData {
-        moduleTables = maybeJoin (moduleTables moduleData) (Just tables),
-        moduleFunctions = maybeJoin (moduleFunctions moduleData) (Just functions)
+    let schemaData' = schemaData {
+        schemaTables = maybeJoin (schemaTables schemaData) (Just tables),
+        schemaFunctions = maybeJoin (schemaFunctions schemaData) (Just functions)
     }
 
-    return moduleData'
+    return schemaData'
 
     where
-        moduleConfig = combine md "module.yaml"
+        schemaConfig = combine md "schema.yml"
 
 readObjectFromFile :: (FromJSON a, ToJSON a) => OptCommon -> FilePath -> IO a
 readObjectFromFile opts file = do

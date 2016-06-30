@@ -1,5 +1,5 @@
-modules: 
+schemas: 
  - domain-install
-module_dirs:
+schema_dirs:
  - .
 

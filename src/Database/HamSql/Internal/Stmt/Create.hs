@@ -47,36 +47,36 @@ sqlCreateDatabase deleteDatabase name = [
 
 getSetupStatements :: OptCommon -> Setup -> [SqlStatement]
 getSetupStatements opts s = debug opts "stmtInstallSetup" $
-  [ getStmt $ setupPreCode s ] ++ moduleStatements ++ [ getStmt $ setupPostCode s ]
+  [ getStmt $ setupPreCode s ] ++ schemaStatements ++ [ getStmt $ setupPostCode s ]
   where
-    moduleStatements =
-      concatMap (getModuleStatements opts s) (setupModuleData $ setupInternal s)
+    schemaStatements =
+      concatMap (getSchemaStatements opts s) (setupSchemaData $ setupInternal s)
     getStmt (Just code) = SqlStmt SqlPreInstall emptyName code
     getStmt Nothing = SqlStmtEmpty
 
--- Module
+-- Schema
 
-getModuleStatements :: OptCommon -> Setup -> Module -> [SqlStatement]
-getModuleStatements opts s m = debug opts "stmtCreateSchema" $
+getSchemaStatements :: OptCommon -> Setup -> Schema -> [SqlStatement]
+getSchemaStatements opts s m = debug opts "stmtCreateSchema" $
   [
-    SqlStmt SqlCreateSchema (moduleName m) $ "CREATE SCHEMA IF NOT EXISTS" <-> toSql (moduleName m),
-    postInst $ moduleExecPostInstall m,
-    stmtCommentOn "schema" (moduleName m) (moduleDescription m)
+    SqlStmt SqlCreateSchema (schemaName m) $ "CREATE SCHEMA IF NOT EXISTS" <-> toSql (schemaName m),
+    postInst $ schemaExecPostInstall m,
+    stmtCommentOn "schema" (schemaName m) (schemaDescription m)
   ] ++
-  maybeMap (privUsage) (modulePrivUsage m) ++
-  maybeMap (privSelectAll) (modulePrivSelectAll m) ++
-  maybeMap (privInsertAll) (modulePrivInsertAll m) ++
-  maybeMap (privUpdateAll) (modulePrivUpdateAll m) ++
-  maybeMap (privDeleteAll) (modulePrivDeleteAll m) ++
-  maybeMap (privSequenceAll) (modulePrivSequenceAll m) ++
-  maybeMap (privExecuteAll) (modulePrivExecuteAll m) ++
-  concat (maybeMap (privAllAll) (modulePrivAllAll m)) ++
-  concat (maybeMap (getDomainStatements opts s m) (moduleDomains m)) ++
-  concat (maybeMap (getTypeStatements opts s m) (moduleTypes m)) ++
-  concat (maybeMap (getRoleStatements opts s) (moduleRoles m)) ++
-  concat (maybeMap (getFunctionStatements opts s m) (moduleFunctions m)) ++
-  concat (maybeMap (createTable opts s m) (moduleTables m)) ++
-  concat (maybeMap (createSequence opts s m) (moduleSequences m))
+  maybeMap (privUsage) (schemaPrivUsage m) ++
+  maybeMap (privSelectAll) (schemaPrivSelectAll m) ++
+  maybeMap (privInsertAll) (schemaPrivInsertAll m) ++
+  maybeMap (privUpdateAll) (schemaPrivUpdateAll m) ++
+  maybeMap (privDeleteAll) (schemaPrivDeleteAll m) ++
+  maybeMap (privSequenceAll) (schemaPrivSequenceAll m) ++
+  maybeMap (privExecuteAll) (schemaPrivExecuteAll m) ++
+  concat (maybeMap (privAllAll) (schemaPrivAllAll m)) ++
+  concat (maybeMap (getDomainStatements opts s m) (schemaDomains m)) ++
+  concat (maybeMap (getTypeStatements opts s m) (schemaTypes m)) ++
+  concat (maybeMap (getRoleStatements opts s) (schemaRoles m)) ++
+  concat (maybeMap (getFunctionStatements opts s m) (schemaFunctions m)) ++
+  concat (maybeMap (createTable opts s m) (schemaTables m)) ++
+  concat (maybeMap (createSequence opts s m) (schemaSequences m))
 
   where
     postInst Nothing = SqlStmtEmpty
@@ -84,7 +84,7 @@ getModuleStatements opts s m = debug opts "stmtCreateSchema" $
 
     priv :: Text -> SqlName -> SqlStatement
     priv p r = SqlStmt SqlPriv r $
-      "GRANT " <> p <> " " <> toSql (moduleName m) <> " TO " <> prefixedRole s r
+      "GRANT " <> p <> " " <> toSql (schemaName m) <> " TO " <> prefixedRole s r
 
     privUsage = priv "USAGE ON SCHEMA"
     privSelectAll = priv "SELECT ON ALL TABLES IN SCHEMA"
@@ -106,7 +106,7 @@ getModuleStatements opts s m = debug opts "stmtCreateSchema" $
 
 -- Function
 
-getFunctionStatements :: OptCommon -> Setup -> Module -> Function -> [SqlStatement]
+getFunctionStatements :: OptCommon -> Setup -> Schema -> Function -> [SqlStatement]
 getFunctionStatements _ setup m f =
     stmtCreateFunction:
     sqlSetOwner (functionOwner f):
@@ -114,7 +114,7 @@ getFunctionStatements _ setup m f =
     map sqlStmtGrantExecute (maybeList $ functionPrivExecute f)
 
     where
-        name = (moduleName m) <.> functionName f
+        name = (schemaName m) <.> functionName f
 
         sqlStmtGrantExecute u = SqlStmt SqlPriv name $ sqlGrantExecute u
         sqlGrantExecute u = "GRANT EXECUTE ON FUNCTION \n" <>
@@ -220,7 +220,7 @@ getFunctionStatements _ setup m f =
 
 -- Domains
 
-getDomainStatements :: OptCommon -> Setup -> Module -> Domain -> [SqlStatement]
+getDomainStatements :: OptCommon -> Setup -> Schema -> Domain -> [SqlStatement]
 getDomainStatements opt _ m d = debug opt "stmtCreateDomain" $
 
   stmtCreateDomain
@@ -230,7 +230,7 @@ getDomainStatements opt _ m d = debug opt "stmtCreateDomain" $
   --stmtCommentOn "DOMAIN" fullName (domainDescription d)
 
     where
-    fullName = (moduleName m) <.> domainName d
+    fullName = (schemaName m) <.> domainName d
 
     stmtCreateDomain = SqlStmt SqlCreateDomain fullName $
       "CREATE DOMAIN" <-> toSql fullName <-> "AS" <-> toSql (domainType d)
@@ -249,7 +249,7 @@ getDomainStatements opt _ m d = debug opt "stmtCreateDomain" $
 
 -- Types
 
-getTypeStatements :: OptCommon -> Setup -> Module -> Type -> [SqlStatement]
+getTypeStatements :: OptCommon -> Setup -> Schema -> Type -> [SqlStatement]
 getTypeStatements _ _ m t =
   SqlStmt SqlCreateType fullName (
     "CREATE TYPE" <-> toSql fullName <-> "AS (" <>
@@ -261,7 +261,7 @@ getTypeStatements _ _ m t =
   -- ALTER TYPE name ALTER ATTRIBUTE attribute_name [ SET DATA ] TYPE data_type
 
   where
-    fullName = (moduleName m) <.> typeName t
+    fullName = (schemaName m) <.> typeName t
     sqlElement e = toSql (typeelementName e) <-> toSql(typeelementType e)
 
 -- Role
