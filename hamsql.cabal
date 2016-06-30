@@ -29,7 +29,7 @@ executable hamsql
                        postgresql-simple >=0.4 && <0.6,
                        file-embed >=0.0 && <0.1,
                        filepath >=1.4 && <1.5,
-                       pandoc >=1.16 && <1.17,
+                       pandoc >=1.12 && <1.17,
                        frontmatter >=0.1 && <0.2,
                        yaml >=0.8 && <0.9,
                        directory >=1.2 && <1.3,
