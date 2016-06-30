@@ -41,7 +41,7 @@ initSetupInternal s' = s' {
 -- Tries to loads all defined modules from defined module dirs
 loadSetupModules :: OptCommon -> FilePath -> Setup -> IO Setup
 loadSetupModules opts path s = do
-  moduleData <- sequence [ loadModule path (getName name) | name <- setupModules s ]
+  moduleData <- sequence [ loadModule path (T.unpack $ unsafePlainName name) | name <- setupModules s ]
   return s {
           xsetupInternal = Just (setupInternal s) {
             setupModuleData = moduleData
@@ -60,8 +60,6 @@ loadSetupModules opts path s = do
         }
 
     moduleDirs = map (combine path) (setupModuleDirs s)
-    -- TODO: make global
-    getName (SqlName n) = T.unpack n
 
 findModulePath :: FilePath -> [FilePath] -> IO FilePath
 findModulePath moduleName search = findDir search

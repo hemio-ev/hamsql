@@ -142,11 +142,11 @@ createTable opts setup m t = debug opts "stmtCreateTable" $
           " ADD CONSTRAINT " <> name (uniquekeyName ks) <>
           " UNIQUE (" <> T.intercalate ", " (map toSql (uniquekeyColumns ks)) <> ")"
 
-        sqlCheck c =
-            " CONSTRAINT " <> name (checkName c) <> " CHECK (" <> checkCheck c <> ")"
+        --sqlCheck c =
+        --    " CONSTRAINT " <> name (checkName c) <> " CHECK (" <> checkCheck c <> ")"
 
         sqlAddForeignKey :: Column -> SqlStatement
-        sqlAddForeignKey c@(Column { columnReferences = Nothing }) =
+        sqlAddForeignKey (Column { columnReferences = Nothing }) =
           SqlStmtEmpty
         sqlAddForeignKey c@(Column { columnReferences = (Just ref) }) =
           SqlStmt SqlCreateForeignKeyConstr intName $

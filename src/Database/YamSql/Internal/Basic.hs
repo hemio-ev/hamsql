@@ -13,14 +13,12 @@ module Database.YamSql.Internal.Basic (module Database.HamSql.Internal.Utils, mo
 import           Control.Exception
 import           Data.Aeson.Types      (Options (..), defaultOptions, genericParseJSON,
                                         genericToJSON)
-import qualified Data.ByteString.Char8 as B
 import           Data.Char
 import           Data.Data
-import           Data.HashMap.Strict   (insert, keys, member)
+import           Data.HashMap.Strict   (keys)
 import           Data.List
 import           Data.Maybe            (fromJust, fromMaybe)
 import qualified Data.Text             as T
-import           Data.Typeable
 import           Data.Yaml
 import           GHC.Generics
 import           System.IO
@@ -47,10 +45,9 @@ myOpt :: Options
 myOpt = defaultOptions {
  fieldLabelModifier     = snakeify . removeFirstPart
 , constructorTagModifier = drop 1 . snakeify
---, sumEncoding = ObjectWithSingleField
 }
 
---outJson :: Setup -> Text
+outJson :: ToJSON a => a -> String
 outJson s = show $ toJSON s
 
 forceToJson :: ToJSON a => a -> IO ()
@@ -60,6 +57,7 @@ forceToJson s =
 
 -- SqlCode (right now only SqlName)
 
+unsafePlainName :: SqlName -> Text
 unsafePlainName (SqlName n) = n
 
 instance Eq SqlName where

@@ -8,10 +8,6 @@
 
 module Database.YamSql.Internal.Type where
 
-import Data.Data
-import Data.Typeable
-import GHC.Generics
-
 import Database.YamSql.Internal.Basic
 
 data Type = Type {

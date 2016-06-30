@@ -8,7 +8,6 @@
 
 module Database.HamSql.Internal.Documentation where
 
-import qualified Data.ByteString
 import           Data.FileEmbed
 import qualified Data.Text             as T
 import           Data.Text.Encoding

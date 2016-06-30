@@ -21,11 +21,9 @@ import           Database.PostgreSQL.Simple.Transaction
 import           Database.PostgreSQL.Simple.Types       (PGArray (..), fromPGArray)
 
 import           Network.URI (URI, parseAbsoluteURI, uriToString)
-import qualified Network.URI as URI
 
 import Database.YamSql
 import Database.HamSql.Internal.Sql
-import Database.HamSql.Internal.Utils
 import Database.HamSql.Internal.Option
 import Database.HamSql.SqlStatement
 import Database.HamSql.Setup
@@ -43,6 +41,7 @@ pgsqlGetFullStatements opt optDb setup  = do
     getPrefix :: SqlName -> Text
     getPrefix (SqlName xs) = xs
 
+sqlManageSchemaJoin :: Text -> Text
 sqlManageSchemaJoin schemaid =
       " JOIN pg_namespace AS n " <\>
       "  ON" <-> schemaid <-> "= n.oid AND " <\>
@@ -189,7 +188,7 @@ pgsqlCorrectTables conn stmtsInstall = do
 
 normalizedFuncStmt :: Connection -> SqlStatement -> IO SqlStatement
 normalizedFuncStmt conn (SqlStmtFunction t n p c) = do
-  x :: [(Int,Int)] <- query conn "SELECT ?, ?" (1::Int, 2::Int)
+  _ :: [(Int,Int)] <- query conn "SELECT ?, ?" (1::Int, 2::Int)
   p' :: [Only (PGArray SqlType)] <- query conn "SELECT ?::regtype[]::varchar[]" (Only $ PGArray $ map toSql p)
 
   return $ SqlStmtFunction t n (fromPGArray $ head (map fromOnly p')) c
@@ -198,11 +197,11 @@ normalizedFuncStmt conn (SqlStmtFunction t n p c) = do
 pgsqlCorrectFunctions :: Connection -> [SqlStatement] -> IO [SqlStatement]
 pgsqlCorrectFunctions conn xs = do
   -- pgsqlDeleteFunctionStmt conn
-  drop <- pgsqlDeleteFunctionStmt conn
+  dropStmt <- pgsqlDeleteFunctionStmt conn
   let create = filter (typeEq SqlCreateFunction) xs
 
   createNormalized <- mapM (normalizedFuncStmt conn) create
-  let dropFiltered = drop \\ map (SqlDropFunction `replacesTypeOf`) createNormalized
+  let dropFiltered = dropStmt \\ map (SqlDropFunction `replacesTypeOf`) createNormalized
   -- let d = map (normalizedFuncStmt conn) expected
 
   return $ create ++ dropFiltered
@@ -283,7 +282,7 @@ pgsqlConnectUrl url = do
 
 pgsqlHandleErr :: SqlStatement -> SqlError -> IO ()
 pgsqlHandleErr code e = do
-    err $
+    _ <- err $
         "sql error in following statement:" <\>
         toSql code <\>
         "sql error:" <-> decodeUtf8 (sqlErrorMsg e) <-> "(Error Code: " <> decodeUtf8 (sqlState e) <> ")"
@@ -320,8 +319,8 @@ pgsqlExecStmtList status (x:xs) failed conn = do
      `catch` handleQueryError savepoint
 
     where
-        handleSqlError savepoint SqlError{sqlState=err}
-         | err == "42P13" = skipQuery savepoint [stmtDropFunction' x, x]
+        handleSqlError savepoint SqlError{sqlState=errCode}
+         | errCode == "42P13" = skipQuery savepoint [stmtDropFunction' x, x]
          | otherwise      = skipQuery savepoint [x]
 
         handleQueryError savepoint QueryError{} = proceed savepoint
@@ -339,7 +338,7 @@ pgsqlExecStmtList status (x:xs) failed conn = do
 pgsqlExecStmt :: Connection -> SqlStatement -> IO ()
 pgsqlExecStmt conn stmt = do
     let code = toSql stmt
-    execute_ conn (toQry code)
+    _ <- execute_ conn (toQry code)
     return ()
 
 pgsqlExecStmtHandled :: Connection -> SqlStatement -> IO ()

@@ -50,9 +50,6 @@ data Module = Module {
 instance FromJSON Module where parseJSON = strictParseYaml
 instance ToJSON Module where toJSON = genericToJSON myOpt
 
-moduleInternal :: Module -> ModuleInternal
-moduleInternal = fromJustReason "moduleInternal" . xmoduleInternal
-
 data ModuleInternal = ModuleInternal {
   moduleLoadPath :: FilePath
 } deriving (Data, Generic, Show, Typeable)

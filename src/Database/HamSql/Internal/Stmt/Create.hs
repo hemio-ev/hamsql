@@ -7,7 +7,6 @@
 
 module Database.HamSql.Internal.Stmt.Create where
 
-import           Data.List
 import           Data.Maybe
 import qualified Data.Text  as T
 
@@ -20,9 +19,8 @@ import Database.HamSql.Internal.Option
 import Database.HamSql.Setup
 --import Database.HamSql
 
+emptyName :: SqlName
 emptyName = SqlName ""
-
-
 
 sqlAddTransact :: [SqlStatement] -> [SqlStatement]
 sqlAddTransact xs =
@@ -109,7 +107,7 @@ getModuleStatements opts s m = debug opts "stmtCreateSchema" $
 -- Function
 
 getFunctionStatements :: OptCommon -> Setup -> Module -> Function -> [SqlStatement]
-getFunctionStatements opts setup m f =
+getFunctionStatements _ setup m f =
     stmtCreateFunction:
     sqlSetOwner (functionOwner f):
     stmtComment:
@@ -252,7 +250,7 @@ getDomainStatements opt _ m d = debug opt "stmtCreateDomain" $
 -- Types
 
 getTypeStatements :: OptCommon -> Setup -> Module -> Type -> [SqlStatement]
-getTypeStatements opt s m t =
+getTypeStatements _ _ m t =
   SqlStmt SqlCreateType fullName (
     "CREATE TYPE" <-> toSql fullName <-> "AS (" <>
     T.intercalate ", " (map sqlElement (typeElements t)) <> ")"
@@ -269,7 +267,7 @@ getTypeStatements opt s m t =
 -- Role
 
 getRoleStatements :: OptCommon -> Setup -> Role -> [SqlStatement]
-getRoleStatements opts setup r =
+getRoleStatements _ setup r =
     SqlStmt SqlCreateRole (roleName r) sqlCreateRole:
     (stmtCommentOn "ROLE" (setupRolePrefix' setup // roleName r) (roleDescription r)):
     maybeMap sqlRoleMembership (roleMemberIn r)
