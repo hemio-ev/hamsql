@@ -17,8 +17,7 @@ import qualified Data.ByteString.Char8 as B
 import           Data.Char
 import           Data.Data
 import           Data.HashMap.Strict   (insert, keys, member)
-import           Data.List.Ordered     (minus, sort, subset)
-import           Data.List.Split       (splitOn)
+import           Data.List
 import           Data.Maybe            (fromJust, fromMaybe)
 import qualified Data.Text             as T
 import           Data.Typeable
@@ -137,17 +136,17 @@ strictParseYaml xs =
  do
   parsed <- genericParseJSON myOpt xs
 
-  let diff = minus (keysOfValue xs) (keysOfData parsed)
+  let diff = keysOfValue xs \\ keysOfData parsed
   return $
    if null diff then
     parsed
    else
     throw $ YamsqlException $ "Found unknown keys: " <> tshow diff
  where
-  keysOfData u = sort $ "tag":map (snakeify.removeFirstPart) (constrFields (toConstr u))
+  keysOfData u = "tag":map (snakeify.removeFirstPart) (constrFields (toConstr u))
 
   keysOfValue :: Value -> [String]
-  keysOfValue (Object xs) = map T.unpack $ sort $ keys xs
+  keysOfValue (Object xs) = map T.unpack $ keys xs
 
 -- EXCEPTIONS
 
