@@ -1,0 +1,4 @@
+name: not-loaded
+description: |
+ Should never exists since filename has trailing '-'
+type: int

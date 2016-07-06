@@ -1,0 +1,4 @@
+name: D1
+description: |
+ Domain from directory
+type: varchar

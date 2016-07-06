@@ -114,19 +114,20 @@ readSchema opts md = do
 
     schemaData <- readObjectFromFile opts schemaConfig
 
+    domains <- do
+      files <- confDirFiles "domains.d"
+      sequence [ readObjectFromFile opts f | f <- files ]
+      
     tables <- do
-      files <- selectFilesInDir isConfigDirFile (combine md "tables.d")
-      sequence [
-        readObjectFromFile opts f :: IO Table
-        | f <- files ]
+      files <- confDirFiles "tables.d"
+      sequence [ readObjectFromFile opts f | f <- files ]
 
     functions <- do
-      files <- selectFilesInDir isConfigDirFile (combine md "functions.d")
-      sequence [
-        readFunctionFromFile opts f :: IO Function
-        | f <- files ]
+      files <- confDirFiles "functions.d"
+      sequence [ readFunctionFromFile opts f | f <- files ]
 
     let schemaData' = schemaData {
+        schemaDomains = maybeJoin (schemaDomains schemaData) (Just domains),
         schemaTables = maybeJoin (schemaTables schemaData) (Just tables),
         schemaFunctions = maybeJoin (schemaFunctions schemaData) (Just functions)
     }
@@ -135,6 +136,8 @@ readSchema opts md = do
 
     where
         schemaConfig = combine md "schema.yml"
+        confDirFiles confDir = selectFilesInDir isConfigDirFile
+         (combine md confDir)
 
 readObjectFromFile :: (FromJSON a, ToJSON a) => OptCommon -> FilePath -> IO a
 readObjectFromFile opts file = do
