@@ -131,6 +131,7 @@ createTable opts setup m t = debug opts "stmtCreateTable" $
         -- PRIMARY KEY
 
         sqlAddPrimaryKey :: [SqlName] -> SqlStatement
+        sqlAddPrimaryKey [] = SqlStmtEmpty
         sqlAddPrimaryKey ks = SqlStmt SqlCreatePrimaryKeyConstr intName $
           "ALTER TABLE " <> toSql intName <>
           " ADD CONSTRAINT " <> name (SqlName "primary_key") <>

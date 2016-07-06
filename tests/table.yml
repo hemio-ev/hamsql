@@ -1,0 +1,5 @@
+schemas: 
+ - table-install
+schema_dirs:
+ - .
+

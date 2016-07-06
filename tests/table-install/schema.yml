@@ -1,0 +1,11 @@
+name: table-install
+description: Table Install
+
+tables:
+ - name: t1
+   description: Table with no primary_key
+   primary_key: []
+   columns:
+    - name: a
+      type: int
+      description: A
