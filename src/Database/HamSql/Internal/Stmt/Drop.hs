@@ -9,8 +9,8 @@ module Database.HamSql.Internal.Stmt.Drop where
 
 import qualified Data.Text as T
 
-import Database.YamSql
 import Database.HamSql.Internal.Sql
+import Database.YamSql
 --import Database.HamSql
 
 -- ROLE

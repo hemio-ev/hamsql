@@ -10,12 +10,12 @@ module Database.HamSql.Internal.Stmt.CreateTable where
 import qualified Data.Text as T
 
 --import Database.HamSql
-import Database.YamSql
-import Database.HamSql.Internal.Sql
 import Database.HamSql.Internal.Option
-import Database.HamSql.Setup
+import Database.HamSql.Internal.Sql
 import Database.HamSql.Internal.Stmt.Commons
 import Database.HamSql.Internal.Stmt.CreateSequence
+import Database.HamSql.Setup
+import Database.YamSql
 
 createTable :: OptCommon -> Setup -> Schema -> Table -> [SqlStatement]
 createTable opts setup m t = debug opts "stmtCreateTable" $

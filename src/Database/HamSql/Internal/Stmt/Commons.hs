@@ -7,9 +7,9 @@
 
 module Database.HamSql.Internal.Stmt.Commons where
 
+import Database.HamSql.Internal.Sql
 import Database.HamSql.Setup
 import Database.YamSql
-import Database.HamSql.Internal.Sql
 --import Database.HamSql
 
 stmtCommentOn :: Text -> SqlName -> Text -> SqlStatement

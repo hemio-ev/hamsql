@@ -20,13 +20,13 @@ import           Database.PostgreSQL.Simple
 import           Database.PostgreSQL.Simple.Transaction
 import           Database.PostgreSQL.Simple.Types       (PGArray (..), fromPGArray)
 
-import           Network.URI (URI, parseAbsoluteURI, uriToString)
+import Network.URI (URI, parseAbsoluteURI, uriToString)
 
-import Database.YamSql
-import Database.HamSql.Internal.Sql
 import Database.HamSql.Internal.Option
-import Database.HamSql.SqlStatement
+import Database.HamSql.Internal.Sql
 import Database.HamSql.Setup
+import Database.HamSql.SqlStatement
+import Database.YamSql
 
 pgsqlGetFullStatements :: OptCommon -> OptCommonDb -> Setup -> IO [SqlStatement]
 pgsqlGetFullStatements opt optDb setup  = do

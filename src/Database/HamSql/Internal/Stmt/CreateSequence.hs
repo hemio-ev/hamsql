@@ -8,10 +8,10 @@
 module Database.HamSql.Internal.Stmt.CreateSequence where
 
 --import Database.HamSql
-import Database.YamSql
-import Database.HamSql.Internal.Sql
 import Database.HamSql.Internal.Option
+import Database.HamSql.Internal.Sql
 import Database.HamSql.Setup
+import Database.YamSql
 
 (+++) a b = a <> " " <> b
 

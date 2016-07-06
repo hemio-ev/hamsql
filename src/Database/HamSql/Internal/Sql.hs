@@ -11,8 +11,8 @@ import           Data.Text                            (Text)
 import qualified Data.Text                            as T
 import           Database.PostgreSQL.Simple.FromField
 
-import Database.YamSql.Internal.Basic
 import Database.HamSql.Internal.Utils
+import Database.YamSql.Internal.Basic
 
 
 instance FromField SqlType where

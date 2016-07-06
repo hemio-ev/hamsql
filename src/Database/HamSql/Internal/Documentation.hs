@@ -15,10 +15,10 @@ import qualified Data.Text.IO          as T.IO
 import           System.FilePath
 import           Text.Pandoc.Templates
 
-import Database.HamSql.Setup
-import Database.YamSql       (Schema (..), SqlName (..))
-import Database.HamSql.Internal.Utils
 import Database.HamSql.Internal.Option
+import Database.HamSql.Internal.Utils
+import Database.HamSql.Setup
+import Database.YamSql                 (Schema (..), SqlName (..))
 
 templateFromFile :: FilePath -> IO Template
 templateFromFile "DEFAULT.rst" =

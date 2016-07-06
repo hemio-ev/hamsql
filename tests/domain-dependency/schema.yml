@@ -1,0 +1,8 @@
+name: domain-dependency
+description: Domain Dependency
+
+domains:
+ -
+  name: dep
+  description: Dep
+  type: int

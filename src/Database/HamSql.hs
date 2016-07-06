@@ -7,6 +7,6 @@ module Database.HamSql (
 
 
 import Database.HamSql.Internal.Documentation
-import Database.HamSql.Internal.PostgresCon
 import Database.HamSql.Internal.Load
 import Database.HamSql.Internal.Option
+import Database.HamSql.Internal.PostgresCon

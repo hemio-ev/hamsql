@@ -10,13 +10,13 @@ module Database.HamSql.Internal.Stmt.Create where
 import           Data.Maybe
 import qualified Data.Text  as T
 
-import Database.YamSql
+import Database.HamSql.Internal.Option
 import Database.HamSql.Internal.Sql
 import Database.HamSql.Internal.Stmt.Commons
 import Database.HamSql.Internal.Stmt.CreateSequence
 import Database.HamSql.Internal.Stmt.CreateTable
-import Database.HamSql.Internal.Option
 import Database.HamSql.Setup
+import Database.YamSql
 --import Database.HamSql
 
 emptyName :: SqlName

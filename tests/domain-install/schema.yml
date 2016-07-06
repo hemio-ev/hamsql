@@ -1,5 +1,7 @@
 name: domain-install
 description: Domain Install
+dependencies:
+ - domain-dependency
 
 domains:
 # Simple domain dependency

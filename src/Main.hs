@@ -13,11 +13,11 @@ import qualified Data.Text.IO        as T.IO
 import           Network.URI
 import           Options.Applicative (execParser)
 
-import Database.YamSql
 import Database.HamSql
-import Database.HamSql.Internal.Utils
 import Database.HamSql.Internal.Sql
+import Database.HamSql.Internal.Utils
 import Database.HamSql.SqlStatement
+import Database.YamSql
 
 main :: IO ()
 main = execParser parserInfoHamsql >>= run

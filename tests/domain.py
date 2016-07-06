@@ -4,6 +4,7 @@ t = utils.test("postgres://postgres@/hamsql-test", "domain.yml")
 
 t.domains = \
  [
+  ('hamsql-test', 'dep', 'domain-dependency', 'int4', None, None) ,
   ('hamsql-test', 'A1', 'domain-install', 'int4', None, None) ,
   ('hamsql-test', 'A2', 'domain-install', 'A1', None, None) ,
   ('hamsql-test', 'B1', 'domain-install', 'int4', None, None) ,

@@ -22,10 +22,10 @@ import           System.Directory      (doesDirectoryExist, doesFileExist,
 import           System.FilePath.Posix (combine, dropFileName, takeExtension,
                                         takeFileName)
 
-import Database.HamSql.Setup
-import Database.YamSql
 import Database.HamSql.Internal.Option
 import Database.HamSql.Internal.Utils
+import Database.HamSql.Setup
+import Database.YamSql
 
 loadSetup :: OptCommon -> FilePath -> IO Setup
 loadSetup opts filePath = do
@@ -41,7 +41,7 @@ initSetupInternal s' = s' {
 -- Tries to loads all defined modules from defined module dirs
 loadSetupSchemas :: OptCommon -> FilePath -> Setup -> IO Setup
 loadSetupSchemas opts path s = do
-  schemaData <- sequence [ loadSchema path (T.unpack $ unsafePlainName name) | name <- setupSchemas s ]
+  schemaData <- loadSchemas opts path s [] (setupSchemas s)
   return s {
           xsetupInternal = Just (setupInternal s) {
             setupSchemaData = schemaData
@@ -60,6 +60,30 @@ loadSetupSchemas opts path s = do
         }
 
     schemaDirs = map (combine path) (setupSchemaDirs s)
+
+loadSchemas :: OptCommon -> FilePath -> Setup -> [Schema] -> [SqlName] -> IO [Schema]
+loadSchemas _ _ _ allLoaded [] = return allLoaded
+loadSchemas optCom path setup loadedSchemas missingSchemas = do
+  schemas <- sequence [ loadSchema path (T.unpack $ unsafePlainName name) | name <- missingSchemas ]
+  let newDependencyNames = nub . concat $ map (maybeList . schemaDependencies) schemas
+  let allLoadedSchemas = schemas ++ loadedSchemas
+  let newMissingDepencenyNames = newDependencyNames \\ map schemaName allLoadedSchemas
+
+  loadSchemas optCom path setup allLoadedSchemas newMissingDepencenyNames
+
+  where
+    loadSchema :: FilePath -> FilePath -> IO Schema
+    loadSchema path name = do
+      schemaPath <- findSchemaPath name schemaDirs
+      schemaData <- readSchema optCom schemaPath
+      return schemaData {
+          xmoduleInternal = Just SchemaInternal {
+            schemaLoadPath = schemaPath
+          }
+        }
+
+    schemaDirs = map (combine path) (setupSchemaDirs setup)
+
 
 findSchemaPath :: FilePath -> [FilePath] -> IO FilePath
 findSchemaPath schemaName search = findDir search
@@ -117,7 +141,7 @@ readSchema opts md = do
     domains <- do
       files <- confDirFiles "domains.d"
       sequence [ readObjectFromFile opts f | f <- files ]
-      
+
     tables <- do
       files <- confDirFiles "tables.d"
       sequence [ readObjectFromFile opts f | f <- files ]
