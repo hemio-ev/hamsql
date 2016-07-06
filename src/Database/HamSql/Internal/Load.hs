@@ -83,11 +83,8 @@ catchErrors filePath x = do
     "In file '" <> tshow filePath <> "': " <> exc
    Right _ -> x
 
-yamlEnding :: FilePath -> Bool
-yamlEnding xs = takeExtension xs == ".yaml" || takeExtension xs == "yml"
-
-pgsqlEnding :: FilePath -> Bool
-pgsqlEnding xs = isAlphaNum (last fn) && head fn /= '.'
+isConfigDirFile :: FilePath -> Bool
+isConfigDirFile xs = isAlphaNum (last fn) && head fn /= '.'
  where fn = takeFileName xs
 
 getFilesInDir :: FilePath -> IO [FilePath]
@@ -118,13 +115,13 @@ readSchema opts md = do
     schemaData <- readObjectFromFile opts schemaConfig
 
     tables <- do
-      files <- selectFilesInDir yamlEnding (combine md "tables.d")
+      files <- selectFilesInDir isConfigDirFile (combine md "tables.d")
       sequence [
         readObjectFromFile opts f :: IO Table
         | f <- files ]
 
     functions <- do
-      files <- selectFilesInDir pgsqlEnding (combine md "functions.d")
+      files <- selectFilesInDir isConfigDirFile (combine md "functions.d")
       sequence [
         readFunctionFromFile opts f :: IO Function
         | f <- files ]
