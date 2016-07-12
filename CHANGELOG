@@ -1,4 +1,4 @@
-v0.6.0-unreleased
+v0.6.0
   - Adds resolve complicated dependency issues
   - Adds resolve change of function return type (if function can be dropped)
   - Changes connection options to suppress SQL NOTICE messages
