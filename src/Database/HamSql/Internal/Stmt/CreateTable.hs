@@ -62,7 +62,7 @@ createTable opts setup m t = debug opts "stmtCreateTable" $
         stmtCreateTable = SqlStmt SqlCreateTable intName $
           "CREATE TABLE " <> toSql intName <> " ()"
 
-        stmtCheck c = SqlStmt SqlAddTableContraint intName $
+        stmtCheck c = SqlStmt SqlCreateCheckConstr intName $
           "ALTER TABLE " <> toSql intName <>
           " ADD CONSTRAINT " <> name (checkName c) <> " CHECK (" <> checkCheck c <> ")"
 

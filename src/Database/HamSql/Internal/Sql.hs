@@ -78,7 +78,6 @@ data SqlStatementType =
   SqlAlterTable |
   SqlDropColumnDefault |
   SqlAlterColumn |
-  SqlAddTableContraint |
   -- ALTER SEQUENCE
   SqlAlterSequence |
   -- FUNCTION
