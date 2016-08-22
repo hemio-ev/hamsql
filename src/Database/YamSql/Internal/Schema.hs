@@ -7,7 +7,18 @@
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE OverloadedStrings  #-}
 
-module Database.YamSql.Internal.Schema (Schema(..), SchemaInternal(..), module Database.YamSql.Internal.Check, module Database.YamSql.Internal.Domain, module Database.YamSql.Internal.Function, module Database.YamSql.Internal.Role, module Database.YamSql.Internal.Sequence, module Database.YamSql.Internal.Table, module Database.YamSql.Internal.Type) where
+module Database.YamSql.Internal.Schema (
+    Schema(..),
+    SchemaInternal(..),
+    module Database.YamSql.Internal.Check,
+    module Database.YamSql.Internal.Domain,
+    module Database.YamSql.Internal.Function,
+    module Database.YamSql.Internal.Role,
+    module Database.YamSql.Internal.Sequence,
+    module Database.YamSql.Internal.Table,
+    module Database.YamSql.Internal.Trigger,
+    module Database.YamSql.Internal.Type
+) where
 
 import Database.YamSql.Internal.Basic
 import Database.YamSql.Internal.Check
@@ -17,6 +28,7 @@ import Database.YamSql.Internal.Function
 import Database.YamSql.Internal.Role
 import Database.YamSql.Internal.Sequence
 import Database.YamSql.Internal.Table
+import Database.YamSql.Internal.Trigger
 import Database.YamSql.Internal.Type
 
 -- Schema --
@@ -33,6 +45,7 @@ data Schema = Schema {
     schemaColumnTemplates   :: Maybe [TableColumnTpl],
     schemaRoles             :: Maybe [Role],
     schemaSequences         :: Maybe [Sequence],
+    schemaTriggers          :: Maybe [Trigger],
 
     schemaPrivUsage         :: Maybe [SqlName],
     schemaPrivSelectAll     :: Maybe [SqlName],
