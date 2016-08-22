@@ -78,6 +78,8 @@ data SqlStatementType =
   SqlAlterTable |
   SqlDropColumnDefault |
   SqlAlterColumn |
+  -- TRIGGER
+  SqlCreateTrigger |
   -- ALTER SEQUENCE
   SqlAlterSequence |
   -- FUNCTION

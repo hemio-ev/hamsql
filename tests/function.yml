@@ -7,3 +7,5 @@ schema_dirs:
 pre_code: |
      -- UUIDs
      CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+     -- Enable Python 3 as function language
+     CREATE EXTENSION IF NOT EXISTS "plpython3u";

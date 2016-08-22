@@ -148,12 +148,19 @@ readSchema opts md = do
 
     functions <- do
       files <- confDirFiles "functions.d"
-      sequence [ readFunctionFromFile opts f | f <- files ]
+      let ins x s = x { functionBody = Just s }
+      sequence [ readFunctionFromFile ins opts f | f <- files ]
+
+    triggers <- do
+      files <- confDirFiles "triggers.d"
+      let ins x s = x { triggerBody = Just s }
+      sequence [ readFunctionFromFile ins opts f | f <- files ]
 
     let schemaData' = schemaData {
         schemaDomains = maybeJoin (schemaDomains schemaData) (Just domains),
         schemaTables = maybeJoin (schemaTables schemaData) (Just tables),
-        schemaFunctions = maybeJoin (schemaFunctions schemaData) (Just functions)
+        schemaFunctions = maybeJoin (schemaFunctions schemaData) (Just functions),
+        schemaTriggers = maybeJoin (schemaTriggers schemaData) (Just triggers)
     }
 
     return schemaData'
@@ -175,14 +182,14 @@ readObject file b =
             Left msg  -> err $ "in yaml-file: " <> tshow file <> ": " <> tshow msg
             Right obj -> obj
 
-readFunctionFromFile :: OptCommon -> FilePath -> IO Function
-readFunctionFromFile opts file = do
+readFunctionFromFile :: (FromJSON a, ToJSON a) => (a -> Text -> a) -> OptCommon -> FilePath -> IO a
+readFunctionFromFile rpl opts file = do
     b <- readYamSqlFile opts file
 
     case parseFrontmatter b of
         Done body yaml -> do
             f <- readObject file yaml
-            return $ f { functionBody = Just (decodeUtf8 body) }
+            return $ rpl f (decodeUtf8 body)
         _ -> readObject file b
 
 readYamSqlFile :: OptCommon -> FilePath -> IO B.ByteString
