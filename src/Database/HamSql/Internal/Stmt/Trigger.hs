@@ -16,9 +16,9 @@ import Database.HamSql.Setup
 import Database.YamSql
 
 
-createTrigger :: OptCommon -> Setup -> Schema -> Trigger -> [SqlStatement]
-createTrigger optCom setup s t =
-    getFunctionStatements optCom setup s triggerFunction ++
+stmtsDeployTrigger :: OptCommon -> Setup -> Schema -> Trigger -> [SqlStatement]
+stmtsDeployTrigger optCom setup s t =
+    stmtsDeployFunction optCom setup s triggerFunction ++
     map triggerStmt (triggerTables t)
 
     where

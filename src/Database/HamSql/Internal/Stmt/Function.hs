@@ -17,8 +17,8 @@ import Database.HamSql.Internal.Stmt.Commons
 import Database.HamSql.Setup
 import Database.YamSql
 
-getFunctionStatements :: OptCommon -> Setup -> Schema -> Function -> [SqlStatement]
-getFunctionStatements _ setup m f =
+stmtsDeployFunction :: OptCommon -> Setup -> Schema -> Function -> [SqlStatement]
+stmtsDeployFunction _ setup m f =
     stmtCreateFunction:
     sqlSetOwner (functionOwner f):
     stmtComment:

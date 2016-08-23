@@ -5,7 +5,7 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Database.HamSql.Internal.Stmt.CreateSequence where
+module Database.HamSql.Internal.Stmt.Sequence where
 
 --import Database.HamSql
 import Database.HamSql.Internal.Option
@@ -15,8 +15,8 @@ import Database.YamSql
 
 (+++) a b = a <> " " <> b
 
-createSequence :: OptCommon -> Setup -> Schema -> Sequence -> [SqlStatement]
-createSequence _ _ m s =
+stmtsDeploySequence :: OptCommon -> Setup -> Schema -> Sequence -> [SqlStatement]
+stmtsDeploySequence _ _ m s =
 
     [
     SqlStmt SqlCreateSequence name $

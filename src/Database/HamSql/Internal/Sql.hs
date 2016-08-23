@@ -35,6 +35,7 @@ afterDelete (SqlStmt t _ _) = f t
       f SqlCreateSchema = True
       f SqlRoleMembership = True
       f SqlCreateFunction = True
+      f SqlCreateTrigger = True
       f SqlCreatePrimaryKeyConstr = True
       f SqlCreateUniqueConstr = True
       f SqlCreateForeignKeyConstr = True
@@ -78,8 +79,6 @@ data SqlStatementType =
   SqlAlterTable |
   SqlDropColumnDefault |
   SqlAlterColumn |
-  -- TRIGGER
-  SqlCreateTrigger |
   -- ALTER SEQUENCE
   SqlAlterSequence |
   -- FUNCTION
@@ -92,6 +91,8 @@ data SqlStatementType =
   SqlCreateForeignKeyConstr |
   SqlCreateCheckConstr |
   SqlAddDefault |
+  -- TRIGGER
+  SqlCreateTrigger |
   SqlPriv |
   SqlComment |
   SqlUnclassified |

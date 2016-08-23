@@ -5,7 +5,7 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Database.HamSql.Internal.Stmt.CreateTable where
+module Database.HamSql.Internal.Stmt.Table where
 
 import qualified Data.Text as T
 
@@ -13,12 +13,12 @@ import qualified Data.Text as T
 import Database.HamSql.Internal.Option
 import Database.HamSql.Internal.Sql
 import Database.HamSql.Internal.Stmt.Commons
-import Database.HamSql.Internal.Stmt.CreateSequence
+import Database.HamSql.Internal.Stmt.Sequence
 import Database.HamSql.Setup
 import Database.YamSql
 
-createTable :: OptCommon -> Setup -> Schema -> Table -> [SqlStatement]
-createTable opts setup m t = debug opts "stmtCreateTable" $
+stmtsDeployTable :: OptCommon -> Setup -> Schema -> Table -> [SqlStatement]
+stmtsDeployTable opts setup m t = debug opts "stmtCreateTable" $
     [
     -- table with columns
     stmtCreateTable,
@@ -117,7 +117,7 @@ createTable opts setup m t = debug opts "stmtCreateTable" $
 
         sequences cs = map serial (filter columnIsSerial cs)
           where
-            serial c = createSequence opts setup m $ Sequence {
+            serial c = stmtsDeploySequence opts setup m $ Sequence {
               sequenceName = serialSequenceName c,
               sequenceIncrement   = Nothing,
               sequenceMinValue    = Nothing,
