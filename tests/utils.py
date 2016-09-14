@@ -8,6 +8,8 @@ def print_arr(data):
         print(" ", tpl, ",")
     print(" ]")
 
+def indent(text):
+    return ('\n' + text).replace('\n', '\n  ')
 
 class test:
     def __init__(self, url, config):
@@ -29,7 +31,7 @@ class test:
         r = subprocess.run(params, stderr=subprocess.PIPE)
         
         if r.returncode != returncode:
-            print("ERROR", r.stderr)
+            print("ERROR", indent(r.stderr.decode('utf-8')))
             if returncode:
                 self.code = r.returncode
             else:
@@ -41,19 +43,19 @@ class test:
         conn = psycopg2.connect(self.url)
         self.cur = conn.cursor()
         
-        self.assert_eq("domains", self._get_domains(), self.domains)
-        self.assert_eq("tables", self._get_tables(), self.tables)
+        self.assert_seteq("domains", self._get_domains(), self.domains)
+        self.assert_seteq("tables", self._get_tables(), self.tables)
         
         self.cur.close()
         conn.close()
         self.cur = None
 
-    def assert_eq(self, name, a, b):
-        if (a != b):
+    def assert_seteq(self, name, a, b):
+        if (sorted(a) != sorted(b)):
             print(name + " failed.")
             self.code = 254
-            print_arr(a)
-            print_arr(b)
+            print_arr(sorted(a))
+            print_arr(sorted(b))
         else:
             print(name + " done.")
 

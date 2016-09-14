@@ -1,0 +1,6 @@
+---
+name: f
+description: Returns 1
+returns: int
+---
+RETURN 1;

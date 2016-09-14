@@ -2,7 +2,6 @@
 --
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
-
 {-# LANGUAGE OverloadedStrings #-}
 
 module Database.HamSql.Internal.Stmt.Commons where
@@ -11,10 +10,12 @@ import Database.HamSql.Internal.Sql
 import Database.HamSql.Setup
 import Database.YamSql
 
-stmtCommentOn :: Text -> SqlName -> Text -> SqlStatement
-stmtCommentOn on obj com = SqlStmt SqlComment (SqlName $ toSql obj) $
-  "COMMENT ON " <> on <> " " <> toSql obj <> " IS " <> toSqlString com
+stmtCommentOn
+  :: ToSqlId a
+  => Text -> a -> Text -> SqlStmt
+stmtCommentOn on obj com =
+  newSqlStmt SqlComment obj $
+  "COMMENT ON " <> on <> " " <> sqlIdCode obj <> " IS " <> toSqlCodeString com
 
 prefixedRole :: Setup -> SqlName -> Text
-prefixedRole setup role = toSql (setupRolePrefix' setup // role)
-
+prefixedRole setup role = toSqlCode (setupRolePrefix' setup // role)

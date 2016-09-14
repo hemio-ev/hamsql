@@ -11,7 +11,9 @@ cabal-dev
 cabal.sandbox.config
 cabal.config
 
-# project specific
-*.sql
-*.json
-*.html
+# python
+*.pyc
+
+# project
+tests/coverage
+tests/hamsql.tix

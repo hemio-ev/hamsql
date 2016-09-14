@@ -1,13 +1,13 @@
-update-and-build: update build
+update-and-build: update build doc
 
 update:
 	cabal update
 	cabal sandbox init
 	cabal install --force-reinstalls --only-dependencies --disable-optimization
-	cabal configure --disable-optimization
+	cabal configure --disable-optimization --enable-coverage
 
 build:
-	cabal build
+	cabal build --ghc-options="-Wall -fwarn-incomplete-record-updates -fno-warn-unused-imports -fno-warn-orphans"
 
 install:
 	cp dist/build/hamsql/hamsql /usr/local/bin/ 
@@ -24,7 +24,11 @@ build-without-dep:
 
 build-wall:
 	cabal configure --disable-optimization
-	cabal build --ghc-options="-fforce-recomp -Wall"
+	cabal build --ghc-options="-fforce-recomp -Wall -fwarn-incomplete-record-updates -fno-warn-unused-imports -fno-warn-orphans"
+
+build-optim:
+	cabal configure --enable-optimization
+	cabal build --ghc-options="-fforce-recomp"
 
 dev-package-status:
 	dpkg-query -l \
@@ -39,3 +43,13 @@ dev-package-status:
 	 libghc-text-dev \
 	 libghc-unordered-containers-dev \
 	 libghc-yaml-dev
+
+doc:
+	cabal haddock --executables
+
+test:
+	-rm tests/hamsql.tix
+	-rm -r tests/coverage
+	make -C tests
+	hpc report tests/hamsql.tix --hpcdir dist/hpc/dyn/mix/hamsql
+	hpc markup tests/hamsql.tix --hpcdir dist/hpc/dyn/mix/hamsql/ --destdir=tests/coverage --verbosity=0
