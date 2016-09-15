@@ -77,26 +77,16 @@ instance FromField SqlName where
     return $ SqlName (typeName :: Text)
 
 -- | More like always perform unfiltered after delete
-afterDelete :: SqlStmt -> Bool
-afterDelete SqlStmtEmpty = True
-afterDelete x =
+allowInUpgrade :: SqlStmt -> Bool
+allowInUpgrade SqlStmtEmpty = False
+allowInUpgrade x =
   case stmtId x of
     Nothing -> False
     Just y ->
       case stmtType y of
-        SqlCreateSchema -> True
-        SqlRoleMembership -> True
-        SqlCreateFunction -> True
-        SqlCreateTrigger -> True
-        SqlAddTableConstr -> True
-        SqlCreatePrimaryKeyConstr -> True
-        SqlCreateUniqueConstr -> True
-        SqlCreateForeignKeyConstr -> True
-        SqlCreateCheckConstr -> True
-        SqlAddDefault -> True
-        SqlPriv -> True
-        SqlComment -> True
-        _ -> False
+        SqlPreInstall -> False
+        SqlPostInstall -> False
+        _ -> True
 
 data SqlStmtType
   = SqlDropDatabase
