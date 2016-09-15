@@ -1,2 +1,2 @@
 tests:
-	./run.bash
+	py.test-3
