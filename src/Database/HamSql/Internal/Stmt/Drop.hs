@@ -21,12 +21,6 @@ stmtsDropRole role =
 stmtsDropTable :: SqlIdContentSqo -> [SqlStmt]
 stmtsDropTable t = [newSqlStmt SqlDropTable t $ "DROP TABLE " <> toSqlCode t]
 
-stmtsDropTableColumn :: SqlIdContentSqoObj -> [SqlStmt]
-stmtsDropTableColumn x@(SqlIdContentSqoObj _ t c) =
-  [ newSqlStmt SqlDropColumn x $
-    "ALTER TABLE " <> toSqlCode t <> " DROP COLUMN " <> toSqlCode c
-  ]
-
 -- TYPE
 stmtsDropType :: SqlIdContentSqo -> [SqlStmt]
 stmtsDropType t = [newSqlStmt SqlDropType t $ "DROP TYPE " <> toSqlCode t]

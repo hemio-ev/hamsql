@@ -35,6 +35,7 @@ executable hamsql
                        directory >=1.2 && <1.3,
                        aeson >=0.7 && <0.12,
                        unordered-containers >=0.2 && <0.3,
-                       semigroups >=0.18 && < 0.19
+                       semigroups >=0.18 && < 0.19,
+                       groom >=0.1 && < 0.2
 
   default-language:    Haskell2010

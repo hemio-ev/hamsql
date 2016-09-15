@@ -21,6 +21,7 @@ import Debug.Trace
 import System.Exit
 import System.IO (stderr)
 import System.IO.Unsafe
+import Text.Groom
 
 import Database.HamSql.Internal.Option
 
@@ -116,7 +117,7 @@ selectUniqueReason msgt xs =
 tshow
   :: (Show a)
   => a -> Text
-tshow = pack . show
+tshow = T.replace "\\\"" "“" . pack . groom
 
 showCode :: Text -> Text
 showCode = T.replace "\n" "\n  " . T.cons '\n'

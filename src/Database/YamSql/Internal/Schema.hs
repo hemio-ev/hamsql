@@ -6,6 +6,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE StandaloneDeriving #-}
 
 module Database.YamSql.Internal.Schema
   ( Schema(..)
@@ -76,6 +77,8 @@ data SqlContextObj a where
     sqlObjectObject :: a
    } -> SqlContextObj a
 
+deriving instance Show (SqlContextObj a)
+
 instance ToSqlId (SqlContextObj a) where
     sqlId (SqlContextObj x) = SqlId $ SqlIdContentObj (sqlIdPartType x) (sqlIdPart x)
 
@@ -83,6 +86,8 @@ data SqlContextSqo a where  SqlContextSqo:: ToSqlIdPart a => {
     sqlSqoSchema:: Schema,
     sqlSqoObject :: a
    } -> SqlContextSqo a
+
+deriving instance Show (SqlContextSqo a)
 
 instance ToSqlId (SqlContextSqo a) where
     sqlId (SqlContextSqo s x) = SqlId $ SqlIdContentSqo
@@ -93,6 +98,8 @@ data SqlContextSqoArgtypes a where SqlContextSqoArgtypes :: (ToSqlIdPart a, ToSq
     sqlSqoArgtypesSchema:: Schema,
     sqlSqoArgtypesObject :: a
    } -> SqlContextSqoArgtypes a
+
+deriving instance Show (SqlContextSqoArgtypes a)
 
 instance ToSqlId (SqlContextSqoArgtypes a) where
     sqlId (SqlContextSqoArgtypes s x) = SqlId $ SqlIdContentSqoArgtypes
@@ -105,6 +112,8 @@ data SqlContextSqoObj a0 a1 where SqlContextSqoObj :: (ToSqlIdPart a0, ToSqlIdPa
     sqlSqoObject1 :: a0,
     sqlSqoObject2 :: a1
 } -> SqlContextSqoObj a0 a1
+
+deriving instance Show (SqlContextSqoObj a0 a1)
 
 instance ToSqlId (SqlContextSqoObj a0 a1) where
     sqlId (SqlContextSqoObj s x1 x2) = SqlId $ SqlIdContentSqoObj

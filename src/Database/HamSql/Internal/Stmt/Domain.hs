@@ -13,9 +13,9 @@ import Database.HamSql.Internal.Stmt.Basic
 stmtsDropDomain :: SqlIdContentSqo -> [SqlStmt]
 stmtsDropDomain x = [newSqlStmt SqlDropDomain x $ "DROP DOMAIN" <-> toSqlCode x]
 
-stmtsDropDomainConstraint :: SqlIdContentSqoObj -> [SqlStmt]
-stmtsDropDomainConstraint x =
-  [ newSqlStmt SqlDropDomainConstraint x $
+stmtsDropDomainConstr :: SqlIdContentSqoObj -> [SqlStmt]
+stmtsDropDomainConstr x =
+  [ newSqlStmt SqlDropDomainConstr x $
     "ALTER DOMAIN" <-> sqlSqoIdCode x <-> "DROP CONSTRAINT" <->
     sqlSqoObjIdCode x
   ]

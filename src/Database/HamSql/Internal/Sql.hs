@@ -18,7 +18,10 @@ import Database.YamSql.Internal.Basic
 data SqlStmtId = SqlStmtId
   { stmtType :: SqlStmtType
   , stmtSqlId :: SqlId
-  } deriving (Show, Eq, Ord)
+  } deriving (Eq, Ord)
+
+instance Show SqlStmtId where
+  show (SqlStmtId x y) = "(SqlStmtId " ++ show x ++ " " ++ show y ++ ")"
 
 data SqlStmt
   = SqlStmt SqlStmtId
@@ -85,6 +88,7 @@ afterDelete x =
         SqlRoleMembership -> True
         SqlCreateFunction -> True
         SqlCreateTrigger -> True
+        SqlAddTableConstr -> True
         SqlCreatePrimaryKeyConstr -> True
         SqlCreateUniqueConstr -> True
         SqlCreateForeignKeyConstr -> True
@@ -105,10 +109,10 @@ data SqlStmtType
   | SqlCreateDomain
   | SqlCreateType
     -- DROP CONSTRAINTS
-  | SqlDropTableConstraint
-  | SqlDropDomainConstraint
+  | SqlDropTableConstr
+  | SqlDropDomainConstr
     -- DROP FUNCTION
-  | SqlDropColumn
+  | SqlDropTableColumn
   | SqlDropTable
   | SqlDropFunction
     -- SEQUENCE
@@ -126,6 +130,7 @@ data SqlStmtType
   | SqlDropType
   | SqlCreateFunction
   | SqlInherit
+  | SqlAddTableConstr
   | SqlCreatePrimaryKeyConstr
   | SqlCreateUniqueConstr
   | SqlCreateForeignKeyConstr

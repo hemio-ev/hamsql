@@ -24,38 +24,38 @@ sqlManageSchemaJoin schemaid =
   "  NOT n.nspname LIKE 'pg_%' AND " <\>
   "  n.nspname NOT IN ('information_schema') "
 
-deployedTableConstraintIds :: Connection -> IO [SqlIdContentSqoObj]
-deployedTableConstraintIds conn = do
-  tableConstraints <-
+deployedTableConstrIds :: Connection -> IO [SqlIdContentSqoObj]
+deployedTableConstrIds conn = do
+  tableConstrs <-
     query_ conn $
     toQry $
     "SELECT n.nspname, t.relname, c.conname" <\> "FROM pg_constraint AS c" <\>
     "JOIN pg_class AS t" <\>
     " ON c.conrelid = t.oid" <->
     sqlManageSchemaJoin "c.connamespace"
-  return $ map toSqlCodeId tableConstraints
+  return $ map toSqlCodeId tableConstrs
   where
     toSqlCodeId (schema, table, constraint) =
       SqlIdContentSqoObj "TABLE-CONSTRAINT" (schema <.> table) constraint
 
 -- DROP DOMAIN CONSTRAINT
-deployedDomainConstraintIds :: Connection -> IO [SqlIdContentSqoObj]
-deployedDomainConstraintIds conn = do
-  domainConstraints <-
+deployedDomainConstrIds :: Connection -> IO [SqlIdContentSqoObj]
+deployedDomainConstrIds conn = do
+  domainConstrs <-
     query_ conn $
     toQry $
     "SELECT n.nspname, d.typname, c.conname" <\> "FROM pg_constraint AS c " <\>
     "JOIN pg_type AS d " <\>
     " ON c.contypid = d.oid" <->
     sqlManageSchemaJoin "c.connamespace"
-  return $ map toSqlCodeId domainConstraints
+  return $ map toSqlCodeId domainConstrs
   where
     toSqlCodeId (schema, table, constraint) =
       SqlIdContentSqoObj "DOMAIN-CONSTRAINT" (schema <.> table) constraint
 
 -- List TABLE
-depolyedTableIds :: Connection -> IO [SqlIdContentSqo]
-depolyedTableIds conn = do
+deployedTableIds :: Connection -> IO [SqlIdContentSqo]
+deployedTableIds conn = do
   dat <-
     query_ conn $
     toQry $
@@ -78,7 +78,7 @@ deployedTableColumnIds conn = do
     " WHERE table_schema NOT IN ('information_schema', 'pg_catalog')"
   return $ map toSqlCodeId dat
   where
-    toSqlCodeId (s, t, u) = SqlIdContentSqoObj "COLUMN" (s <.> t) u
+    toSqlCodeId (s, t, u) = SqlIdContentSqoObj "TABLE-COLUMN" (s <.> t) u
 
 deployedTypeIds :: Connection -> IO [SqlIdContentSqo]
 deployedTypeIds conn = do

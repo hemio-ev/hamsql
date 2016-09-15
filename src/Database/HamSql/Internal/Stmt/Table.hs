@@ -19,12 +19,18 @@ import Database.YamSql
 
 -- | Assuming that CASCADE will only cause other constraints to be deleted
 -- | Required since foreign keys may depend on other keys
-stmtsDropTableConstraint :: SqlIdContentSqoObj -> [SqlStmt]
-stmtsDropTableConstraint x =
-  [ newSqlStmt SqlDropTableConstraint x $
+stmtsDropTableConstr :: SqlIdContentSqoObj -> [SqlStmt]
+stmtsDropTableConstr x =
+  [ newSqlStmt SqlDropTableConstr x $
     "ALTER TABLE" <-> sqlSqoIdCode x <-> "DROP CONSTRAINT IF EXISTS" <->
     sqlSqoObjIdCode x <->
     "CASCADE"
+  ]
+
+stmtsDropTableColumn :: SqlIdContentSqoObj -> [SqlStmt]
+stmtsDropTableColumn x =
+  [ newSqlStmt SqlDropTableColumn x $
+    "ALTER TABLE" <-> sqlSqoIdCode x <-> "DROP COLUMN" <-> sqlSqoObjIdCode x
   ]
 
 columnObj :: SqlContextSqo Table -> Column -> SqlContextSqoObj Table Column
@@ -68,7 +74,7 @@ stmtsDeployTable context@SetupContext {setupContextSetup = setup} obj@SqlContext
   -- primary key
   [sqlAddPrimaryKey (tablePrimaryKey t)] ++
   -- mult column unique
-  maybeMap sqlUniqueConstraint (tableUnique t) ++
+  maybeMap sqlUniqueConstr (tableUnique t) ++
   -- single column FKs (references)
   map sqlAddForeignKey columns ++
   -- inheritance
@@ -155,15 +161,15 @@ stmtsDeployTable context@SetupContext {setupContextSetup = setup} obj@SqlContext
     sqlAddPrimaryKey :: [SqlName] -> SqlStmt
     sqlAddPrimaryKey [] = SqlStmtEmpty
     sqlAddPrimaryKey ks =
-      newSqlStmt SqlCreatePrimaryKeyConstr obj $
+      newSqlStmt SqlCreatePrimaryKeyConstr (constrId (SqlName "primary_key")) $
       "ALTER TABLE " <> sqlIdCode obj <> " ADD CONSTRAINT " <>
       constrName (SqlName "primary_key") <>
       " PRIMARY KEY (" <>
       T.intercalate ", " (map toSqlCode ks) <>
       ")"
-    sqlUniqueConstraint :: UniqueKey -> SqlStmt
-    sqlUniqueConstraint ks =
-      newSqlStmt SqlCreateUniqueConstr obj $
+    sqlUniqueConstr :: UniqueKey -> SqlStmt
+    sqlUniqueConstr ks =
+      newSqlStmt SqlCreateUniqueConstr (constrId (uniquekeyName ks)) $
       "ALTER TABLE " <> sqlIdCode obj <> " ADD CONSTRAINT " <>
       constrName (uniquekeyName ks) <>
       " UNIQUE (" <>
@@ -174,7 +180,7 @@ stmtsDeployTable context@SetupContext {setupContextSetup = setup} obj@SqlContext
     sqlAddForeignKey :: Column -> SqlStmt
     sqlAddForeignKey Column {columnReferences = Nothing} = SqlStmtEmpty
     sqlAddForeignKey c@Column {columnReferences = (Just ref)} =
-      newSqlStmt SqlCreateForeignKeyConstr obj $
+      newSqlStmt SqlCreateForeignKeyConstr (constrId (columnName c)) $
       "ALTER TABLE " <> sqlIdCode obj <> " ADD CONSTRAINT " <>
       constrName (columnName c) <>
       " FOREIGN KEY (" <>
@@ -189,7 +195,7 @@ stmtsDeployTable context@SetupContext {setupContextSetup = setup} obj@SqlContext
       sqlOnRefDelete (columnOnRefDelete c)
     sqlAddForeignKey' :: ForeignKey -> SqlStmt
     sqlAddForeignKey' fk =
-      newSqlStmt SqlCreateForeignKeyConstr obj $
+      newSqlStmt SqlCreateForeignKeyConstr (constrId (foreignkeyName fk)) $
       "ALTER TABLE " <> sqlIdCode obj <> " ADD CONSTRAINT " <>
       constrName (foreignkeyName fk) <>
       " FOREIGN KEY (" <>
@@ -217,7 +223,7 @@ stmtsDeployTable context@SetupContext {setupContextSetup = setup} obj@SqlContext
       newSqlStmt SqlAlterTable obj $
       "ALTER TABLE " <> sqlIdCode obj <> " INHERIT " <> toSqlCode n
     sqlColumnUnique c@Column {columnUnique = (Just True)} =
-      newSqlStmt SqlCreateUniqueConstr obj $
+      newSqlStmt SqlCreateUniqueConstr (constrId (columnName c)) $
       "ALTER TABLE " <> sqlIdCode obj <> " ADD CONSTRAINT " <>
       constrName (columnName c) <>
       " UNIQUE (" <>
@@ -226,3 +232,9 @@ stmtsDeployTable context@SetupContext {setupContextSetup = setup} obj@SqlContext
     sqlColumnUnique _ = SqlStmtEmpty
     -- tools
     constrName a = toSqlCode (tableName t // SqlName "-" // a)
+    constrId a =
+      SqlIdContentSqoObj
+        "TABLE-CONSTRAINT"
+        (SqlName $ sqlIdCode obj)
+        (SqlName $ constrName a)
+    constrIdText a = toSqlCode $ constrId a

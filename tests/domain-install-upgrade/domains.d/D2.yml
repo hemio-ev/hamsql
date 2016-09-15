@@ -1,0 +1,4 @@
+name: D2
+description: |
+ Domain from directory upgrade
+type: varchar

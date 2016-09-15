@@ -41,7 +41,8 @@ import System.IO
 import Database.HamSql.Internal.Utils
 
 -- | Idable
-class ToSqlId a  where
+class Show a =>
+      ToSqlId a  where
   sqlId :: a -> SqlId
   sqlIdCode :: a -> Text
   sqlIdCode = toSqlCode . sqlId
@@ -50,7 +51,8 @@ class (Typeable a, ToSqlCode a, Eq a, Show a) =>
       SqlIdContent a  where
   sqlIdType :: a -> SqlContextObjType
 
-class ToSqlIdPart a  where
+class Show a =>
+      ToSqlIdPart a  where
   sqlIdPart :: a -> SqlName
   sqlIdPartType :: a -> SqlContextObjType
 
@@ -121,6 +123,9 @@ instance ToSqlId SqlIdContentSqo where
 instance ToSqlCode SqlIdContentSqo where
   toSqlCode (SqlIdContentSqo _ x) = toSqlCode x
 
+instance ToSqlSqoId SqlIdContentSqo where
+  sqlSqoId (SqlIdContentSqo _ x) = x
+
 -- | TABLE TRIGGER, TABLE CONTRAINT
 data SqlIdContentSqoObj =
   SqlIdContentSqoObj SqlContextObjType
@@ -155,6 +160,9 @@ instance SqlIdContent SqlIdContentSqoArgtypes where
 
 instance ToSqlId SqlIdContentSqoArgtypes where
   sqlId = SqlId
+
+instance ToSqlSqoId SqlIdContentSqoArgtypes where
+  sqlSqoId (SqlIdContentSqoArgtypes _ x _) = x
 
 instance ToSqlCode SqlIdContentSqoArgtypes where
   toSqlCode (SqlIdContentSqoArgtypes _ x ys) =

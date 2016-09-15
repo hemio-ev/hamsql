@@ -1,0 +1,4 @@
+schemas: 
+ - domain-install-upgrade
+schema_dirs:
+ - .
