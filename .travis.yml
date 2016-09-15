@@ -1,6 +1,12 @@
 language: haskell
 ghc:
+ - 8.0
+ - 7.10
  - 7.8
  - 7.6
+
+before_install:
+ - sudo apt -qq update
+ - sudo apt install -y make ghc cabal-install libpq-dev happy
 
 install: make
