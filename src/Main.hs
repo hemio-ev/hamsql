@@ -49,7 +49,7 @@ run (Upgrade opt optDb optUpgrade) = do
   deleteStmts <- pgsqlDeleteAllStmt conn
   createStmts <- pgsqlGetFullStatements opt optDb setup
   fragile <- pgsqlUpdateFragile optUpgrade conn createStmts
-  let stmts = sort deleteStmts ++ (Data.List.filter allowInUpgrade (sort fragile))
+  let stmts = sort deleteStmts ++ Data.List.filter allowInUpgrade (sort fragile)
   useSqlStmts optDb stmts
 -- Doc
 run (Doc opt optDoc) = do

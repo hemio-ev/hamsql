@@ -57,7 +57,8 @@ deployedDomainConstrIds conn = do
 deployedSequenceIds :: Connection -> IO [SqlIdContentSqo]
 deployedSequenceIds conn = do
   dat <-
-    query_ conn 
+    query_
+      conn
       "SELECT sequence_schema, sequence_name FROM information_schema.sequences"
   return $ map toSqlCodeId dat
   where

@@ -41,6 +41,12 @@ stmtIdType :: SqlStmt -> Maybe SqlStmtType
 stmtIdType (SqlStmt x _) = Just (stmtType x)
 stmtIdType SqlStmtEmpty = Nothing
 
+stmtDesc :: SqlStmt -> Text
+stmtDesc stmt =
+  case stmtId stmt of
+    Nothing -> "EMPTY-STATEMENT"
+    Just x -> T.pack (sqlIdType $ stmtSqlId x) <-> toSqlCode (stmtSqlId x)
+
 instance Eq SqlStmt where
   x == y = stmtId x == stmtId y
 

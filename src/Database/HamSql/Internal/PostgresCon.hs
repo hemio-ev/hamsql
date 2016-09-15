@@ -78,6 +78,7 @@ import Control.Exception
 import Control.Monad (void, when)
 import qualified Data.ByteString.Char8 as B
 import Data.List
+import Data.Maybe
 import Data.String
 import qualified Data.Text as T
 import Data.Text.Encoding (decodeUtf8)
@@ -93,8 +94,8 @@ import Database.HamSql.Internal.Option
 import Database.HamSql.Internal.Sql
 import Database.HamSql.Internal.Stmt.Domain
 import Database.HamSql.Internal.Stmt.Function
-import Database.HamSql.Internal.Stmt.Table
 import Database.HamSql.Internal.Stmt.Sequence
+import Database.HamSql.Internal.Stmt.Table
 import Database.HamSql.Setup
 import Database.HamSql.SqlStmt
 import Database.YamSql
@@ -172,7 +173,12 @@ pgsqlExecStmtList status (x:xs) failed conn = do
   tryExec savepoint `catch` handleSqlError savepoint `catch` handleQueryError savepoint
   where
     tryExec savepoint = do
-      warn "EXECUTING" $ warn (tshow x) $ pgsqlExecStmt conn x
+      warn' $
+        "-- Executing " <> tshow (fromMaybe SqlUnclassified (stmtIdType x)) <>
+        " for " <>
+        stmtDesc x
+      pgsqlExecStmt conn x
+      warn' $ toSqlCode x
       proceed savepoint
     -- action after execution has not failed
     proceed savepoint = do
@@ -185,7 +191,10 @@ pgsqlExecStmtList status (x:xs) failed conn = do
     handleQueryError savepoint QueryError {} = proceed savepoint
     -- action after execution has failed
     skipQuery savepoint stmts = do
-      warn "ROLLBACK" $ rollbackToSavepoint conn savepoint
+      warn' "SAVEPOINT retry;"
+      warn' $ toSqlCode x
+      warn' "ROLLBACK TO SAVEPOINT retry;"
+      rollbackToSavepoint conn savepoint
       releaseSavepoint conn savepoint
       pgsqlExecStmtList status xs (failed ++ stmts) conn
 
@@ -227,10 +236,10 @@ removeSqlIdBySqlStmts t xs is =
   [ x
   | x <- is 
   , sqlId x `notElem` ids ]
--- target set of sql ids
   where
     ids = map sqlId $ filterSqlStmtType t xs
 
+-- target set of sql ids
 correctStatements
   :: ToSqlId a
   => SqlStmtType -- ^ install statements and the stmt type of interest

@@ -49,7 +49,7 @@ class Show a =>
 
 class (Typeable a, ToSqlCode a, Eq a, Show a) =>
       SqlIdContent a  where
-  sqlIdType :: a -> SqlContextObjType
+  sqlIdContentType :: a -> SqlContextObjType
 
 class Show a =>
       ToSqlIdPart a  where
@@ -74,16 +74,19 @@ class ToSqlIdPartArgs a  where
 
 -- | SqlId
 data SqlId where
-        SqlId :: (SqlIdContent a) => a -> SqlId
+        SqlId :: (SqlIdContent a) => { sqlIdContent :: a } -> SqlId
 
 deriving instance Show SqlId
+
+sqlIdType :: SqlId -> SqlContextObjType
+sqlIdType (SqlId x) = sqlIdContentType x
 
 instance Eq SqlId where
   SqlId x == SqlId y = Just x == cast y
 
 instance Ord SqlId where
   SqlId x `compare` SqlId y =
-    case sqlIdType x `compare` sqlIdType y of
+    case sqlIdContentType x `compare` sqlIdContentType y of
       EQ -> toSqlCode x `compare` toSqlCode y
       x' -> x'
 
@@ -100,7 +103,7 @@ data SqlIdContentObj =
   deriving (Eq, Show)
 
 instance SqlIdContent SqlIdContentObj where
-  sqlIdType (SqlIdContentObj x _) = x
+  sqlIdContentType (SqlIdContentObj x _) = x
 
 instance ToSqlId SqlIdContentObj where
   sqlId = SqlId
@@ -115,7 +118,7 @@ data SqlIdContentSqo =
   deriving (Eq, Show)
 
 instance SqlIdContent SqlIdContentSqo where
-  sqlIdType (SqlIdContentSqo x _) = x
+  sqlIdContentType (SqlIdContentSqo x _) = x
 
 instance ToSqlId SqlIdContentSqo where
   sqlId = SqlId
@@ -134,7 +137,7 @@ data SqlIdContentSqoObj =
   deriving (Eq, Show)
 
 instance SqlIdContent SqlIdContentSqoObj where
-  sqlIdType (SqlIdContentSqoObj x _ _) = x
+  sqlIdContentType (SqlIdContentSqoObj x _ _) = x
 
 instance ToSqlId SqlIdContentSqoObj where
   sqlId = SqlId
@@ -156,7 +159,7 @@ data SqlIdContentSqoArgtypes =
   deriving (Eq, Show)
 
 instance SqlIdContent SqlIdContentSqoArgtypes where
-  sqlIdType (SqlIdContentSqoArgtypes x _ _) = x
+  sqlIdContentType (SqlIdContentSqoArgtypes x _ _) = x
 
 instance ToSqlId SqlIdContentSqoArgtypes where
   sqlId = SqlId
