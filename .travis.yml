@@ -6,7 +6,7 @@ ghc:
  - 7.6
 
 before_install:
- - sudo apt -qq update
- - sudo apt install -y make ghc cabal-install libpq-dev happy
+ - sudo apt-get -qq update
+ - sudo apt-get install -y make ghc cabal-install libpq-dev happy
 
 install: make
