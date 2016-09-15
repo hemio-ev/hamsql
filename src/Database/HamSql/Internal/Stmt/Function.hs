@@ -17,9 +17,12 @@ import Database.HamSql.Internal.Stmt.Commons
 import Database.HamSql.Setup
 import Database.YamSql
 
-stmtsDropFunction :: SqlId -> [SqlStmt]
-stmtsDropFunction x =
+stmtsDropFunction' :: SqlId -> [SqlStmt]
+stmtsDropFunction' x =
   [newSqlStmt SqlDropFunction x $ "DROP FUNCTION " <> toSqlCode x]
+
+stmtsDropFunction :: SqlIdContentSqoArgtypes -> [SqlStmt]
+stmtsDropFunction x = stmtsDropFunction' $ sqlId x
 
 instance ToSqlStmts (SqlContextSqoArgtypes Function) where
   toSqlStmts = stmtsDeployFunction

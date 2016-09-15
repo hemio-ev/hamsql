@@ -20,6 +20,7 @@ class test:
         
         self.domains = []
         self.tables = []
+        self.functions = []
 
     def run_cmd(self, cmd, returncode=0, delete_db=False):
         params = ['hamsql', cmd, '-s', self.config, '-c', self.url]
@@ -45,6 +46,7 @@ class test:
         
         self.assert_seteq("domains", self._get_domains(), self.domains)
         self.assert_seteq("tables", self._get_tables(), self.tables)
+        self.assert_seteq("functions", self._get_functions(), self.functions)
         
         self.cur.close()
         conn.close()
@@ -54,7 +56,9 @@ class test:
         if (sorted(a) != sorted(b)):
             print(name + " failed.")
             self.code = 254
+            print("actual")
             print_arr(sorted(a))
+            print("expected")
             print_arr(sorted(b))
         else:
             print(name + " done.")
@@ -72,6 +76,23 @@ class test:
             SELECT table_schema, table_name, table_type
                 FROM information_schema.tables
                 WHERE table_schema NOT IN ('information_schema', 'pg_catalog')
+            """)
+        return self.cur.fetchall()
+
+    def _get_functions(self):
+        self.cur.execute("""
+            SELECT
+                n.nspname
+                ,p.proname
+                ,ARRAY(SELECT UNNEST(p.proargtypes::regtype[]::varchar[]))
+                ,prorettype::regtype::varchar
+                ,proargnames
+                ,prosecdef
+            FROM pg_catalog.pg_proc AS p
+                JOIN pg_namespace AS n ON p.pronamespace = n.oid AND
+                    NOT n.nspname LIKE 'pg_%' AND
+                    n.nspname NOT IN ('information_schema')
+                WHERE p.probin IS NULL
             """)
         return self.cur.fetchall()
                 

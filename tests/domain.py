@@ -29,7 +29,7 @@ t.check()
 t.run_cmd('upgrade')
 t.check()
 
-t.config= 'domain-upgrade.yml'
+t.config = 'domain-upgrade.yml'
 t.domains = \
  [
   ('hamsql-test', 'A1', 'domain-install', 'int4', None, None) ,

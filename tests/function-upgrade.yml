@@ -1,0 +1,5 @@
+schemas: 
+ - function-install-upgrade
+ - public
+schema_dirs:
+ - .

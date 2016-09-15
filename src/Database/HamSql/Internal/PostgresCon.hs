@@ -116,7 +116,8 @@ pgsqlUpdateFragile :: t -> Connection -> [SqlStmt] -> IO [SqlStmt]
 pgsqlUpdateFragile _ conn stmts =
   correctStmts SqlCreateDomain deployedDomainIds stmtsDropDomain stmts >>=
   correctStmts SqlCreateTable deployedTableIds stmtsDropTable >>=
-  correctStmts SqlAddColumn deployedTableColumnIds stmtsDropTableColumn
+  correctStmts SqlAddColumn deployedTableColumnIds stmtsDropTableColumn >>=
+  dropResidual SqlCreateFunction deployedFunctionIds stmtsDropFunction
   where
     correctStmts
       :: ToSqlId a
@@ -127,6 +128,16 @@ pgsqlUpdateFragile _ conn stmts =
       -> IO [SqlStmt]
     correctStmts createType existingInquire dropStmtGenerator =
       correctStatements createType (existingInquire conn) dropStmtGenerator
+    dropResidual
+      :: ToSqlId a
+      => SqlStmtType
+      -> (Connection -> IO [a])
+      -> (a -> [SqlStmt])
+      -> [SqlStmt]
+      -> IO [SqlStmt]
+    dropResidual t isf f xs = do
+      is <- isf conn
+      return (xs ++ concatMap f (removeSqlIdBySqlStmts t xs is))
 
 -- DB Utils
 pgsqlExecWithoutTransact :: URI -> [SqlStmt] -> IO Connection
@@ -167,7 +178,7 @@ pgsqlExecStmtList status (x:xs) failed conn = do
       pgsqlExecStmtList Changed xs failed conn
     handleSqlError savepoint SqlError {sqlState = errCode}
       | errCode == sqlErrInvalidFunctionDefinition =
-        skipQuery savepoint (stmtsDropFunction (sqlId x) ++ [x])
+        skipQuery savepoint (stmtsDropFunction' (sqlId x) ++ [x])
       | otherwise = skipQuery savepoint [x]
     handleQueryError savepoint QueryError {} = proceed savepoint
     -- action after execution has failed
@@ -198,11 +209,11 @@ filterSqlStmtType t xs =
   | x <- xs 
   , stmtIdType x == Just t ]
 
-removeStmtsByTypeAndIds
+removeStmtsMatchingIds
   :: [Maybe SqlStmtId] -- ^ Statement ids to remove
   -> [SqlStmt]
   -> [SqlStmt]
-removeStmtsByTypeAndIds ids stmts =
+removeStmtsMatchingIds ids stmts =
   [ stmt
   | stmt <- stmts 
   , stmtId stmt `notElem` ids ]
@@ -214,20 +225,21 @@ removeSqlIdBySqlStmts t xs is =
   [ x
   | x <- is 
   , sqlId x `notElem` ids ]
+-- target set of sql ids
   where
     ids = map sqlId $ filterSqlStmtType t xs
 
 correctStatements
   :: ToSqlId a
   => SqlStmtType -- ^ install statements and the stmt type of interest
-  -> IO [a] -- ^  domains to be dropped
+  -> IO [a] -- ^ deployed (existing) elements
   -> (a -> [SqlStmt]) -- ^ drop statment generator
-  -> [SqlStmt]
+  -> [SqlStmt] -- ^ install statements, representing desired state
   -> IO [SqlStmt]
 correctStatements t iois f xs = do
   is <- iois
   return $
-    removeStmtsByTypeAndIds (addSqlStmtType t is) xs ++
+    removeStmtsMatchingIds (addSqlStmtType t is) xs ++
     concatMap f (removeSqlIdBySqlStmts t xs is)
 
 abc :: Int
