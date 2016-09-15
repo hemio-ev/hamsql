@@ -13,6 +13,10 @@ import Database.HamSql.Internal.Sql
 import Database.HamSql.Setup
 import Database.YamSql
 
+stmtsDropSequence :: SqlIdContentSqo -> [SqlStmt]
+stmtsDropSequence x =
+  [newSqlStmt SqlDropSequence x $ "DROP SEQUENCE " <> toSqlCode x]
+
 instance ToSqlStmts (SqlContextSqo Sequence) where
   toSqlStmts = stmtsDeploySequence
 

@@ -94,6 +94,7 @@ import Database.HamSql.Internal.Sql
 import Database.HamSql.Internal.Stmt.Domain
 import Database.HamSql.Internal.Stmt.Function
 import Database.HamSql.Internal.Stmt.Table
+import Database.HamSql.Internal.Stmt.Sequence
 import Database.HamSql.Setup
 import Database.HamSql.SqlStmt
 import Database.YamSql
@@ -117,6 +118,7 @@ pgsqlUpdateFragile _ conn stmts =
   correctStmts SqlCreateDomain deployedDomainIds stmtsDropDomain stmts >>=
   correctStmts SqlCreateTable deployedTableIds stmtsDropTable >>=
   correctStmts SqlAddColumn deployedTableColumnIds stmtsDropTableColumn >>=
+  correctStmts SqlCreateSequence deployedSequenceIds stmtsDropSequence >>=
   dropResidual SqlCreateFunction deployedFunctionIds stmtsDropFunction
   where
     correctStmts

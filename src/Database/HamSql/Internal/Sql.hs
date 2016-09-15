@@ -111,6 +111,7 @@ data SqlStmtType
     -- DROP CONSTRAINTS
   | SqlDropTableConstr
   | SqlDropDomainConstr
+  | SqlDropSequence
     -- DROP FUNCTION
   | SqlDropTableColumn
   | SqlDropTable

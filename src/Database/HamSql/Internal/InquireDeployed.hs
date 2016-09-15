@@ -53,6 +53,16 @@ deployedDomainConstrIds conn = do
     toSqlCodeId (schema, table, constraint) =
       SqlIdContentSqoObj "DOMAIN-CONSTRAINT" (schema <.> table) constraint
 
+-- List SEQUENCE
+deployedSequenceIds :: Connection -> IO [SqlIdContentSqo]
+deployedSequenceIds conn = do
+  dat <-
+    query_ conn 
+      "SELECT sequence_schema, sequence_name FROM information_schema.sequences"
+  return $ map toSqlCodeId dat
+  where
+    toSqlCodeId (s, t) = SqlIdContentSqo "SEQUENCE" $ s <.> t
+
 -- List TABLE
 deployedTableIds :: Connection -> IO [SqlIdContentSqo]
 deployedTableIds conn = do
