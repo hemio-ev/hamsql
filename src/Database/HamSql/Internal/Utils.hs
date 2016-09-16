@@ -16,7 +16,7 @@ import Data.List (group, intercalate, sort)
 import Data.Monoid ((<>))
 import Data.Text (Text, pack)
 import qualified Data.Text as T
-import Data.Text.IO
+import qualified Data.Text.IO as TIO
 import Debug.Trace
 import System.Exit
 import System.IO (stderr)
@@ -25,13 +25,15 @@ import Text.Groom
 
 import Database.HamSql.Internal.Option
 
+logStmt x = TIO.appendFile "hamsql-stmt-log.sql" (x <> "\n")
+
 join :: [a] -> [[a]] -> [a]
 join = intercalate
 
 err :: Text -> a
 err xs =
   unsafePerformIO $
-  do hPutStrLn stderr ("error: " <> xs)
+  do TIO.hPutStrLn stderr ("error: " <> xs)
      exitWith $ ExitFailure 1
 
 inf :: Text -> a -> a
@@ -50,7 +52,7 @@ msg typ xs ys =
      return ys
 
 msg' :: Text -> Text -> IO ()
-msg' typ xs = hPutStrLn stderr (typ <> ": " <> xs)
+msg' typ xs = TIO.hPutStrLn stderr (typ <> ": " <> xs)
 
 debug :: OptCommon -> Text -> a -> a
 debug opt

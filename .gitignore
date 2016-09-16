@@ -17,4 +17,5 @@ cabal.config
 # project
 tests/coverage
 hamsql.tix
+hamsql-stmt-log.sql
 .cache

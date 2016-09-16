@@ -1,33 +1,41 @@
-import subprocess
 import psycopg2
+import subprocess
+import time
 
 dburl = "postgres://postgres@/hamsql-test"
 
-def dbcur():
+def db_open():
     global dburl
     conn = psycopg2.connect(dburl)
     cur = conn.cursor()
     return conn, cur
     
-    #cur.close()
-    #conn.close()
-
+def db_close(conn, cur):
+    cur.close()
+    conn.close()
 
 def check(domains=[], functions=[], tables=[]):
-    conn, cur = dbcur()
-    assert set(domains) == set(db_domains(cur))
+    conn, cur = db_open()
+    assert sorted(domains) == sorted(db_domains(cur))
     assert sorted(functions) == sorted(db_functions(cur))
-    assert set(tables) == set(db_tables(cur))
+    assert sorted(tables) == sorted(db_tables(cur))
+    db_close(conn, cur)
 
-def run(cmd, setup, delete_db=False):
-    global dburl
-    params = ['hamsql', cmd, '-s', setup, '-c', dburl]
+def runAssertSilent(cmd, setup, **xs):
+    completedProcess = run(cmd, setup, capture=True, **xs)
+    assertSilent(completedProcess)
+    return completedProcess
+
+def assertSilent(completedProcess):
+    assert completedProcess.returncode == 0
+    assert completedProcess.stdout == ""
+    assert completedProcess.stderr == ""
+
+def assertError(completedProcess, err):
+    assert completedProcess.returncode == 1
+    assert completedProcess.stdout == ""
+    assert err in completedProcess.stderr
     
-    if delete_db:
-        params += [ '--delete-existing-database' ]
-
-    return subprocess.run(params)
-
 def db_domains(cur):
     cur.execute("""
         SELECT domain_catalog, domain_name, domain_schema, udt_name, character_maximum_length, domain_default
@@ -60,3 +68,21 @@ def db_functions(cur):
             WHERE p.probin IS NULL
         """)
     return cur.fetchall()
+
+def run(cmd, setup, delete_db=False, capture=False):
+    global dburl
+    settings = {}
+    params = ['hamsql', cmd, '-s', setup, '-c', dburl]
+    
+    if delete_db:
+        params += [ '--delete-existing-database' ]
+    
+    if capture:
+        settings.update({
+            'stdout': subprocess.PIPE,
+            'stderr': subprocess.PIPE,
+            'universal_newlines': True
+        })
+    
+    return subprocess.run(params, **settings)
+

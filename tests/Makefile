@@ -1,2 +1,2 @@
 tests:
-	py.test-3
+	py.test-3 -vx

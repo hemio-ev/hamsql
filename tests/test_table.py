@@ -9,11 +9,9 @@ def test_tables():
      ]
     }
 
-    compl = run('install', 'table.yml', delete_db=True)
-    assert compl.returncode == 0
+    runAssertSilent('install', 'table.yml', delete_db=True)
     check(**xs)
 
-    compl = run('upgrade', 'table.yml')
-    assert compl.returncode == 0
+    runAssertSilent('upgrade', 'table.yml')
     check(**xs)
 

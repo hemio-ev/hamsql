@@ -81,6 +81,7 @@ import Data.List
 import Data.Maybe
 import Data.String
 import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
 import Data.Text.Encoding (decodeUtf8)
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.Transaction
@@ -173,12 +174,12 @@ pgsqlExecStmtList status (x:xs) failed conn = do
   tryExec savepoint `catch` handleSqlError savepoint `catch` handleQueryError savepoint
   where
     tryExec savepoint = do
-      warn' $
+      logStmt $
         "-- Executing " <> tshow (fromMaybe SqlUnclassified (stmtIdType x)) <>
         " for " <>
         stmtDesc x
       pgsqlExecStmt conn x
-      warn' $ toSqlCode x
+      logStmt $ toSqlCode x
       proceed savepoint
     -- action after execution has not failed
     proceed savepoint = do
@@ -191,9 +192,9 @@ pgsqlExecStmtList status (x:xs) failed conn = do
     handleQueryError savepoint QueryError {} = proceed savepoint
     -- action after execution has failed
     skipQuery savepoint stmts = do
-      warn' "SAVEPOINT retry;"
-      warn' $ toSqlCode x
-      warn' "ROLLBACK TO SAVEPOINT retry;"
+      logStmt "SAVEPOINT retry;"
+      logStmt $ toSqlCode x
+      logStmt "ROLLBACK TO SAVEPOINT retry;"
       rollbackToSavepoint conn savepoint
       releaseSavepoint conn savepoint
       pgsqlExecStmtList status xs (failed ++ stmts) conn

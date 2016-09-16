@@ -15,12 +15,10 @@ def test_functions():
      ]
     }
 
-    compl = run('install', 'function.yml', delete_db=True)
-    assert compl.returncode == 0
+    runAssertSilent('install', 'function.yml', delete_db=True)
     check(**xs)
 
-    compl = run('upgrade', 'function.yml')
-    assert compl.returncode == 0
+    runAssertSilent('upgrade', 'function.yml')
     check(**xs)
 
     xs['functions'] = \
@@ -28,7 +26,6 @@ def test_functions():
       ('public', 'f', [], 'integer', None, False) ,
      ]
 
-    compl = run('upgrade', 'function-upgrade.yml')
-    assert compl.returncode == 0
+    runAssertSilent('upgrade', 'function-upgrade.yml')
     check(**xs)
 

@@ -20,23 +20,19 @@ def test_domains():
      ]
     }
 
-    compl = run('install', 'domain.yml', delete_db=True)
-    assert compl.returncode == 0
+    runAssertSilent('install', 'domain.yml', delete_db=True)
     check(**xs)
 
-    compl = run('install', 'domain.yml')
-    assert compl.returncode == 1
+    compl = run('install', 'domain.yml', capture=True)
+    assertError(compl, "42P04")
 
-    compl = run('install', 'domain.yml', delete_db=True)
-    assert compl.returncode == 0
+    runAssertSilent('install', 'domain.yml', delete_db=True)
     check(**xs)
 
-    compl = run('install', 'domain.yml', delete_db=True)
-    assert compl.returncode == 0
+    runAssertSilent('install', 'domain.yml', delete_db=True)
     check(**xs)
 
-    compl = run('upgrade', 'domain.yml')
-    assert compl.returncode == 0
+    runAssertSilent('upgrade', 'domain.yml')
     check(**xs)
 
     xs.update({
@@ -52,7 +48,6 @@ def test_domains():
       ]
     })
 
-    compl = run('upgrade', 'domain-upgrade.yml')
-    assert compl.returncode == 0
+    runAssertSilent('upgrade', 'domain-upgrade.yml')
     check(**xs)
 

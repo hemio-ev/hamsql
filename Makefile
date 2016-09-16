@@ -50,6 +50,7 @@ doc:
 test:
 	-rm tests/hamsql.tix
 	-rm -r tests/coverage
+	-rm tests/hamsql-stmt-log.sql
 	make -C tests
 	hpc report tests/hamsql.tix --hpcdir dist/hpc/dyn/mix/hamsql
 	hpc markup tests/hamsql.tix --hpcdir dist/hpc/dyn/mix/hamsql/ --destdir=tests/coverage --verbosity=0
