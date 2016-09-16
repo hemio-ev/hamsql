@@ -1,2 +1,3 @@
 import pytest
-pytest.register_assert_rewrite('utils')
+
+pytest_plugins = ['utils']
