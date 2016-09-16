@@ -81,8 +81,8 @@ import Data.List
 import Data.Maybe
 import Data.String
 import qualified Data.Text as T
-import qualified Data.Text.IO as TIO
 import Data.Text.Encoding (decodeUtf8)
+import qualified Data.Text.IO as TIO
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.Transaction
 import Database.PostgreSQL.Simple.Types (PGArray(..), fromPGArray)

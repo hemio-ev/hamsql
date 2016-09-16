@@ -33,12 +33,12 @@ loadSetup opts filePath = do
   setup' <-
     loadSetupSchemas opts (dropFileName filePath) (initSetupInternal setup)
   return $ applyTpl setup'
-
-initSetupInternal s' =
-  s'
-  { setupSchemas = removeDuplicates $ setupSchemas s'
-  , setupSchemaData = Nothing
-  }
+  where
+    initSetupInternal s' =
+      s'
+      { setupSchemas = removeDuplicates $ setupSchemas s'
+      , setupSchemaData = Nothing
+      }
 
 -- Tries to loads all defined modules from defined module dirs
 loadSetupSchemas :: OptCommon -> FilePath -> Setup -> IO Setup
@@ -196,7 +196,6 @@ readFunctionFromFile rpl opts file = do
 
 readYamSqlFile :: OptCommon -> FilePath -> IO B.ByteString
 readYamSqlFile opts file = do
-  info opts $ "Reading file '" <> tshow file <> "'"
   fileExists <- doesFileExist file
   unless fileExists $ err $ "Expected file existance: '" <> tshow file <> "'"
-  B.readFile file
+  debug opts ("Reading file " <> tshow file) $ B.readFile file

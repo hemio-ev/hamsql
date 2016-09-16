@@ -65,6 +65,7 @@ parserCmdDoc = Doc <$> parserOptCommon <*> parserOptDoc
 data OptCommon = OptCommon
   { optSetup :: FilePath
   , optVerbose :: Bool
+  , optDebug :: Bool
   } deriving (Show)
 
 parserOptCommon :: Parser OptCommon
@@ -74,13 +75,15 @@ parserOptCommon =
     (long "setup" <> short 's' <> help "Setup file (yaml)" <> val "setup.yml" <>
      action "file -X '!*.yml'" <>
      action "directory") <*>
-  boolFlag (long "verbose" <> short 'v' <> help "Verbose")
+  boolFlag (long "verbose" <> short 'v' <> help "Verbose") <*>
+  boolFlag (long "debug" <> help "Debug")
 
 -- Commons Execute
 data OptCommonDb = OptCommonDb
   { optEmulate :: Bool
   , optPrint :: Bool
   , optConnection :: String
+  , optPermitDataDeletion :: Bool
   } deriving (Show)
 
 parserOptCommonDb :: Parser OptCommonDb
@@ -89,7 +92,9 @@ parserOptCommonDb =
   boolFlag (long "emulate" <> short 'e' <> help "Perform changes but rollback") <*>
   boolFlag
     (long "print" <> short 'p' <> help "Print SQL code instead of executing") <*>
-  strOption (long "connection" <> short 'c' <> val "postgresql://")
+  strOption (long "connection" <> short 'c' <> val "postgresql://") <*>
+  boolFlag
+    (long "permit-data-deletion" <> help "Permit deletion of columns and tables")
 
 -- Command Install
 data OptInstall = OptInstall
@@ -105,14 +110,12 @@ parserOptInstall =
 
 -- Command Upgrade
 data OptUpgrade = OptUpgrade
-  { optPermitDataDeletion :: Bool
+  { optNone :: Bool
   } deriving (Show)
 
 parserOptUpgrade :: Parser OptUpgrade
 parserOptUpgrade =
-  OptUpgrade <$>
-  boolFlag
-    (long "perimit-data-deletion" <> help "Permit deletion of columns or tables")
+  OptUpgrade <$> boolFlag (long "X" <> help "(currently no upgade specific options)")
 
 -- Command Doc
 data OptDoc = OptDoc

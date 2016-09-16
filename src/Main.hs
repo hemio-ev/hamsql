@@ -24,7 +24,7 @@ main = execParser parserInfoHamsql >>= run
 
 run :: Command -> IO ()
 -- Install
-run (Install opt optDb optInstall) = do
+run (Install optCommon optDb optInstall) = do
   let dbname = SqlName $ T.pack $ tail $ uriPath $ getConUrl optDb
   if not (optEmulate optDb || optPrint optDb)
     then void $
@@ -38,26 +38,47 @@ run (Install opt optDb optInstall) = do
          "In --emulate and --print mode the" <->
          "DROP/CREATE DATABASE statements are skipped. You have to ensure that an empty" <->
          "database exists for those commands to make sense."
-  setup <- loadSetup opt (optSetup opt)
+  setup <- loadSetup optCommon (optSetup optCommon)
   return ()
-  statements <- pgsqlGetFullStatements opt optDb setup
-  useSqlStmts optDb (sort statements)
+  statements <- pgsqlGetFullStatements optCommon optDb setup
+  useSqlStmts optCommon optDb (sort statements)
 -- Upgrade
-run (Upgrade opt optDb optUpgrade) = do
-  setup <- loadSetup opt (optSetup opt)
+run (Upgrade optCommon optDb optUpgrade) = do
+  setup <- loadSetup optCommon (optSetup optCommon)
   conn <- pgsqlConnectUrl (getConUrl optDb)
   deleteStmts <- pgsqlDeleteAllStmt conn
-  createStmts <- pgsqlGetFullStatements opt optDb setup
+  createStmts <- pgsqlGetFullStatements optCommon optDb setup
   fragile <- pgsqlUpdateFragile optUpgrade conn createStmts
   let stmts = sort deleteStmts ++ Data.List.filter allowInUpgrade (sort fragile)
-  useSqlStmts optDb stmts
+  useSqlStmts optCommon optDb stmts
 -- Doc
-run (Doc opt optDoc) = do
-  setup <- loadSetup opt (optSetup opt)
+run (Doc optCommon optDoc) = do
+  setup <- loadSetup optCommon (optSetup optCommon)
   docWrite optDoc setup
 
-useSqlStmts :: OptCommonDb -> [SqlStmt] -> IO ()
-useSqlStmts optDb stmts
+useSqlStmts :: OptCommon -> OptCommonDb -> [SqlStmt] -> IO ()
+useSqlStmts optCommon optDb unfilteredStmts
   | optPrint optDb = T.IO.putStrLn $ sqlPrinter $ sqlAddTransact stmts
   | optEmulate optDb = void $ pgsqlExec (getConUrl optDb) stmts
   | otherwise = void $ pgsqlExec (getConUrl optDb) stmts
+  where
+    warnOnDiff xs =
+      case unfilteredStmts \\ xs of
+        [] -> xs
+        ys ->
+          warn
+            ("A total of" <-> tshow (length ys) <->
+             "objects will not be deleted." <->
+             "You must supply the --permit-data-deletion if you want to delete them.") $
+          info
+            optCommon
+            ("The following objects are not deleted:" <>
+             showCode (T.cons '\n' $ T.intercalate "\n" (map stmtDesc ys)))
+            xs
+    stmts
+      | optPermitDataDeletion optDb = unfilteredStmts
+      | otherwise =
+        warnOnDiff
+          [ x
+          | x <- unfilteredStmts 
+          , not $ stmtRequiresPermitDeletion x ]

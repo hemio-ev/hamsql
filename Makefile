@@ -48,9 +48,7 @@ doc:
 	cabal haddock --executables
 
 test:
-	-rm tests/hamsql.tix
-	-rm -r tests/coverage
-	-rm tests/hamsql-stmt-log.sql
 	make -C tests
+	-rm -r tests/coverage
 	hpc report tests/hamsql.tix --hpcdir dist/hpc/dyn/mix/hamsql
 	hpc markup tests/hamsql.tix --hpcdir dist/hpc/dyn/mix/hamsql/ --destdir=tests/coverage --verbosity=0

@@ -25,6 +25,7 @@ import Text.Groom
 
 import Database.HamSql.Internal.Option
 
+logStmt :: Text -> IO ()
 logStmt x = TIO.appendFile "hamsql-stmt-log.sql" (x <> "\n")
 
 join :: [a] -> [[a]] -> [a]
@@ -35,9 +36,6 @@ err xs =
   unsafePerformIO $
   do TIO.hPutStrLn stderr ("error: " <> xs)
      exitWith $ ExitFailure 1
-
-inf :: Text -> a -> a
-inf = msg "info"
 
 warn :: Text -> a -> a
 warn = msg "warning"
@@ -54,15 +52,15 @@ msg typ xs ys =
 msg' :: Text -> Text -> IO ()
 msg' typ xs = TIO.hPutStrLn stderr (typ <> ": " <> xs)
 
-debug :: OptCommon -> Text -> a -> a
-debug opt
-  | optVerbose opt = msg "debug"
-  | otherwise = id'
-  where
-    id' _ = id
+info :: OptCommon -> Text -> a -> a
+info opts xs
+  | optVerbose opts = msg "info" xs
+  | otherwise = id
 
-info :: OptCommon -> Text -> IO ()
-info opts xs = when (optVerbose opts) $ msg' "debug" xs
+debug :: OptCommon -> Text -> a -> a
+debug opts xs
+  | optDebug opts = msg "debug" xs
+  | otherwise = id
 
 removeDuplicates
   :: (Ord a)

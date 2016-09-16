@@ -94,6 +94,14 @@ allowInUpgrade x =
         SqlPostInstall -> False
         _ -> True
 
+stmtRequiresPermitDeletion :: SqlStmt -> Bool
+stmtRequiresPermitDeletion x =
+  case stmtIdType x of
+    Nothing -> False
+    Just SqlDropTable -> True
+    Just SqlDropTableColumn -> True
+    Just _ -> False
+
 data SqlStmtType
   = SqlDropDatabase
   | SqlCreateDatabase

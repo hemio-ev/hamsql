@@ -4,22 +4,22 @@ import time
 
 dburl = "postgres://postgres@/hamsql-test"
 
-def db_open():
+def run(cmd, setup, delete_db=False, capture=False, args=[]):
     global dburl
-    conn = psycopg2.connect(dburl)
-    cur = conn.cursor()
-    return conn, cur
+    settings = {}
+    params = ['hamsql', cmd, '-s', setup, '-c', dburl] + args
     
-def db_close(conn, cur):
-    cur.close()
-    conn.close()
-
-def check(domains=[], functions=[], tables=[]):
-    conn, cur = db_open()
-    assert sorted(domains) == sorted(db_domains(cur))
-    assert sorted(functions) == sorted(db_functions(cur))
-    assert sorted(tables) == sorted(db_tables(cur))
-    db_close(conn, cur)
+    if delete_db:
+        params += [ '--delete-existing-database' ]
+    
+    if capture:
+        settings.update({
+            'stdout': subprocess.PIPE,
+            'stderr': subprocess.PIPE,
+            'universal_newlines': True
+        })
+    
+    return subprocess.run(params, **settings)
 
 def runAssertSilent(cmd, setup, **xs):
     completedProcess = run(cmd, setup, capture=True, **xs)
@@ -35,6 +35,33 @@ def assertError(completedProcess, err):
     assert completedProcess.returncode == 1
     assert completedProcess.stdout == ""
     assert err in completedProcess.stderr
+    
+def assertStdErr(completedProcess, err):
+    assert completedProcess.returncode == 0
+    assert completedProcess.stdout == ""
+    assert err in completedProcess.stderr
+    
+def assertStdOut(completedProcess, out):
+    assert completedProcess.returncode == 0
+    assert out in completedProcess.stdout
+    assert completedProcess.stderr == ""
+
+def check(domains=[], functions=[], tables=[]):
+    conn, cur = db_open()
+    assert sorted(domains) == sorted(db_domains(cur))
+    assert sorted(functions) == sorted(db_functions(cur))
+    assert sorted(tables) == sorted(db_tables(cur))
+    db_close(conn, cur)
+    
+def db_open():
+    global dburl
+    conn = psycopg2.connect(dburl)
+    cur = conn.cursor()
+    return conn, cur
+    
+def db_close(conn, cur):
+    cur.close()
+    conn.close()
     
 def db_domains(cur):
     cur.execute("""
@@ -68,21 +95,4 @@ def db_functions(cur):
             WHERE p.probin IS NULL
         """)
     return cur.fetchall()
-
-def run(cmd, setup, delete_db=False, capture=False):
-    global dburl
-    settings = {}
-    params = ['hamsql', cmd, '-s', setup, '-c', dburl]
-    
-    if delete_db:
-        params += [ '--delete-existing-database' ]
-    
-    if capture:
-        settings.update({
-            'stdout': subprocess.PIPE,
-            'stderr': subprocess.PIPE,
-            'universal_newlines': True
-        })
-    
-    return subprocess.run(params, **settings)
 
