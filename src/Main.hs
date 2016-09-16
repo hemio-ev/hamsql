@@ -24,24 +24,29 @@ main = execParser parserInfoHamsql >>= run
 
 run :: Command -> IO ()
 -- Install
-run (Install optCommon optDb optInstall) = do
-  let dbname = SqlName $ T.pack $ tail $ uriPath $ getConUrl optDb
-  if not (optEmulate optDb || optPrint optDb)
-    then void $
-         pgsqlExecWithoutTransact
-           ((getConUrl optDb)
-            { uriPath = "/postgres"
-            })
-           (sqlCreateDatabase (optDeleteExistingDatabase optInstall) dbname)
-    else when (optDeleteExistingDatabase optInstall) $
-         warn' $
-         "In --emulate and --print mode the" <->
-         "DROP/CREATE DATABASE statements are skipped. You have to ensure that an empty" <->
-         "database exists for those commands to make sense."
-  setup <- loadSetup optCommon (optSetup optCommon)
-  return ()
-  statements <- pgsqlGetFullStatements optCommon optDb setup
-  useSqlStmts optCommon optDb (sort statements)
+run (Install optCommon optDb optInstall)
+  | optPermitDataDeletion optDb /= optDeleteExistingDatabase optInstall =
+    err $
+    "For installs either both --permit-data-deletion and --delete-existing-database" <->
+    "must be supplied or non of them."
+  | otherwise = do
+    let dbname = SqlName $ T.pack $ tail $ uriPath $ getConUrl optDb
+    if not (optEmulate optDb || optPrint optDb)
+      then void $
+           pgsqlExecWithoutTransact
+             ((getConUrl optDb)
+              { uriPath = "/postgres"
+              })
+             (sqlCreateDatabase (optDeleteExistingDatabase optInstall) dbname)
+      else when (optDeleteExistingDatabase optInstall) $
+           warn' $
+           "In --emulate and --print mode the DROP/CREATE DATABASE" <->
+           "statements are skipped. You have to ensure that an empty" <->
+           "database exists for those commands to make sense."
+    setup <- loadSetup optCommon (optSetup optCommon)
+    return ()
+    statements <- pgsqlGetFullStatements optCommon optDb setup
+    useSqlStmts optCommon optDb (sort statements)
 -- Upgrade
 run (Upgrade optCommon optDb optUpgrade) = do
   setup <- loadSetup optCommon (optSetup optCommon)
@@ -68,12 +73,12 @@ useSqlStmts optCommon optDb unfilteredStmts
         ys ->
           warn
             ("A total of" <-> tshow (length ys) <->
-             "objects will not be deleted." <->
-             "You must supply the --permit-data-deletion if you want to delete them.") $
+             "objects will not be deleted. You must supply the" <->
+             "--permit-data-deletion argument if you want to delete them.") $
           info
             optCommon
-            ("The following objects are not deleted:" <>
-             showCode (T.cons '\n' $ T.intercalate "\n" (map stmtDesc ys)))
+            ("The following objects are not deleted:" <\>
+             showCode (T.intercalate "\n" (map stmtDesc ys)))
             xs
     stmts
       | optPermitDataDeletion optDb = unfilteredStmts

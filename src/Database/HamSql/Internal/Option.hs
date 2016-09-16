@@ -115,7 +115,8 @@ data OptUpgrade = OptUpgrade
 
 parserOptUpgrade :: Parser OptUpgrade
 parserOptUpgrade =
-  OptUpgrade <$> boolFlag (long "X" <> help "(currently no upgade specific options)")
+  OptUpgrade <$>
+  boolFlag (long "X" <> help "(currently no upgade specific options)")
 
 -- Command Doc
 data OptDoc = OptDoc

@@ -32,3 +32,10 @@ def test_missing_permit_data_deletion():
     # With verbose a TABLE that cannot be deleted should be reported
     result = run('upgrade', 'domain.yml', args=['--verbose'], capture=True)
     assertStdErr(result, "TABLE")
+    
+def test_missing_database_deletion():
+    runAssertSilent('install', 'table.yml', delete_db=True)
+    
+    result = run('install', 'table.yml', capture=True)
+    assertError(result, "42P04")
+    

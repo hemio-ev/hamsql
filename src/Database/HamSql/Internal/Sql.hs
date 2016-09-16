@@ -98,6 +98,7 @@ stmtRequiresPermitDeletion :: SqlStmt -> Bool
 stmtRequiresPermitDeletion x =
   case stmtIdType x of
     Nothing -> False
+    Just SqlDropDatabase -> True
     Just SqlDropTable -> True
     Just SqlDropTableColumn -> True
     Just _ -> False

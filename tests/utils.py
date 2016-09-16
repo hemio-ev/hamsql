@@ -10,7 +10,7 @@ def run(cmd, setup, delete_db=False, capture=False, args=[]):
     params = ['hamsql', cmd, '-s', setup, '-c', dburl] + args
     
     if delete_db:
-        params += [ '--delete-existing-database' ]
+        params += [ '--permit-data-deletion', '--delete-existing-database' ]
     
     if capture:
         settings.update({
