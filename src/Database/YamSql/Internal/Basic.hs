@@ -26,7 +26,7 @@ module Database.YamSql.Internal.Basic
 import Control.Exception
 import Data.Aeson.Types
        (GFromJSON(..), Options(..), defaultOptions, genericParseJSON,
-        genericToJSON)
+        genericToJSON, Zero)
 
 import Data.Char
 import Data.Data
@@ -288,7 +288,7 @@ instance ToJSON SqlType where
   toJSON = genericToJSON myOpt
 
 strictParseYaml
-  :: (Generic r, GFromJSON (Rep r), Data r)
+  :: (Generic r, GFromJSON Zero (Rep r), Data r)
   => Value -> Parser r
 strictParseYaml xs = do
   parsed <- genericParseJSON myOpt xs
