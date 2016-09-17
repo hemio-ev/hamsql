@@ -127,7 +127,7 @@ data OptDoc = OptDoc
 parserOptDoc :: Parser OptDoc
 parserOptDoc =
   OptDoc <$>
-  strOption (long "output-dir" <> short 'o' <> val "doc/" <> action "directory") <*>
+  strOption (long "output-dir" <> short 'o' <> val "docs/" <> action "directory") <*>
   strOption
     (long "template" <> short 't' <> val "DEFAULT.rst" <>
      action "file -X '!*.html'" <>

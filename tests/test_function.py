@@ -1,4 +1,7 @@
 from utils import *
+import os
+import os.path
+import shutil
 
 def test_functions():
 
@@ -28,4 +31,16 @@ def test_functions():
 
     runAssertSilent('upgrade', 'function-upgrade.yml')
     check(**xs)
+
+def test_doc():
+    out = 'docs/'
+    
+    if os.path.exists(out):
+        shutil.rmtree(out)
+    os.mkdir(out)
+    
+    runAssertSilent('doc', 'function.yml')
+
+    assert os.path.exists('docs/function-install.rst')
+    assert sum(1 for line in open('docs/function-install.rst')) > 70
 

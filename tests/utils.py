@@ -7,7 +7,12 @@ dburl = "postgres://postgres@/hamsql-test"
 def run(cmd, setup, delete_db=False, capture=False, args=[]):
     global dburl
     settings = {}
-    params = ['hamsql', cmd, '-s', setup, '-c', dburl] + args
+    params = ['hamsql', cmd, '-s', setup] 
+    
+    if cmd != 'doc':
+        params += ['-c', dburl]
+    
+    params += args
     
     if delete_db:
         params += [ '--permit-data-deletion', '--delete-existing-database' ]
