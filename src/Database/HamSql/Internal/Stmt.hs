@@ -6,7 +6,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 --{-# LANGUAGE FlexibleInstances #-}
-module Database.HamSql.Internal.Sql where
+module Database.HamSql.Internal.Stmt where
 
 import Data.Text (Text)
 import qualified Data.Text as T

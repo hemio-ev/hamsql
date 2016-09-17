@@ -11,7 +11,7 @@ import qualified Data.Text as T
 
 --import Database.HamSql
 import Database.HamSql.Internal.Option
-import Database.HamSql.Internal.Sql
+import Database.HamSql.Internal.Stmt
 import Database.HamSql.Internal.Stmt.Commons
 import Database.HamSql.Internal.Stmt.Sequence
 import Database.HamSql.Setup

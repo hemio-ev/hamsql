@@ -92,7 +92,7 @@ import Network.URI (URI, parseAbsoluteURI, uriToString)
 import Database.HamSql.Internal.DbUtils
 import Database.HamSql.Internal.InquireDeployed
 import Database.HamSql.Internal.Option
-import Database.HamSql.Internal.Sql
+import Database.HamSql.Internal.Stmt
 import Database.HamSql.Internal.Stmt.Domain
 import Database.HamSql.Internal.Stmt.Function
 import Database.HamSql.Internal.Stmt.Sequence

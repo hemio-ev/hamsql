@@ -9,7 +9,7 @@ module Database.HamSql.Internal.Stmt.Sequence where
 
 --import Database.HamSql
 import Database.HamSql.Internal.Option
-import Database.HamSql.Internal.Sql
+import Database.HamSql.Internal.Stmt
 import Database.HamSql.Setup
 import Database.YamSql
 

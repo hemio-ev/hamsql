@@ -16,7 +16,7 @@ import Data.Typeable
 
 import Database.HamSql.Internal.Utils
 import Database.YamSql
-import Database.HamSql.Internal.Sql
+import Database.HamSql.Internal.Stmt
 
 data SetupContext = SetupContext
   { setupContextSetup :: Setup

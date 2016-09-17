@@ -18,7 +18,7 @@ import Database.PostgreSQL.Simple
 import Network.URI (URI, parseAbsoluteURI, uriToString)
 
 import Database.HamSql.Internal.Option
-import Database.HamSql.Internal.Sql
+import Database.HamSql.Internal.Stmt
 import Database.YamSql
 
 toQry :: Text -> Query

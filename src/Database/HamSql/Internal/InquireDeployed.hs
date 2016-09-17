@@ -14,7 +14,7 @@ import Network.URI (URI, parseAbsoluteURI, uriToString)
 
 import Database.HamSql.Internal.DbUtils
 import Database.HamSql.Internal.Option
-import Database.HamSql.Internal.Sql
+import Database.HamSql.Internal.Stmt
 import Database.HamSql.SqlStmt
 import Database.YamSql
 

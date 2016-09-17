@@ -10,7 +10,7 @@ module Database.HamSql.Internal.Stmt.Schema where
 import qualified Data.Text as T
 
 import Database.HamSql.Internal.Option
-import Database.HamSql.Internal.Sql
+import Database.HamSql.Internal.Stmt
 import Database.HamSql.Internal.Stmt.Commons
 import Database.HamSql.Internal.Stmt.Function
 import Database.HamSql.Setup

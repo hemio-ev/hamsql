@@ -10,7 +10,7 @@ import Data.Maybe
 import qualified Data.Text as T
 
 import Database.HamSql.Internal.Option
-import Database.HamSql.Internal.Sql
+import Database.HamSql.Internal.Stmt
 import Database.HamSql.Internal.Stmt.Commons
 import Database.HamSql.Internal.Stmt.Domain
 import Database.HamSql.Internal.Stmt.Function
