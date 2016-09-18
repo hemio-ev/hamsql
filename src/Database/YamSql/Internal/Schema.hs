@@ -59,7 +59,7 @@ data Schema = Schema
   , schemaDomains :: Maybe [Domain]
   , schemaTypes :: Maybe [Type]
   , schemaExecPostInstall :: Maybe Text
-  } deriving (Generic, Show, Data, Typeable)
+  } deriving (Generic, Show, Data)
 
 instance FromJSON Schema where
   parseJSON = strictParseYaml

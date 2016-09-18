@@ -24,7 +24,7 @@ data Trigger = Trigger
   , triggerLanguage :: Maybe Text
   , triggerVariables :: Maybe [Variable]
   , triggerBody :: Maybe Text
-  } deriving (Generic, Show, Data, Typeable)
+  } deriving (Generic, Show, Data)
 
 instance FromJSON Trigger where
   parseJSON = strictParseYaml

@@ -15,7 +15,7 @@ data Sequence = Sequence
   , sequenceCycle :: Maybe Bool
     -- PostgreSQL extension
   , sequenceOwnedByColumn :: Maybe SqlName
-  } deriving (Generic, Show, Data, Typeable)
+  } deriving (Generic, Show, Data)
 
 instance FromJSON Sequence where
   parseJSON = strictParseYaml

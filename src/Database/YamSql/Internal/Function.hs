@@ -43,7 +43,7 @@ data Function = Function
   , functionLanguage :: Maybe Text
     -- | the code of the function (body)
   , functionBody :: Maybe Text
-  } deriving (Generic, Show, Data, Typeable)
+  } deriving (Generic, Show, Data)
 
 instance FromJSON Function where
   parseJSON = strictParseYaml
@@ -80,7 +80,7 @@ data FunctionTpl = FunctionTpl
   , functiontplBodyPrelude :: Maybe Text
     -- code added after the body of the function
   , functiontplBodyPostlude :: Maybe Text
-  } deriving (Generic, Show, Data, Typeable)
+  } deriving (Generic, Show, Data)
 
 instance FromJSON FunctionTpl where
   parseJSON = strictParseYaml

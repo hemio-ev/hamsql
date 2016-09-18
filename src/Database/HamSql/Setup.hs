@@ -42,7 +42,7 @@ data Setup = Setup
   , setupPreCode :: Maybe Text
   , setupPostCode :: Maybe Text
   , setupSchemaData :: Maybe [Schema]
-  } deriving (Generic, Show, Data, Typeable)
+  } deriving (Generic, Show, Data)
 
 instance FromJSON Setup where
   parseJSON = strictParseYaml

@@ -16,7 +16,7 @@ data Role = Role
   , roleLogin :: Maybe Bool
   , rolePassword :: Maybe Text
   , roleMemberIn :: Maybe [SqlName]
-  } deriving (Generic, Show, Data, Typeable)
+  } deriving (Generic, Show, Data)
 
 instance FromJSON Role where
   parseJSON = strictParseYaml

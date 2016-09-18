@@ -13,7 +13,7 @@ data Domain = Domain
   , domainType :: SqlType
   , domainDefault :: Maybe Text
   , domainChecks :: Maybe [Check]
-  } deriving (Generic, Show, Data, Typeable)
+  } deriving (Generic, Show, Data)
 
 instance FromJSON Domain where
   parseJSON = strictParseYaml

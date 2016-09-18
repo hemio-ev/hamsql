@@ -13,7 +13,7 @@ data Type = Type
   { typeName :: SqlName
   , typeDescription :: Text
   , typeElements :: [TypeElement]
-  } deriving (Generic, Show, Data, Typeable)
+  } deriving (Generic, Show, Data)
 
 instance FromJSON Type where
   parseJSON = strictParseYaml
@@ -24,7 +24,7 @@ instance ToJSON Type where
 data TypeElement = TypeElement
   { typeelementName :: SqlName
   , typeelementType :: SqlType
-  } deriving (Generic, Show, Data, Typeable)
+  } deriving (Generic, Show, Data)
 
 instance FromJSON TypeElement where
   parseJSON = strictParseYaml

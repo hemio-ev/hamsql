@@ -20,7 +20,7 @@ module Database.YamSql.Internal.Basic
   , FromJSON(..)
   , Generic(..)
   , Data(..)
-  , Typeable
+  
   ) where
 
 import Control.Exception
@@ -269,7 +269,7 @@ class SqlIdentifierConcat a  where
 -- SqlName
 newtype SqlName =
   SqlName Text
-  deriving (Generic, Ord, Show, Typeable, Data)
+  deriving (Generic, Ord, Show, Data)
 
 instance FromJSON SqlName where
   parseJSON = genericParseJSON myOpt
@@ -279,7 +279,7 @@ instance ToJSON SqlName where
 
 newtype SqlType =
   SqlType Text
-  deriving (Generic, Show, Eq, Typeable, Data)
+  deriving (Generic, Show, Eq, Data)
 
 instance FromJSON SqlType where
   parseJSON = genericParseJSON myOpt
@@ -307,6 +307,6 @@ strictParseYaml xs = do
 -- EXCEPTIONS
 data YamsqlException =
   YamsqlException Text
-  deriving (Show, Typeable)
+  deriving (Show)
 
 instance Exception YamsqlException

@@ -4,11 +4,6 @@
 
 module Database.YamSql.Internal.Table where
 
-import Data.Aeson (Object, Value(..))
-import Data.Data
-import Data.HashMap.Strict (insert, keys, member)
-import GHC.Generics
-
 import Database.YamSql.Internal.Basic
 import Database.YamSql.Internal.Check
 
@@ -27,7 +22,7 @@ data Table = Table
   , tablePrivDelete :: Maybe [SqlName]
   , tableTemplates :: Maybe [SqlName]
   , tableTemplateData :: Maybe [TableTpl]
-  } deriving (Data, Generic, Show, Typeable)
+  } deriving (Data, Generic, Show)
 
 instance FromJSON Table where
   parseJSON = strictParseYaml
@@ -50,7 +45,7 @@ data TableTpl = TableTpl
   , tabletplPrivInsert :: Maybe [SqlName]
   , tabletplPrivUpdate :: Maybe [SqlName]
   , tabletplPrivDelete :: Maybe [SqlName]
-  } deriving (Generic, Show, Typeable, Data)
+  } deriving (Generic, Show, Data)
 
 instance FromJSON TableTpl where
   parseJSON = strictParseYaml
@@ -69,7 +64,7 @@ data Column = Column
   , columnOnRefUpdate :: Maybe Text
   , columnUnique :: Maybe Bool
   , columnChecks :: Maybe [Check]
-  } deriving (Generic, Show, Typeable, Data)
+  } deriving (Generic, Show, Data)
 
 instance FromJSON Column where
   parseJSON = strictParseYaml
@@ -97,7 +92,7 @@ applyTableTpl tpl t =
 data UniqueKey = UniqueKey
   { uniquekeyName :: SqlName
   , uniquekeyColumns :: [SqlName]
-  } deriving (Generic, Show, Typeable, Data)
+  } deriving (Generic, Show, Data)
 
 instance FromJSON UniqueKey where
   parseJSON = strictParseYaml
@@ -112,7 +107,7 @@ data ForeignKey = ForeignKey
   , foreignkeyRefColumns :: [SqlName]
   , foreignkeyOnDelete :: Maybe Text
   , foreignkeyOnUpdate :: Maybe Text
-  } deriving (Generic, Show, Typeable, Data)
+  } deriving (Generic, Show, Data)
 
 instance FromJSON ForeignKey where
   parseJSON = strictParseYaml

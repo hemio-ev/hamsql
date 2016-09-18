@@ -15,7 +15,7 @@ data Variable = Variable
   , variableDescription :: Maybe Text
   , variableType :: SqlType
   , variableDefault :: Maybe Text
-  } deriving (Generic, Show, Data, Typeable)
+  } deriving (Generic, Show, Data)
 
 instance FromJSON Variable where
   parseJSON = strictParseYaml
@@ -27,7 +27,7 @@ data Parameter = Parameter
   { parameterName :: SqlName
   , parameterDescription :: Maybe Text
   , parameterType :: SqlType
-  } deriving (Generic, Show, Data, Typeable)
+  } deriving (Generic, Show, Data)
 
 instance FromJSON Parameter where
   parseJSON = strictParseYaml
