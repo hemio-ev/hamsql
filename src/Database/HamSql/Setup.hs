@@ -68,13 +68,12 @@ instance WithName (WithSchema TableTpl) where
 instance WithName (WithSchema FunctionTpl) where
   name (WithSchema m f) = toSqlCode $ schemaName m <.> functiontplTemplate f
 
-instance WithName (WithSchema TableColumnTpl) where
-  name (WithSchema m f) = toSqlCode $ schemaName m <.> tablecolumntplTemplate f
-
 withoutSchema :: WithSchema a -> a
 withoutSchema (WithSchema _ t) = t
 
 --selectTemplates :: (WithName t) => Maybe [SqlName] -> [WithSchema t] -> [t]
+selectTemplates :: (ToSqlCode a, WithName (WithSchema t)) =>
+                         Maybe [a] -> [WithSchema t] -> [t]
 selectTemplates ns ts
                    -- TODO: error handling here should be done using exceptions
  =
@@ -83,6 +82,8 @@ selectTemplates ns ts
    filter (\t -> n == name t) ts
   | n <- map toSqlCode $ maybeList ns ]
 
+selectTemplate :: (ToSqlCode a1, WithName (WithSchema a)) =>
+                        a1 -> [WithSchema a] -> a
 selectTemplate x ts =
   head' $ map withoutSchema $ filter (\y -> name y == toSqlCode x) ts
   where
@@ -104,11 +105,7 @@ setupAllTableTemplates s =
     [ maybeMap (WithSchema m) (schemaTableTemplates m)
     | m <- setupAllSchemas s ]
 
-setupAllColumnTemplates :: Setup -> [WithSchema TableColumnTpl]
-setupAllColumnTemplates s =
-  concat
-    [ maybeMap (WithSchema m) (schemaColumnTemplates m)
-    | m <- setupAllSchemas s ]
+
 
 applyTpl :: Setup -> Setup
 applyTpl s =
@@ -121,7 +118,7 @@ applyTpl s =
       m
       { schemaTables =
         Just $
-        map applyColumnTemplates $ maybeMap applyTableTemplates (schemaTables m)
+        maybeMap applyTableTemplates (schemaTables m)
       , schemaFunctions =
         Just $ maybeMap applyFunctionTemplates (schemaFunctions m)
       }
@@ -134,15 +131,4 @@ applyTpl s =
     functionTpls :: Function -> [FunctionTpl]
     functionTpls f =
       selectTemplates (functionTemplates f) (setupAllFunctionTemplates s)
-    applyColumnTemplates :: Table -> Table
-    applyColumnTemplates t =
-      t
-      { tableColumns = map f (tableColumns t)
-      }
-      where
-        f x@ColumnTpl {} = applyColumnTpl (columnTpl x) x
-        f x = x
-    columnTpl :: Column -> TableColumnTpl
-    columnTpl c@ColumnTpl {} =
-      selectTemplate (columntplTemplate c) (setupAllColumnTemplates s)
-    columnTpl _ = undefined
+

@@ -95,13 +95,11 @@ stmtsDeployTable context@SetupContext {setupContextSetup = setup} obj@SqlContext
       checkCheck c <>
       ")"
     -- COLUMNS
-    sqlAlterColumn c@Column {} =
+    sqlAlterColumn c =
       "ALTER TABLE " <> sqlIdCode obj <> " ALTER COLUMN " <>
       toSqlCode (columnName c) <>
       " "
-    sqlAlterColumn _ =
-      err "ColumnTemplates should not be present in SQL parsing"
-    stmtAddColumn c@Column {} =
+    stmtAddColumn c =
       newSqlStmt SqlAddColumn (columnObj obj c) $
       "ALTER TABLE" <-> sqlIdCode obj <-> "ADD COLUMN" <->
       toSqlCode (columnName c) <->
@@ -237,4 +235,3 @@ stmtsDeployTable context@SetupContext {setupContextSetup = setup} obj@SqlContext
         "TABLE-CONSTRAINT"
         (SqlName $ sqlIdCode obj)
         (SqlName $ constrName a)
-    constrIdText a = toSqlCode $ constrId a

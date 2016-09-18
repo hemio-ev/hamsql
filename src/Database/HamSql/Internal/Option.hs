@@ -6,11 +6,15 @@ module Database.HamSql.Internal.Option where
 
 import Data.Semigroup
 import Options.Applicative
+import Options.Applicative.Builder.Internal (HasMetavar, HasValue)
 
 -- helper functions
 boolFlag :: Mod FlagFields Bool -> Parser Bool
 boolFlag = flag False True
 
+val
+  :: (HasMetavar f, HasValue f)
+  => String -> Mod f String
 val xs = value xs <> metavar ("\"" ++ xs ++ "\"")
 
 -- Global
@@ -127,7 +131,8 @@ data OptDoc = OptDoc
 parserOptDoc :: Parser OptDoc
 parserOptDoc =
   OptDoc <$>
-  strOption (long "output-dir" <> short 'o' <> val "docs/" <> action "directory") <*>
+  strOption
+    (long "output-dir" <> short 'o' <> val "docs/" <> action "directory") <*>
   strOption
     (long "template" <> short 't' <> val "DEFAULT.rst" <>
      action "file -X '!*.html'" <>

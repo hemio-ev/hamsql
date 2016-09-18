@@ -45,7 +45,6 @@ data Schema = Schema
   , schemaFunctionTemplates :: Maybe [FunctionTpl]
   , schemaTables :: Maybe [Table]
   , schemaTableTemplates :: Maybe [TableTpl]
-  , schemaColumnTemplates :: Maybe [TableColumnTpl]
   , schemaRoles :: Maybe [Role]
   , schemaSequences :: Maybe [Sequence]
   , schemaTriggers :: Maybe [Trigger]
