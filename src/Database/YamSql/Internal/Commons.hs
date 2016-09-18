@@ -4,7 +4,6 @@
 -- Some rights reserved. See COPYING, AUTHORS.
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Database.YamSql.Internal.Commons where
 
@@ -18,10 +17,10 @@ data Variable = Variable
   } deriving (Generic, Show, Data)
 
 instance FromJSON Variable where
-  parseJSON = strictParseYaml
+  parseJSON = parseYamSql
 
 instance ToJSON Variable where
-  toJSON = genericToJSON myOpt
+  toJSON = toYamSqlJson
 
 data Parameter = Parameter
   { parameterName :: SqlName
@@ -30,7 +29,7 @@ data Parameter = Parameter
   } deriving (Generic, Show, Data)
 
 instance FromJSON Parameter where
-  parseJSON = strictParseYaml
+  parseJSON = parseYamSql
 
 instance ToJSON Parameter where
-  toJSON = genericToJSON myOpt
+  toJSON = toYamSqlJson

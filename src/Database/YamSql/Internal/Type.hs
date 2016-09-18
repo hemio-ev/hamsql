@@ -16,10 +16,10 @@ data Type = Type
   } deriving (Generic, Show, Data)
 
 instance FromJSON Type where
-  parseJSON = strictParseYaml
+  parseJSON = parseYamSql
 
 instance ToJSON Type where
-  toJSON = genericToJSON myOpt
+  toJSON = toYamSqlJson
 
 data TypeElement = TypeElement
   { typeelementName :: SqlName
@@ -27,10 +27,10 @@ data TypeElement = TypeElement
   } deriving (Generic, Show, Data)
 
 instance FromJSON TypeElement where
-  parseJSON = strictParseYaml
+  parseJSON = parseYamSql
 
 instance ToJSON TypeElement where
-  toJSON = genericToJSON myOpt
+  toJSON = toYamSqlJson
 
 instance ToSqlIdPart Type where
   sqlIdPart = typeName

@@ -18,10 +18,10 @@ data Sequence = Sequence
   } deriving (Generic, Show, Data)
 
 instance FromJSON Sequence where
-  parseJSON = strictParseYaml
+  parseJSON = parseYamSql
 
 instance ToJSON Sequence where
-  toJSON = genericToJSON myOpt
+  toJSON = toYamSqlJson
 
 instance ToSqlIdPart Sequence where
   sqlIdPart = sequenceName

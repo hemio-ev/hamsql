@@ -3,11 +3,9 @@
 -- Copyright 2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Database.HamSql.Internal.Stmt.Domain where
 
---import qualified Data.Text as T
 import Database.HamSql.Internal.Stmt.Basic
 
 stmtsDropDomain :: SqlIdContentSqo -> [SqlStmt]

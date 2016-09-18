@@ -3,7 +3,6 @@
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Database.HamSql.Internal.DbUtils where
@@ -18,6 +17,7 @@ import Network.URI (URI, parseAbsoluteURI, uriToString)
 
 import Database.HamSql.Internal.Option
 import Database.HamSql.Internal.Stmt
+import Database.HamSql.Internal.Utils
 import Database.YamSql
 
 toQry :: Text -> Query

@@ -16,10 +16,10 @@ data Domain = Domain
   } deriving (Generic, Show, Data)
 
 instance FromJSON Domain where
-  parseJSON = strictParseYaml
+  parseJSON = parseYamSql
 
 instance ToJSON Domain where
-  toJSON = genericToJSON myOpt
+  toJSON = toYamSqlJson
 
 instance ToSqlIdPart Domain where
   sqlIdPart = domainName

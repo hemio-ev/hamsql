@@ -1,6 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Database.YamSql.Internal.Table where
 
@@ -25,10 +24,10 @@ data Table = Table
   } deriving (Data, Generic, Show)
 
 instance FromJSON Table where
-  parseJSON = strictParseYaml
+  parseJSON = parseYamSql
 
 instance ToJSON Table where
-  toJSON = genericToJSON myOpt
+  toJSON = toYamSqlJson
 
 instance ToSqlIdPart Table where
   sqlIdPart = tableName
@@ -48,10 +47,10 @@ data TableTpl = TableTpl
   } deriving (Generic, Show, Data)
 
 instance FromJSON TableTpl where
-  parseJSON = strictParseYaml
+  parseJSON = parseYamSql
 
 instance ToJSON TableTpl where
-  toJSON = genericToJSON myOpt
+  toJSON = toYamSqlJson
 
 data Column = Column
   { columnName :: SqlName
@@ -67,10 +66,10 @@ data Column = Column
   } deriving (Generic, Show, Data)
 
 instance FromJSON Column where
-  parseJSON = strictParseYaml
+  parseJSON = parseYamSql
 
 instance ToJSON Column where
-  toJSON = genericToJSON myOpt
+  toJSON = toYamSqlJson
 
 instance ToSqlIdPart Column where
   sqlIdPart = columnName
@@ -95,10 +94,10 @@ data UniqueKey = UniqueKey
   } deriving (Generic, Show, Data)
 
 instance FromJSON UniqueKey where
-  parseJSON = strictParseYaml
+  parseJSON = parseYamSql
 
 instance ToJSON UniqueKey where
-  toJSON = genericToJSON myOpt
+  toJSON = toYamSqlJson
 
 data ForeignKey = ForeignKey
   { foreignkeyName :: SqlName
@@ -110,7 +109,7 @@ data ForeignKey = ForeignKey
   } deriving (Generic, Show, Data)
 
 instance FromJSON ForeignKey where
-  parseJSON = strictParseYaml
+  parseJSON = parseYamSql
 
 instance ToJSON ForeignKey where
-  toJSON = genericToJSON myOpt
+  toJSON = toYamSqlJson

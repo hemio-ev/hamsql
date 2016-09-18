@@ -3,18 +3,13 @@
 -- Copyright 2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Database.HamSql.Internal.Stmt.Function where
 
 import Data.Maybe
 import qualified Data.Text as T
 
---import Database.HamSql
-import Database.HamSql.Internal.Stmt
-import Database.HamSql.Internal.Stmt.Commons
-import Database.HamSql.Setup
-import Database.YamSql
+import Database.HamSql.Internal.Stmt.Basic
 
 stmtsDropFunction' :: SqlId -> [SqlStmt]
 stmtsDropFunction' x =

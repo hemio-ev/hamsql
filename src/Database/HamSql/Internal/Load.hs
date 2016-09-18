@@ -2,8 +2,6 @@
 --
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
-{-# LANGUAGE OverloadedStrings #-}
-
 module Database.HamSql.Internal.Load where
 
 import Control.Exception
@@ -25,6 +23,7 @@ import Database.HamSql.Internal.Option
 import Database.HamSql.Internal.Utils
 import Database.HamSql.Setup
 import Database.YamSql
+import Database.YamSql.Parser
 
 loadSetup :: OptCommon -> FilePath -> IO Setup
 loadSetup opts filePath = do

@@ -3,7 +3,6 @@
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 {-# LANGUAGE GADTs #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 --{-# LANGUAGE FlexibleInstances #-}
 module Database.HamSql.Internal.Stmt where

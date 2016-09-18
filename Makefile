@@ -3,7 +3,7 @@ update-and-build: update build
 update:
 	cabal update
 	cabal sandbox init
-	cabal install --force-reinstalls --only-dependencies --disable-optimization
+	cabal install -ffast --allow-newer --force-reinstalls --only-dependencies --disable-optimization
 
 test:
 	cabal clean
@@ -13,7 +13,7 @@ test:
 	cabal test --show-details direct
 
 doc:
-	cabal haddock --executables
+	cabal haddock
 
 build:
 	cabal configure --disable-optimization
@@ -44,7 +44,11 @@ dev-build-optim:
 	cabal build --ghc-options="-fforce-recomp"
 
 dev-modules:
-	find src/ -name '*.hs' -printf '%P\n' | sed -e 's/\.hs//' -e 's/\//\./g'
+	find src/ -name '*.hs' -printf '    %P\n' | sort | sed -e 's/\.hs//' -e 's/\//\./g' | grep Internal
+	find src/ -name '*.hs' -printf '    %P\n' | sort | sed -e 's/\.hs//' -e 's/\//\./g' | grep -v Internal
+
+dev-lang-ext:
+	grep -h -r '# LANGUAGE' src/ | sort | uniq | sed -e 's/{-# LANGUAGE /    /' | sed -e 's/ #-}/,/'
 
 dev-package-status:
 	dpkg-query -l \

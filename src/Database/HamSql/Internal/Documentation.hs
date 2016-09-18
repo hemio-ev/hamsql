@@ -2,7 +2,6 @@
 --
 -- Copyright 2014 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 
 module Database.HamSql.Internal.Documentation where

@@ -3,13 +3,10 @@
 -- Copyright 2015-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Database.HamSql.Internal.Stmt.Sequence where
 
-import Database.HamSql.Internal.Stmt
-import Database.HamSql.Setup
-import Database.YamSql
+import Database.HamSql.Internal.Stmt.Basic
 
 stmtsDropSequence :: SqlIdContentSqo -> [SqlStmt]
 stmtsDropSequence x =

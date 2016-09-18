@@ -4,7 +4,6 @@
 -- Some rights reserved. See COPYING, AUTHORS.
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Database.YamSql.Internal.Role where
 
@@ -19,10 +18,10 @@ data Role = Role
   } deriving (Generic, Show, Data)
 
 instance FromJSON Role where
-  parseJSON = strictParseYaml
+  parseJSON = parseYamSql
 
 instance ToJSON Role where
-  toJSON = genericToJSON myOpt
+  toJSON = toYamSqlJson
 
 instance ToSqlIdPart Role where
   sqlIdPart = roleName

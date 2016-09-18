@@ -2,8 +2,6 @@
 --
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
-{-# LANGUAGE OverloadedStrings #-}
-
 module Database.HamSql.Internal.Utils
   ( module Database.HamSql.Internal.Utils
   , Text

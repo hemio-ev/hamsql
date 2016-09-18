@@ -3,14 +3,10 @@
 -- Copyright 2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Database.HamSql.Internal.Stmt.Role where
 
-import Database.HamSql.Internal.Stmt
-import Database.HamSql.Internal.Stmt.Commons
-import Database.HamSql.Setup
-import Database.YamSql
+import Database.HamSql.Internal.Stmt.Basic
 
 instance ToSqlStmts (SqlContextObj Role) where
   toSqlStmts = stmtsDeployRole

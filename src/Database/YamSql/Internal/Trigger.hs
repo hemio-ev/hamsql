@@ -4,7 +4,6 @@
 -- Some rights reserved. See COPYING, AUTHORS.
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Database.YamSql.Internal.Trigger where
 
@@ -25,10 +24,10 @@ data Trigger = Trigger
   } deriving (Generic, Show, Data)
 
 instance FromJSON Trigger where
-  parseJSON = strictParseYaml
+  parseJSON = parseYamSql
 
 instance ToJSON Trigger where
-  toJSON = genericToJSON myOpt
+  toJSON = toYamSqlJson
 
 instance ToSqlIdPart Trigger where
   sqlIdPart = triggerName

@@ -2,12 +2,9 @@
 --
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
-{-# LANGUAGE OverloadedStrings #-}
-
 module Database.HamSql.Internal.Stmt.Drop where
 
-import Database.HamSql.Internal.Stmt
-import Database.YamSql
+import Database.HamSql.Internal.Stmt.Basic
 
 --import Database.HamSql
 -- ROLE

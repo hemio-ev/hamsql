@@ -3,7 +3,6 @@
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Database.HamSql.Internal.InquireDeployed where
@@ -12,6 +11,7 @@ import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.Types (PGArray(..), fromPGArray)
 
 import Database.HamSql.Internal.DbUtils
+import Database.HamSql.Internal.Utils
 import Database.YamSql
 
 sqlManageSchemaJoin :: Text -> Text

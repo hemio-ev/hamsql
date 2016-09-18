@@ -2,11 +2,10 @@
 --
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
-{-# LANGUAGE OverloadedStrings #-}
-
 module Database.HamSql.Internal.Stmt.Commons where
 
 import Database.HamSql.Internal.Stmt
+import Database.HamSql.Internal.Utils
 import Database.HamSql.Setup
 import Database.YamSql
 

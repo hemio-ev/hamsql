@@ -6,16 +6,18 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE OverloadedStrings #-}
+
 {-# LANGUAGE GADTs #-}
 
 module Database.HamSql.Setup where
 
 import Data.Maybe (fromMaybe)
 import Data.Typeable
+import Data.Yaml
 
 import Database.HamSql.Internal.Utils
 import Database.YamSql
+import Database.YamSql.Parser
 import Database.HamSql.Internal.Stmt
 
 data SetupContext = SetupContext
@@ -45,10 +47,10 @@ data Setup = Setup
   } deriving (Generic, Show, Data)
 
 instance FromJSON Setup where
-  parseJSON = strictParseYaml
+  parseJSON = parseYamSql
 
 instance ToJSON Setup where
-  toJSON = genericToJSON myOpt
+  toJSON = toYamSqlJson
 
 setupRolePrefix' :: Setup -> SqlName
 setupRolePrefix' setup = fromMaybe (SqlName "yamsql_") (setupRolePrefix setup)

@@ -3,7 +3,6 @@
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 {-|
@@ -91,6 +90,7 @@ import Database.HamSql.Internal.Stmt.Domain
 import Database.HamSql.Internal.Stmt.Function
 import Database.HamSql.Internal.Stmt.Sequence
 import Database.HamSql.Internal.Stmt.Table
+import Database.HamSql.Internal.Utils
 import Database.HamSql.Setup
 import Database.HamSql.SqlStmt
 import Database.YamSql
@@ -212,7 +212,7 @@ addSqlStmtType t = map (Just . SqlStmtId t . sqlId)
 filterSqlStmtType :: SqlStmtType -> [SqlStmt] -> [SqlStmt]
 filterSqlStmtType t xs =
   [ x
-  | x <- xs
+  | x <- xs 
   , stmtIdType x == Just t ]
 
 removeStmtsMatchingIds
@@ -221,7 +221,7 @@ removeStmtsMatchingIds
   -> [SqlStmt]
 removeStmtsMatchingIds ids stmts =
   [ stmt
-  | stmt <- stmts
+  | stmt <- stmts 
   , stmtId stmt `notElem` ids ]
 
 removeSqlIdBySqlStmts
@@ -229,7 +229,7 @@ removeSqlIdBySqlStmts
   => SqlStmtType -> [SqlStmt] -> [a] -> [a]
 removeSqlIdBySqlStmts t xs is =
   [ x
-  | x <- is
+  | x <- is 
   , sqlId x `notElem` ids ]
   where
     ids = map sqlId $ filterSqlStmtType t xs

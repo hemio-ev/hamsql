@@ -4,10 +4,10 @@
 -- Some rights reserved. See COPYING, AUTHORS.
 module Database.YamSql
   ( module Database.YamSql.Internal.Schema
-  , module Database.YamSql.Internal.Basic
+  , module Database.YamSql.Internal.SqlId
   , module Database.YamSql.Internal.Commons
   ) where
 
-import Database.YamSql.Internal.Basic
 import Database.YamSql.Internal.Commons
 import Database.YamSql.Internal.Schema
+import Database.YamSql.Internal.SqlId

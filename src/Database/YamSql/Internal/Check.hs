@@ -4,7 +4,6 @@
 -- Some rights reserved. See COPYING, AUTHORS.
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Database.YamSql.Internal.Check where
 
@@ -17,10 +16,10 @@ data Check = Check
   } deriving (Generic, Show, Data)
 
 instance FromJSON Check where
-  parseJSON = strictParseYaml
+  parseJSON = parseYamSql
 
 instance ToJSON Check where
-  toJSON = genericToJSON myOpt
+  toJSON = toYamSqlJson
 
 -- TODO clearify if this is useful for uniqueness
 instance ToSqlIdPart Check where

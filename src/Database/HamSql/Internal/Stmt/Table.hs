@@ -3,17 +3,13 @@
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Database.HamSql.Internal.Stmt.Table where
 
 import qualified Data.Text as T
 
-import Database.HamSql.Internal.Stmt
-import Database.HamSql.Internal.Stmt.Commons
+import Database.HamSql.Internal.Stmt.Basic
 import Database.HamSql.Internal.Stmt.Sequence
-import Database.HamSql.Setup
-import Database.YamSql
 
 -- | Assuming that CASCADE will only cause other constraints to be deleted
 -- | Required since foreign keys may depend on other keys

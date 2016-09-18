@@ -2,7 +2,7 @@
 --
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
-{-# LANGUAGE OverloadedStrings #-}
+module Main where
 
 import Control.Monad (void, when)
 import Data.List
@@ -13,9 +13,6 @@ import Network.URI
 import Options.Applicative (execParser)
 
 import Database.HamSql
-import Database.HamSql.Internal.DbUtils
-import Database.HamSql.Internal.Stmt
-import Database.HamSql.Internal.Utils
 import Database.HamSql.SqlStmt
 import Database.YamSql
 
@@ -85,5 +82,5 @@ useSqlStmts optCommon optDb unfilteredStmts
       | otherwise =
         warnOnDiff
           [ x
-          | x <- unfilteredStmts
+          | x <- unfilteredStmts 
           , not $ stmtRequiresPermitDeletion x ]

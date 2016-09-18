@@ -4,7 +4,7 @@
 -- Some rights reserved. See COPYING, AUTHORS.
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE OverloadedStrings #-}
+
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
@@ -62,10 +62,10 @@ data Schema = Schema
   } deriving (Generic, Show, Data)
 
 instance FromJSON Schema where
-  parseJSON = strictParseYaml
+  parseJSON = parseYamSql
 
 instance ToJSON Schema where
-  toJSON = genericToJSON myOpt
+  toJSON = toYamSqlJson
 
 instance ToSqlIdPart Schema where
     sqlIdPart = schemaName
