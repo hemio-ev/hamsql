@@ -86,13 +86,14 @@ import Database.HamSql.Internal.DbUtils
 import Database.HamSql.Internal.InquireDeployed
 import Database.HamSql.Internal.Option
 import Database.HamSql.Internal.Stmt
+import Database.HamSql.Internal.Stmt.Create
 import Database.HamSql.Internal.Stmt.Domain
+import Database.HamSql.Internal.Stmt.Drop
 import Database.HamSql.Internal.Stmt.Function
 import Database.HamSql.Internal.Stmt.Sequence
 import Database.HamSql.Internal.Stmt.Table
 import Database.HamSql.Internal.Utils
 import Database.HamSql.Setup
-import Database.HamSql.SqlStmt
 import Database.YamSql
 
 sqlErrInvalidFunctionDefinition :: B.ByteString

@@ -13,7 +13,6 @@ import Network.URI
 import Options.Applicative (execParser)
 
 import Database.HamSql
-import Database.HamSql.SqlStmt
 import Database.YamSql
 
 main :: IO ()

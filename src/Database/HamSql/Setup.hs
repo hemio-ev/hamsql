@@ -6,7 +6,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
-
 {-# LANGUAGE GADTs #-}
 
 module Database.HamSql.Setup where
@@ -34,9 +33,7 @@ instance ToSqlStmts SetupElement where
 class (Typeable a) => ToSqlStmts a where
     toSqlStmts :: SetupContext -> a -> [SqlStmt]
 
-
-
--- Setup --
+-- | Setup
 data Setup = Setup
   { setupSchemas :: [SqlName]
   , setupSchemaDirs :: [FilePath]
@@ -55,7 +52,7 @@ instance ToJSON Setup where
 setupRolePrefix' :: Setup -> SqlName
 setupRolePrefix' setup = fromMaybe (SqlName "yamsql_") (setupRolePrefix setup)
 
--- Template handling and applyTemplate
+-- | Template handling and applyTemplate
 data WithSchema a =
   WithSchema Schema
              a
@@ -73,7 +70,6 @@ instance WithName (WithSchema FunctionTpl) where
 withoutSchema :: WithSchema a -> a
 withoutSchema (WithSchema _ t) = t
 
---selectTemplates :: (WithName t) => Maybe [SqlName] -> [WithSchema t] -> [t]
 selectTemplates :: (ToSqlCode a, WithName (WithSchema t)) =>
                          Maybe [a] -> [WithSchema t] -> [t]
 selectTemplates ns ts

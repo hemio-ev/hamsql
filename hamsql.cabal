@@ -31,7 +31,6 @@ library
   exposed-modules:
     Database.HamSql
     Database.HamSql.Setup
-    Database.HamSql.SqlStmt
     Database.YamSql
     Database.YamSql.Parser
 

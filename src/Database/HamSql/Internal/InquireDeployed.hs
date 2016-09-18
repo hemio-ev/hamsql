@@ -2,9 +2,6 @@
 --
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-
 module Database.HamSql.Internal.InquireDeployed where
 
 import Database.PostgreSQL.Simple
