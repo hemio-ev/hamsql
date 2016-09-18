@@ -1,34 +1,50 @@
-update-and-build: update build doc
+update-and-build: update build
 
 update:
 	cabal update
 	cabal sandbox init
 	cabal install --force-reinstalls --only-dependencies --disable-optimization
-	cabal configure --disable-optimization --enable-coverage
+
+test:
+	cabal clean
+	cabal configure --disable-optimization --enable-coverage --enable-tests
+	#cabal build --ghc-options="-Wall -fwarn-incomplete-record-updates -fno-warn-orphans"
+	#cabal build
+	cabal test --show-details direct
+
+doc:
+	cabal haddock --executables
 
 build:
+	cabal configure --disable-optimization
 	cabal build --ghc-options="-Wall -fwarn-incomplete-record-updates -fno-warn-orphans"
 
 install:
 	cp dist/build/hamsql/hamsql /usr/local/bin/ 
 
-clean:
+# ununsual options
+
+dev-clean:
 	cabal clean
 	find src/ \( -name '*.hi' -or -name '*.o' \) -exec rm {} ';'
 
-build-without-dep:
+dev-build-without-dep:
 	cabal sandbox init
 	cabal install frontmatter
 	cabal configure --disable-optimization
 	cabal build
 
-build-wall:
+dev-rebuild:
+	cabal clean
 	cabal configure --disable-optimization
 	cabal build --ghc-options="-fforce-recomp -Wall -fwarn-incomplete-record-updates -fno-warn-orphans"
 
-build-optim:
+dev-build-optim:
 	cabal configure --enable-optimization
 	cabal build --ghc-options="-fforce-recomp"
+
+dev-modules:
+	find src/ -name '*.hs' -printf '%P\n' | sed -e 's/\.hs//' -e 's/\//\./g'
 
 dev-package-status:
 	dpkg-query -l \
@@ -44,11 +60,3 @@ dev-package-status:
 	 libghc-unordered-containers-dev \
 	 libghc-yaml-dev
 
-doc:
-	cabal haddock --executables
-
-test:
-	make -C tests
-	-rm -r tests/coverage
-	hpc report tests/hamsql.tix --hpcdir dist/hpc/dyn/mix/hamsql
-	hpc markup tests/hamsql.tix --hpcdir dist/hpc/dyn/mix/hamsql/ --destdir=tests/coverage --verbosity=0

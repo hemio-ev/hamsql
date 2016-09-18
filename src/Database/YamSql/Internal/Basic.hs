@@ -20,7 +20,6 @@ module Database.YamSql.Internal.Basic
   , FromJSON(..)
   , Generic(..)
   , Data(..)
-  
   ) where
 
 import Control.Exception

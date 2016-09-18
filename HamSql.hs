@@ -85,5 +85,5 @@ useSqlStmts optCommon optDb unfilteredStmts
       | otherwise =
         warnOnDiff
           [ x
-          | x <- unfilteredStmts 
+          | x <- unfilteredStmts
           , not $ stmtRequiresPermitDeletion x ]

@@ -212,7 +212,7 @@ addSqlStmtType t = map (Just . SqlStmtId t . sqlId)
 filterSqlStmtType :: SqlStmtType -> [SqlStmt] -> [SqlStmt]
 filterSqlStmtType t xs =
   [ x
-  | x <- xs 
+  | x <- xs
   , stmtIdType x == Just t ]
 
 removeStmtsMatchingIds
@@ -221,7 +221,7 @@ removeStmtsMatchingIds
   -> [SqlStmt]
 removeStmtsMatchingIds ids stmts =
   [ stmt
-  | stmt <- stmts 
+  | stmt <- stmts
   , stmtId stmt `notElem` ids ]
 
 removeSqlIdBySqlStmts
@@ -229,7 +229,7 @@ removeSqlIdBySqlStmts
   => SqlStmtType -> [SqlStmt] -> [a] -> [a]
 removeSqlIdBySqlStmts t xs is =
   [ x
-  | x <- is 
+  | x <- is
   , sqlId x `notElem` ids ]
   where
     ids = map sqlId $ filterSqlStmtType t xs

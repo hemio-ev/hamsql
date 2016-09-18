@@ -12,7 +12,7 @@ import qualified Data.Text as T
 import Database.PostgreSQL.Simple.FromField
 
 import Database.HamSql.Internal.Utils
-import Database.YamSql.Internal.Basic
+import Database.YamSql
 
 data SqlStmtId = SqlStmtId
   { stmtType :: SqlStmtType
@@ -72,14 +72,10 @@ sqlPrinter :: [SqlStmt] -> Text
 sqlPrinter xs = T.concat $ map toSqlCode xs
 
 instance FromField SqlType where
-  fromField x y = do
-    typeName <- fromField x y
-    return $ SqlType (typeName :: Text)
+  fromField x y = SqlType <$> fromField x y
 
 instance FromField SqlName where
-  fromField x y = do
-    typeName <- fromField x y
-    return $ SqlName (typeName :: Text)
+  fromField x y = SqlName <$> fromField x y
 
 -- | More like always perform unfiltered after delete
 allowInUpgrade :: SqlStmt -> Bool
