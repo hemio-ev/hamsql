@@ -11,8 +11,6 @@ module Database.YamSql.Internal.Trigger where
 import Database.YamSql.Internal.Basic
 import Database.YamSql.Internal.Commons
 
-import Database.YamSql.Internal.Function
-
 data Trigger = Trigger
   { triggerName :: SqlName
   , triggerDescription :: Text

@@ -11,7 +11,6 @@ import Data.Maybe
 import qualified Data.Text as T
 
 --import Database.HamSql
-import Database.HamSql.Internal.Option
 import Database.HamSql.Internal.Stmt
 import Database.HamSql.Internal.Stmt.Commons
 import Database.HamSql.Setup

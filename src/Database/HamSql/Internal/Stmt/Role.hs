@@ -7,8 +7,6 @@
 
 module Database.HamSql.Internal.Stmt.Role where
 
---import Database.HamSql
-import Database.HamSql.Internal.Option
 import Database.HamSql.Internal.Stmt
 import Database.HamSql.Internal.Stmt.Commons
 import Database.HamSql.Setup

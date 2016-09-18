@@ -32,7 +32,6 @@ import Data.Char
 import Data.Data
 import Data.HashMap.Strict (keys)
 import Data.List
-import Data.Maybe (fromJust, fromMaybe)
 import qualified Data.Text as T
 import Data.Yaml
 import GHC.Generics

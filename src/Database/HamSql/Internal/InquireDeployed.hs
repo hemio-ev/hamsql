@@ -10,12 +10,8 @@ module Database.HamSql.Internal.InquireDeployed where
 
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.Types (PGArray(..), fromPGArray)
-import Network.URI (URI, parseAbsoluteURI, uriToString)
 
 import Database.HamSql.Internal.DbUtils
-import Database.HamSql.Internal.Option
-import Database.HamSql.Internal.Stmt
-import Database.HamSql.SqlStmt
 import Database.YamSql
 
 sqlManageSchemaJoin :: Text -> Text
@@ -104,9 +100,9 @@ deployedTypeIds conn = do
     toSqlCodeId (schema, t) = SqlIdContentSqo "TYPE" $ schema <.> t
 
 -- ids for all roles on the server prefixed with `prefix`
-deployedRoleIds :: URI -> Text -> IO [SqlIdContentObj]
-deployedRoleIds url prefix = do
-  conn <- pgsqlConnectUrl url
+-- TODO: Fix this
+deployedRoleIds :: Connection -> Text -> IO [SqlIdContentObj]
+deployedRoleIds conn prefix = do
   roles <-
     query conn "SELECT rolname FROM pg_roles WHERE rolname LIKE ?" $
     Only $ prefix <> "%"

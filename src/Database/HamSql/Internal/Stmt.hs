@@ -8,7 +8,6 @@
 --{-# LANGUAGE FlexibleInstances #-}
 module Database.HamSql.Internal.Stmt where
 
-import Data.Text (Text)
 import qualified Data.Text as T
 import Database.PostgreSQL.Simple.FromField
 

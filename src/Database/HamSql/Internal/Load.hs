@@ -20,7 +20,7 @@ import System.Directory
        (doesDirectoryExist, doesFileExist, getDirectoryContents)
 
 import System.FilePath.Posix
-       (combine, dropFileName, takeExtension, takeFileName)
+       (combine, dropFileName, takeFileName)
 
 import Database.HamSql.Internal.Option
 import Database.HamSql.Internal.Utils

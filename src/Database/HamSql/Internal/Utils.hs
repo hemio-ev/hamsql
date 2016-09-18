@@ -10,8 +10,6 @@ module Database.HamSql.Internal.Utils
   , (<>)
   ) where
 
-import Control.Monad
-import Data.Char
 import Data.List (group, intercalate, sort)
 import Data.Monoid ((<>))
 import Data.Text (Text, pack)

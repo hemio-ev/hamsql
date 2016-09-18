@@ -26,8 +26,8 @@ module Database.YamSql.Internal.Schema
   ) where
 
 import Database.YamSql.Internal.Basic
+
 import Database.YamSql.Internal.Check
-import Database.YamSql.Internal.Commons
 import Database.YamSql.Internal.Domain
 import Database.YamSql.Internal.Function
 import Database.YamSql.Internal.Role

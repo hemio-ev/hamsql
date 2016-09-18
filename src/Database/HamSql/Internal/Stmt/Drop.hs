@@ -6,8 +6,6 @@
 
 module Database.HamSql.Internal.Stmt.Drop where
 
-import qualified Data.Text as T
-
 import Database.HamSql.Internal.Stmt
 import Database.YamSql
 

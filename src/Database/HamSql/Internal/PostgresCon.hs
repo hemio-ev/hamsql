@@ -77,17 +77,11 @@ module Database.HamSql.Internal.PostgresCon where
 import Control.Exception
 import Control.Monad (void, when)
 import qualified Data.ByteString.Char8 as B
-import Data.List
 import Data.Maybe
-import Data.String
-import qualified Data.Text as T
-import Data.Text.Encoding (decodeUtf8)
-import qualified Data.Text.IO as TIO
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.Transaction
-import Database.PostgreSQL.Simple.Types (PGArray(..), fromPGArray)
 
-import Network.URI (URI, parseAbsoluteURI, uriToString)
+import Network.URI (URI)
 
 import Database.HamSql.Internal.DbUtils
 import Database.HamSql.Internal.InquireDeployed

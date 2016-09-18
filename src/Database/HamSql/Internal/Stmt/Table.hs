@@ -9,8 +9,6 @@ module Database.HamSql.Internal.Stmt.Table where
 
 import qualified Data.Text as T
 
---import Database.HamSql
-import Database.HamSql.Internal.Option
 import Database.HamSql.Internal.Stmt
 import Database.HamSql.Internal.Stmt.Commons
 import Database.HamSql.Internal.Stmt.Sequence

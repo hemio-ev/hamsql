@@ -7,7 +7,7 @@ update:
 	cabal configure --disable-optimization --enable-coverage
 
 build:
-	cabal build --ghc-options="-Wall -fwarn-incomplete-record-updates -fno-warn-unused-imports -fno-warn-orphans"
+	cabal build --ghc-options="-Wall -fwarn-incomplete-record-updates -fno-warn-orphans"
 
 install:
 	cp dist/build/hamsql/hamsql /usr/local/bin/ 
@@ -24,7 +24,7 @@ build-without-dep:
 
 build-wall:
 	cabal configure --disable-optimization
-	cabal build --ghc-options="-fforce-recomp -Wall -fwarn-incomplete-record-updates -fno-warn-unused-imports -fno-warn-orphans"
+	cabal build --ghc-options="-fforce-recomp -Wall -fwarn-incomplete-record-updates -fno-warn-orphans"
 
 build-optim:
 	cabal configure --enable-optimization
