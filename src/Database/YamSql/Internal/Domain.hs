@@ -23,4 +23,4 @@ instance ToJSON Domain where
 
 instance ToSqlIdPart Domain where
   sqlIdPart = domainName
-  sqlIdPartType _ = "DOMAIN"
+  sqlIdPartType = const "DOMAIN"

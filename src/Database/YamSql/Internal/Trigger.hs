@@ -31,4 +31,4 @@ instance ToJSON Trigger where
 
 instance ToSqlIdPart Trigger where
   sqlIdPart = triggerName
-  sqlIdPartType _ = "TRIGGER"
+  sqlIdPartType = const "TRIGGER"

@@ -69,7 +69,7 @@ instance ToJSON Schema where
 
 instance ToSqlIdPart Schema where
     sqlIdPart = schemaName
-    sqlIdPartType _ = "SCHEMA"
+    sqlIdPartType = const "SCHEMA"
 
 data SqlContextObj a where
    SqlContextObj  :: ToSqlIdPart a => {

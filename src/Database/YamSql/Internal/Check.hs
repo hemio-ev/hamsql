@@ -24,4 +24,4 @@ instance ToJSON Check where
 -- TODO clearify if this is useful for uniqueness
 instance ToSqlIdPart Check where
   sqlIdPart = checkName
-  sqlIdPartType _ = "CHECK"
+  sqlIdPartType = const "CHECK"

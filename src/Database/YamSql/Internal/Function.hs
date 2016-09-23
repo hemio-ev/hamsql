@@ -52,7 +52,7 @@ instance ToJSON Function where
 
 instance ToSqlIdPart Function where
   sqlIdPart = functionName
-  sqlIdPartType _ = "FUNCTION"
+  sqlIdPartType = const "FUNCTION"
 
 instance ToSqlIdPartArgs Function where
   sqlIdPartArgs x = maybeMap variableType $ functionParameters x

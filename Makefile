@@ -1,8 +1,8 @@
 update-and-build: update build
 
 update:
-	cabal update
 	cabal sandbox init
+	cabal update
 	cabal install -ffast --allow-newer --force-reinstalls --only-dependencies --disable-optimization
 
 test:

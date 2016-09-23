@@ -31,7 +31,7 @@ instance ToJSON Table where
 
 instance ToSqlIdPart Table where
   sqlIdPart = tableName
-  sqlIdPartType _ = "TABLE"
+  sqlIdPartType = const "TABLE"
 
 data TableTpl = TableTpl
   { tabletplTemplate :: SqlName
@@ -73,7 +73,7 @@ instance ToJSON Column where
 
 instance ToSqlIdPart Column where
   sqlIdPart = columnName
-  sqlIdPartType _ = "COLUMN"
+  sqlIdPartType = const "COLUMN"
 
 applyTableTpl :: TableTpl -> Table -> Table
 applyTableTpl tpl t =

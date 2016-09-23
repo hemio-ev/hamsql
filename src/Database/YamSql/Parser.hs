@@ -17,7 +17,7 @@ module Database.YamSql.Parser
 
 import Control.Exception
 import Data.Aeson.Types
-       (GFromJSON(..), Options(..), defaultOptions, genericParseJSON,
+       (GFromJSON, GToJSON, Options(..), defaultOptions, genericParseJSON,
         genericToJSON, Zero)
 
 import Data.Char
@@ -82,7 +82,8 @@ parseYamSql xs = do
     keysOfValue (Object ys) = map T.unpack $ keys ys
     keysOfValue _ = err "HAMSQL-UNEXPECTED 3"
 
-toYamSqlJson = toYamSqlJson
+toYamSqlJson :: (Generic a, GToJSON Zero (Rep a)) => a -> Value
+toYamSqlJson = genericToJSON myOpt
 
 data YamsqlException =
   YamsqlException Text

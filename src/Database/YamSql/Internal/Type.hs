@@ -34,4 +34,4 @@ instance ToJSON TypeElement where
 
 instance ToSqlIdPart Type where
   sqlIdPart = typeName
-  sqlIdPartType _ = "TYPE"
+  sqlIdPartType = const "TYPE"

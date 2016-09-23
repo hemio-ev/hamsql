@@ -25,4 +25,4 @@ instance ToJSON Sequence where
 
 instance ToSqlIdPart Sequence where
   sqlIdPart = sequenceName
-  sqlIdPartType _ = "SEQUENCE"
+  sqlIdPartType = const "SEQUENCE"
