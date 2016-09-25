@@ -8,27 +8,28 @@ module Database.HamSql.Internal.Stmt.Role where
 
 import Database.HamSql.Internal.Stmt.Basic
 
-instance ToSqlStmts (SqlContextObj Role) where
-  toSqlStmts = stmtsDeployRole
+stmtsDropRole :: Setup -> SqlIdContentObj -> [SqlStmt]
+stmtsDropRole setup role =
+  [newSqlStmt SqlDropRole role $ "DROP ROLE " <> prefixedRole setup (sqlObjId role)]
 
-stmtsDeployRole :: SetupContext -> SqlContextObj Role -> [SqlStmt]
-stmtsDeployRole SetupContext {setupContextSetup = setup} obj@SqlContextObj {sqlObjectObject = r} =
-  newSqlStmt SqlCreateRole obj sqlCreateRole :
-  stmtCommentOn
-    "ROLE"
-    --(setupRolePrefix' setup // roleName r)
-    obj -- TODO: THIS IS WRONG.
-    (roleDescription r) :
-  maybeMap sqlRoleMembership (roleMemberIn r)
-  where
-    sqlCreateRole =
-      "CREATE ROLE" <-> prefix (roleName r) <-> sqlLogin (roleLogin r) <->
-      sqlPassword (rolePassword r)
-    sqlRoleMembership group =
-      newSqlStmt SqlRoleMembership obj $
-      "GRANT" <-> prefix group <-> "TO" <-> prefix (roleName r)
-    sqlLogin (Just True) = "LOGIN"
-    sqlLogin _ = "NOLOGIN"
-    sqlPassword Nothing = ""
-    sqlPassword (Just p) = "ENCRYPTED PASSWORD '" <> p <> "' "
-    prefix role = prefixedRole setup role
+instance ToSqlStmts (SqlContextObj Role) where
+  toSqlStmts SetupContext {setupContextSetup = setup} obj@SqlContextObj {sqlObjectObject = r} =
+    newSqlStmt SqlCreateRole obj sqlCreateRole :
+    stmtCommentOn
+      "ROLE"
+      --(setupRolePrefix' setup // roleName r)
+      obj -- TODO: THIS IS WRONG.
+      (roleDescription r) :
+    maybeMap sqlRoleMembership (roleMemberIn r)
+    where
+      sqlCreateRole =
+        "CREATE ROLE" <-> prefix (roleName r) <-> sqlLogin (roleLogin r) <->
+        sqlPassword (rolePassword r)
+      sqlRoleMembership group =
+        newSqlStmt SqlRoleMembership obj $
+        "GRANT" <-> prefix group <-> "TO" <-> prefix (roleName r)
+      sqlLogin (Just True) = "LOGIN"
+      sqlLogin _ = "NOLOGIN"
+      sqlPassword Nothing = ""
+      sqlPassword (Just p) = "ENCRYPTED PASSWORD '" <> p <> "' "
+      prefix role = prefixedRole setup role

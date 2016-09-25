@@ -92,6 +92,7 @@ import Database.HamSql.Internal.Stmt.Drop
 import Database.HamSql.Internal.Stmt.Function
 import Database.HamSql.Internal.Stmt.Sequence
 import Database.HamSql.Internal.Stmt.Table
+import Database.HamSql.Internal.Stmt.Role
 import Database.HamSql.Internal.Utils
 import Database.HamSql.Setup
 import Database.YamSql
@@ -110,13 +111,14 @@ pgsqlDeleteAllStmt conn = do
     (concatMap stmtsDropDomainConstr domainConstrs ++
      concatMap stmtsDropTableConstr tableConstrs)
 
-pgsqlUpdateFragile :: t -> Connection -> [SqlStmt] -> IO [SqlStmt]
-pgsqlUpdateFragile _ conn stmts =
+pgsqlUpdateFragile :: Setup -> Connection -> [SqlStmt] -> IO [SqlStmt]
+pgsqlUpdateFragile setup conn stmts =
   correctStmts SqlCreateDomain deployedDomainIds stmtsDropDomain stmts >>=
   correctStmts SqlCreateTable deployedTableIds stmtsDropTable >>=
   correctStmts SqlAddColumn deployedTableColumnIds stmtsDropTableColumn >>=
   correctStmts SqlCreateSequence deployedSequenceIds stmtsDropSequence >>=
-  dropResidual SqlCreateFunction deployedFunctionIds stmtsDropFunction
+  dropResidual SqlCreateFunction deployedFunctionIds stmtsDropFunction >>=
+  dropResidual SqlCreateRole (deployedRoleIds setup) (stmtsDropRole setup)
   where
     correctStmts
       :: ToSqlId a
@@ -166,7 +168,8 @@ pgsqlExecStmtList Changed [] failed conn =
   void $ pgsqlExecStmtList Unchanged failed [] conn
 pgsqlExecStmtList status (x:xs) failed conn = do
   savepoint <- newSavepoint conn
-  tryExec savepoint `catch` handleSqlError savepoint `catch` handleQueryError savepoint
+  tryExec savepoint `catch` handleSqlError savepoint `catch`
+    handleQueryError savepoint
   where
     tryExec savepoint = do
       logStmt $
@@ -197,9 +200,9 @@ pgsqlExecStmtList status (x:xs) failed conn = do
 pgsqlExecIntern :: PgSqlMode -> URI -> [SqlStmt] -> IO Connection
 pgsqlExecIntern mode connUrl xs = do
   conn <- pgsqlConnectUrl connUrl
-  when (mode == PgSqlWithTransaction) $
-    do begin conn
-       pgsqlExecStmtList Init xs [] conn
+  when (mode == PgSqlWithTransaction) $ do
+    begin conn
+    pgsqlExecStmtList Init xs [] conn
   when (mode == PgSqlWithoutTransaction) $ mapM_ (pgsqlExecStmtHandled conn) xs
   return conn
 
@@ -211,27 +214,19 @@ addSqlStmtType
 addSqlStmtType t = map (Just . SqlStmtId t . sqlId)
 
 filterSqlStmtType :: SqlStmtType -> [SqlStmt] -> [SqlStmt]
-filterSqlStmtType t xs =
-  [ x
-  | x <- xs
-  , stmtIdType x == Just t ]
+filterSqlStmtType t xs = [x | x <- xs, stmtIdType x == Just t]
 
 removeStmtsMatchingIds
   :: [Maybe SqlStmtId] -- ^ Statement ids to remove
   -> [SqlStmt]
   -> [SqlStmt]
 removeStmtsMatchingIds ids stmts =
-  [ stmt
-  | stmt <- stmts
-  , stmtId stmt `notElem` ids ]
+  [stmt | stmt <- stmts, stmtId stmt `notElem` ids]
 
 removeSqlIdBySqlStmts
   :: ToSqlId a
   => SqlStmtType -> [SqlStmt] -> [a] -> [a]
-removeSqlIdBySqlStmts t xs is =
-  [ x
-  | x <- is
-  , sqlId x `notElem` ids ]
+removeSqlIdBySqlStmts t xs is = [x | x <- is, sqlId x `notElem` ids]
   where
     ids = map sqlId $ filterSqlStmtType t xs
 

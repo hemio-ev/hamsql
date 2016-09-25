@@ -57,10 +57,12 @@ parserCommand =
           (progDesc "Produces a documentation of the setup.")))
 
 parserCmdInstall :: Parser Command
-parserCmdInstall = Install <$> parserOptCommon <*> parserOptCommonDb <*> parserOptInstall
+parserCmdInstall =
+  Install <$> parserOptCommon <*> parserOptCommonDb <*> parserOptInstall
 
 parserCmdUpgrade :: Parser Command
-parserCmdUpgrade = Upgrade <$> parserOptCommon <*> parserOptCommonDb <*> parserOptUpgrade
+parserCmdUpgrade =
+  Upgrade <$> parserOptCommon <*> parserOptCommonDb <*> parserOptUpgrade
 
 parserCmdDoc :: Parser Command
 parserCmdDoc = Doc <$> parserOptCommon <*> parserOptDoc

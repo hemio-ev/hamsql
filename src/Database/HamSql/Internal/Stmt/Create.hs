@@ -29,7 +29,8 @@ fa source schema =
   toElemList SqlContextSqo schemaTypes schema ++
   concat
     [ map (toSetupElement . SqlContextSqoObj schema table) $ tableColumns table
-    | table <- maybeList $ schemaTables schema ]
+    | table <- maybeList $ schemaTables schema
+    ]
   where
     toSetupElement x = SetupElement x source
     toElemList x y = map (toSetupElement . x schema) . maybeList . y

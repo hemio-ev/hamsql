@@ -37,7 +37,7 @@ class (Typeable a) => ToSqlStmts a where
 data Setup = Setup
   { setupSchemas :: [SqlName]
   , setupSchemaDirs :: [FilePath]
-  , setupRolePrefix :: Maybe SqlName
+  , setupRolePrefix :: Maybe Text
   , setupPreCode :: Maybe Text
   , setupPostCode :: Maybe Text
   , setupSchemaData :: Maybe [Schema]
@@ -49,8 +49,8 @@ instance FromJSON Setup where
 instance ToJSON Setup where
   toJSON = toYamSqlJson
 
-setupRolePrefix' :: Setup -> SqlName
-setupRolePrefix' setup = fromMaybe (SqlName "yamsql_") (setupRolePrefix setup)
+setupRolePrefix' :: Setup -> Text
+setupRolePrefix' setup = fromMaybe "yamsql_" (setupRolePrefix setup)
 
 -- | Template handling and applyTemplate
 data WithSchema a =

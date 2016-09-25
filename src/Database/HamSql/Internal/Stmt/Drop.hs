@@ -6,11 +6,7 @@ module Database.HamSql.Internal.Stmt.Drop where
 
 import Database.HamSql.Internal.Stmt.Basic
 
---import Database.HamSql
--- ROLE
-stmtsDropRole :: SqlIdContentObj -> [SqlStmt]
-stmtsDropRole role =
-  [newSqlStmt SqlDropRole role $ "DROP ROLE " <> toSqlCode role]
+
 
 -- TABLE
 stmtsDropTable :: SqlIdContentSqo -> [SqlStmt]

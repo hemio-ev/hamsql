@@ -1,13 +1,15 @@
 import psycopg2
 import subprocess
 import time
+import os.path
 
 dburl = "postgres://postgres@/hamsql-test"
 
 def run(cmd, setup, delete_db=False, capture=False, args=[]):
     global dburl
     settings = {}
-    params = ['hamsql', cmd, '-s', setup] 
+    path = os.path.dirname(__file__) + '/../dist/build/hamsql/hamsql'
+    params = [path, cmd, '-s', setup]
     
     if cmd != 'doc':
         params += ['-c', dburl]

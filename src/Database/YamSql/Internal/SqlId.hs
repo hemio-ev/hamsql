@@ -32,6 +32,11 @@ class Show a =>
   sqlIdPart :: a -> SqlName
   sqlIdPartType :: a -> SqlContextObjType
 
+class ToSqlObjId a  where
+  sqlObjId :: a -> SqlName
+  sqlObjIdCode :: a -> Text
+  sqlObjIdCode = toSqlCode . sqlObjId
+
 class ToSqlSqoId a  where
   sqlSqoId :: a -> SqlName
   sqlSqoIdCode :: a -> Text
@@ -42,7 +47,7 @@ class ToSqlSqoObjId a  where
   sqlSqoObjIdCode :: a -> Text
   sqlSqoObjIdCode = toSqlCode . sqlSqoObjId
 
--- | Strings like "TABLE"
+-- | Strings like /TABLE/
 type SqlContextObjType = String
 
 class ToSqlIdPartArgs a  where
@@ -86,6 +91,9 @@ instance ToSqlId SqlIdContentObj where
 
 instance ToSqlCode SqlIdContentObj where
   toSqlCode (SqlIdContentObj _ x) = toSqlCode x
+  
+instance ToSqlObjId SqlIdContentObj where
+  sqlObjId (SqlIdContentObj _ x) = x
 
 -- | TABLE
 data SqlIdContentSqo =

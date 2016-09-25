@@ -17,4 +17,4 @@ stmtCommentOn on obj com =
   "COMMENT ON " <> on <> " " <> sqlIdCode obj <> " IS " <> toSqlCodeString com
 
 prefixedRole :: Setup -> SqlName -> Text
-prefixedRole setup role = toSqlCode (setupRolePrefix' setup // role)
+prefixedRole setup role = toSqlCode ((SqlName $ setupRolePrefix' setup) // role)

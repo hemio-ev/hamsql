@@ -44,12 +44,12 @@ run (Install optCommon optDb optInstall)
     statements <- pgsqlGetFullStatements optCommon optDb setup
     useSqlStmts optCommon optDb (sort statements)
 -- Upgrade
-run (Upgrade optCommon optDb optUpgrade) = do
+run (Upgrade optCommon optDb _) = do
   setup <- loadSetup optCommon (optSetup optCommon)
   conn <- pgsqlConnectUrl (getConUrl optDb)
   deleteStmts <- pgsqlDeleteAllStmt conn
   createStmts <- pgsqlGetFullStatements optCommon optDb setup
-  fragile <- pgsqlUpdateFragile optUpgrade conn createStmts
+  fragile <- pgsqlUpdateFragile setup conn createStmts
   let stmts = sort deleteStmts ++ Data.List.filter allowInUpgrade (sort fragile)
   useSqlStmts optCommon optDb stmts
 -- Doc

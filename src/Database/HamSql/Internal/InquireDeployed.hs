@@ -10,6 +10,7 @@ import Database.PostgreSQL.Simple.Types (PGArray (..), fromPGArray)
 
 import Database.HamSql.Internal.DbUtils
 import Database.HamSql.Internal.Utils
+import Database.HamSql.Setup
 import Database.YamSql
 
 sqlManageSchemaJoin :: Text -> Text
@@ -97,21 +98,19 @@ deployedTypeIds conn = do
   where
     toSqlCodeId (schema, t) = SqlIdContentSqo "TYPE" $ schema <.> t
 
--- ids for all roles on the server prefixed with `prefix`
--- TODO: Fix this
-deployedRoleIds :: Connection -> Text -> IO [SqlIdContentObj]
-deployedRoleIds conn prefix = do
+deployedRoleIds :: Setup -> Connection -> IO [SqlIdContentObj]
+deployedRoleIds setup conn = do
   roles <-
     query conn "SELECT rolname FROM pg_roles WHERE rolname LIKE ?" $
     Only $ prefix <> "%"
   return $ map toSqlCodeId roles
   where
+    prefix = setupRolePrefix' setup
     unprefixed =
       fromJustReason "Retrived role without prefix from database" .
       stripPrefix prefix
     toSqlCodeId (Only role) = SqlIdContentObj "ROLE" (SqlName $ unprefixed role)
 
--- TODO: REMOVE PREFIX HERE
 deployedDomainIds :: Connection -> IO [SqlIdContentSqo]
 deployedDomainIds conn = do
   domains <-
