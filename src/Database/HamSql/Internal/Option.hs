@@ -67,9 +67,9 @@ parserCmdDoc = Doc <$> parserOptCommon <*> parserOptDoc
 
 -- Commons
 data OptCommon = OptCommon
-  { optSetup :: FilePath
+  { optSetup   :: FilePath
   , optVerbose :: Bool
-  , optDebug :: Bool
+  , optDebug   :: Bool
   } deriving (Show)
 
 parserOptCommon :: Parser OptCommon
@@ -84,9 +84,9 @@ parserOptCommon =
 
 -- Commons Execute
 data OptCommonDb = OptCommonDb
-  { optEmulate :: Bool
-  , optPrint :: Bool
-  , optConnection :: String
+  { optEmulate            :: Bool
+  , optPrint              :: Bool
+  , optConnection         :: String
   , optPermitDataDeletion :: Bool
   } deriving (Show)
 
@@ -125,7 +125,7 @@ parserOptUpgrade =
 -- Command Doc
 data OptDoc = OptDoc
   { optOutputDir :: FilePath
-  , optTemplate :: FilePath
+  , optTemplate  :: FilePath
   } deriving (Show)
 
 parserOptDoc :: Parser OptDoc

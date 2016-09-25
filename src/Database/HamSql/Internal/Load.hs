@@ -7,15 +7,15 @@ module Database.HamSql.Internal.Load where
 import Control.Exception
 import Control.Monad
 
-import qualified Data.ByteString as B
-import Data.Char
-import Data.Frontmatter
-import Data.List
-import qualified Data.Text as T
-import Data.Text.Encoding (decodeUtf8)
-import Data.Yaml
-import System.Directory
-       (doesDirectoryExist, doesFileExist, getDirectoryContents)
+import qualified Data.ByteString    as B
+import           Data.Char
+import           Data.Frontmatter
+import           Data.List
+import qualified Data.Text          as T
+import           Data.Text.Encoding (decodeUtf8)
+import           Data.Yaml
+import           System.Directory   (doesDirectoryExist, doesFileExist,
+                                     getDirectoryContents)
 
 import System.FilePath.Posix (combine, dropFileName, takeFileName)
 

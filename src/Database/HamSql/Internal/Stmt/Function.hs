@@ -6,8 +6,8 @@
 
 module Database.HamSql.Internal.Stmt.Function where
 
-import Data.Maybe
-import qualified Data.Text as T
+import           Data.Maybe
+import qualified Data.Text  as T
 
 import Database.HamSql.Internal.Stmt.Basic
 

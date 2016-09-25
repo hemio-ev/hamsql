@@ -2,18 +2,18 @@
 --
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Database.HamSql.Internal.DbUtils where
 
-import Control.Exception
-import qualified Data.ByteString.Char8 as B
-import Data.String
-import qualified Data.Text as T
-import Data.Text.Encoding (decodeUtf8)
-import Database.PostgreSQL.Simple
-import Network.URI (URI, parseAbsoluteURI, uriToString)
+import           Control.Exception
+import qualified Data.ByteString.Char8      as B
+import           Data.String
+import qualified Data.Text                  as T
+import           Data.Text.Encoding         (decodeUtf8)
+import           Database.PostgreSQL.Simple
+import           Network.URI                (URI, parseAbsoluteURI, uriToString)
 
 import Database.HamSql.Internal.Option
 import Database.HamSql.Internal.Stmt

@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveGeneric      #-}
 
 module Database.YamSql.Internal.Domain where
 
@@ -8,11 +8,11 @@ import Database.YamSql.Internal.Check
 
 -- Domains --
 data Domain = Domain
-  { domainName :: SqlName
+  { domainName        :: SqlName
   , domainDescription :: Text
-  , domainType :: SqlType
-  , domainDefault :: Maybe Text
-  , domainChecks :: Maybe [Check]
+  , domainType        :: SqlType
+  , domainDefault     :: Maybe Text
+  , domainChecks      :: Maybe [Check]
   } deriving (Generic, Show, Data)
 
 instance FromJSON Domain where

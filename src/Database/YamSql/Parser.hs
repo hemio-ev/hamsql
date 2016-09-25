@@ -82,7 +82,9 @@ parseYamSql xs = do
     keysOfValue (Object ys) = map T.unpack $ keys ys
     keysOfValue _ = err "HAMSQL-UNEXPECTED 3"
 
-toYamSqlJson :: (Generic a, GToJSON Zero (Rep a)) => a -> Value
+toYamSqlJson
+  :: (Generic a, GToJSON Zero (Rep a))
+  => a -> Value
 toYamSqlJson = genericToJSON myOpt
 
 data YamsqlException =

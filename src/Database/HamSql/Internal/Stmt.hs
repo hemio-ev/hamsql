@@ -7,14 +7,14 @@
 --{-# LANGUAGE FlexibleInstances #-}
 module Database.HamSql.Internal.Stmt where
 
-import qualified Data.Text as T
-import Database.PostgreSQL.Simple.FromField
+import qualified Data.Text                            as T
+import           Database.PostgreSQL.Simple.FromField
 
 import Database.HamSql.Internal.Utils
 import Database.YamSql
 
 data SqlStmtId = SqlStmtId
-  { stmtType :: SqlStmtType
+  { stmtType  :: SqlStmtType
   , stmtSqlId :: SqlId
   } deriving (Eq, Ord)
 

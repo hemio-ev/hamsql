@@ -2,7 +2,7 @@
 --
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 {-|
@@ -73,12 +73,12 @@ Properties all via ALTER SEQUENCE.
 -}
 module Database.HamSql.Internal.PostgresCon where
 
-import Control.Exception
-import Control.Monad (void, when)
-import qualified Data.ByteString.Char8 as B
-import Data.Maybe
-import Database.PostgreSQL.Simple
-import Database.PostgreSQL.Simple.Transaction
+import           Control.Exception
+import           Control.Monad                          (void, when)
+import qualified Data.ByteString.Char8                  as B
+import           Data.Maybe
+import           Database.PostgreSQL.Simple
+import           Database.PostgreSQL.Simple.Transaction
 
 import Network.URI (URI)
 
@@ -213,7 +213,7 @@ addSqlStmtType t = map (Just . SqlStmtId t . sqlId)
 filterSqlStmtType :: SqlStmtType -> [SqlStmt] -> [SqlStmt]
 filterSqlStmtType t xs =
   [ x
-  | x <- xs 
+  | x <- xs
   , stmtIdType x == Just t ]
 
 removeStmtsMatchingIds
@@ -222,7 +222,7 @@ removeStmtsMatchingIds
   -> [SqlStmt]
 removeStmtsMatchingIds ids stmts =
   [ stmt
-  | stmt <- stmts 
+  | stmt <- stmts
   , stmtId stmt `notElem` ids ]
 
 removeSqlIdBySqlStmts
@@ -230,7 +230,7 @@ removeSqlIdBySqlStmts
   => SqlStmtType -> [SqlStmt] -> [a] -> [a]
 removeSqlIdBySqlStmts t xs is =
   [ x
-  | x <- is 
+  | x <- is
   , sqlId x `notElem` ids ]
   where
     ids = map sqlId $ filterSqlStmtType t xs

@@ -4,8 +4,9 @@
 -- Some rights reserved. See COPYING, AUTHORS.
 module Database.HamSql.Internal.InquireDeployed where
 
+import Data.Text                        (stripPrefix)
 import Database.PostgreSQL.Simple
-import Database.PostgreSQL.Simple.Types (PGArray(..), fromPGArray)
+import Database.PostgreSQL.Simple.Types (PGArray (..), fromPGArray)
 
 import Database.HamSql.Internal.DbUtils
 import Database.HamSql.Internal.Utils
@@ -105,7 +106,10 @@ deployedRoleIds conn prefix = do
     Only $ prefix <> "%"
   return $ map toSqlCodeId roles
   where
-    toSqlCodeId (Only role) = SqlIdContentObj "ROLE" role
+    unprefixed =
+      fromJustReason "Retrived role without prefix from database" .
+      stripPrefix prefix
+    toSqlCodeId (Only role) = SqlIdContentObj "ROLE" (SqlName $ unprefixed role)
 
 -- TODO: REMOVE PREFIX HERE
 deployedDomainIds :: Connection -> IO [SqlIdContentSqo]

@@ -3,16 +3,16 @@
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveGeneric      #-}
 
 module Database.YamSql.Internal.Check where
 
 import Database.YamSql.Internal.Basic
 
 data Check = Check
-  { checkName :: SqlName
+  { checkName        :: SqlName
   , checkDescription :: Text
-  , checkCheck :: Text
+  , checkCheck       :: Text
   } deriving (Generic, Show, Data)
 
 instance FromJSON Check where

@@ -27,6 +27,7 @@ install:
 dev-clean:
 	cabal clean
 	find src/ \( -name '*.hi' -or -name '*.o' \) -exec rm {} ';'
+	-rm -r .cabal-sandbox/ cabal.sandbox.config
 
 dev-build-without-dep:
 	cabal sandbox init

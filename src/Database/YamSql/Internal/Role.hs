@@ -3,18 +3,18 @@
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveGeneric      #-}
 
 module Database.YamSql.Internal.Role where
 
 import Database.YamSql.Internal.Basic
 
 data Role = Role
-  { roleName :: SqlName
+  { roleName        :: SqlName
   , roleDescription :: Text
-  , roleLogin :: Maybe Bool
-  , rolePassword :: Maybe Text
-  , roleMemberIn :: Maybe [SqlName]
+  , roleLogin       :: Maybe Bool
+  , rolePassword    :: Maybe Text
+  , roleMemberIn    :: Maybe [SqlName]
   } deriving (Generic, Show, Data)
 
 instance FromJSON Role where
