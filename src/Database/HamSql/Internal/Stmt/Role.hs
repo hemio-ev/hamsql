@@ -9,17 +9,13 @@ module Database.HamSql.Internal.Stmt.Role where
 import Database.HamSql.Internal.Stmt.Basic
 
 stmtsDropRole :: Setup -> SqlIdContentObj -> [SqlStmt]
-stmtsDropRole setup role =
-  [newSqlStmt SqlDropRole role $ "DROP ROLE " <> prefixedRole setup (sqlObjId role)]
+stmtsDropRole setup role = [newSqlStmt SqlDropRole role $ "DROP ROLE " <> prefixedRole setup (sqlObjId role)]
 
 instance ToSqlStmts (SqlContextObj Role) where
   toSqlStmts SetupContext {setupContextSetup = setup} obj@SqlContextObj {sqlObjectObject = r} =
     newSqlStmt SqlCreateRole obj sqlCreateRole :
-    stmtCommentOn
-      "ROLE"
-      --(setupRolePrefix' setup // roleName r)
-      obj -- TODO: THIS IS WRONG.
-      (roleDescription r) :
+    newSqlStmt SqlComment obj (
+      "COMMENT ON ROLE" <-> prefix (roleName r) <-> "IS" <> toSqlCodeString (roleDescription r)) :
     maybeMap sqlRoleMembership (roleMemberIn r)
     where
       sqlCreateRole =

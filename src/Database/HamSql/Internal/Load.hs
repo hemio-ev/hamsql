@@ -6,7 +6,7 @@ module Database.HamSql.Internal.Load where
 
 import Control.Exception
 import Control.Monad
-
+import Data.Maybe
 import qualified Data.ByteString    as B
 import           Data.Char
 import           Data.Frontmatter
@@ -16,7 +16,6 @@ import           Data.Text.Encoding (decodeUtf8)
 import           Data.Yaml
 import           System.Directory   (doesDirectoryExist, doesFileExist,
                                      getDirectoryContents)
-
 import System.FilePath.Posix (combine, dropFileName, takeFileName)
 
 import Database.HamSql.Internal.Option
@@ -68,7 +67,7 @@ loadSchemas optCom path setup loadedSchemas missingSchemas = do
     loadSchema schema = do
       schemaPath <- findSchemaPath schema schemaDirs
       readSchema optCom schemaPath
-    schemaDirs = map (combine path) (setupSchemaDirs setup)
+    schemaDirs = map (combine path) (fromMaybe [""] $ setupSchemaDirs setup)
 
 findSchemaPath :: FilePath -> [FilePath] -> IO FilePath
 findSchemaPath schema search = findDir search

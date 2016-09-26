@@ -1,8 +1,8 @@
 schemas: 
  - function-install
  - public
-schema_dirs:
- - .
+
+role_prefix: hamsql-test_
 
 pre_code: |
      -- UUIDs

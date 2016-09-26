@@ -9,7 +9,7 @@ def run(cmd, setup, delete_db=False, capture=False, args=[]):
     global dburl
     settings = {}
     path = os.path.dirname(__file__) + '/../dist/build/hamsql/hamsql'
-    params = [path, cmd, '-s', setup]
+    params = [path, cmd, '-s', 'setups/' + setup]
     
     if cmd != 'doc':
         params += ['-c', dburl]
@@ -53,11 +53,12 @@ def assertStdOut(completedProcess, out):
     assert out in completedProcess.stdout
     assert completedProcess.stderr == ""
 
-def check(domains=[], functions=[], tables=[]):
+def check(domains=[], functions=[], tables=[], roles=[]):
     conn, cur = db_open()
     assert sorted(domains) == sorted(db_domains(cur))
     assert sorted(functions) == sorted(db_functions(cur))
     assert sorted(tables) == sorted(db_tables(cur))
+    assert sorted(roles) == sorted(db_roles(cur))
     db_close(conn, cur)
     
 def db_open():
@@ -69,6 +70,24 @@ def db_open():
 def db_close(conn, cur):
     cur.close()
     conn.close()
+    
+def db_roles(cur):
+    cur.execute("""
+        SELECT
+            rolname
+            ,rolsuper
+            ,rolinherit
+            ,rolcreaterole
+            ,rolcreatedb
+            ,rolcanlogin
+            ,rolconnlimit
+            ,rolbypassrls
+            ,rolconfig
+        FROM
+            pg_catalog.pg_roles
+        WHERE rolname LIKE 'hamsql-test_%'
+        """)
+    return cur.fetchall()
     
 def db_domains(cur):
     cur.execute("""

@@ -36,7 +36,7 @@ class (Typeable a) => ToSqlStmts a where
 -- | Setup
 data Setup = Setup
   { setupSchemas :: [SqlName]
-  , setupSchemaDirs :: [FilePath]
+  , setupSchemaDirs :: Maybe [FilePath]
   , setupRolePrefix :: Maybe Text
   , setupPreCode :: Maybe Text
   , setupPostCode :: Maybe Text

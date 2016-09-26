@@ -1,4 +1,4 @@
 schemas: 
  - domain-install-upgrade
-schema_dirs:
- - .
+
+role_prefix: hamsql-test_

@@ -22,6 +22,7 @@ fa
   => Maybe b -> Schema -> [SetupElement]
 fa source schema =
   [toSetupElement $ SqlContextObj schema] ++
+  toElemList' SqlContextObj schemaRoles schema ++
   toElemList SqlContextSqo schemaDomains schema ++
   toElemList SqlContextSqoArgtypes schemaFunctions schema ++
   toElemList SqlContextSqo schemaSequences schema ++
@@ -34,6 +35,7 @@ fa source schema =
   where
     toSetupElement x = SetupElement x source
     toElemList x y = map (toSetupElement . x schema) . maybeList . y
+    toElemList' x y = map (toSetupElement . x) . maybeList . y
 
 fb :: SetupContext -> [SetupElement] -> [SqlStmt]
 fb x = concatMap (toSqlStmts x)

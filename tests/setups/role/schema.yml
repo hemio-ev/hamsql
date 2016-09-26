@@ -1,0 +1,7 @@
+name: role
+description: Simple ROLEs
+
+roles:
+ - name: role1
+   description: |
+    Role #1
