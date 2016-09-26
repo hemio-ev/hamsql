@@ -11,7 +11,7 @@ import Database.YamSql
 
 stmtCommentOn
   :: ToSqlId a
-  => Text -> a -> Text -> SqlStmt
+  => Text -> a -> Text -> Maybe SqlStmt
 stmtCommentOn on obj com =
   newSqlStmt SqlComment obj $
   "COMMENT ON " <> on <> " " <> sqlIdCode obj <> " IS " <> toSqlCodeString com

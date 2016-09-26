@@ -28,7 +28,6 @@ getConUrl xs =
   fromJustReason "Not a valid URI" (parseAbsoluteURI $ optConnection xs)
 
 pgsqlExecStmt :: Connection -> SqlStmt -> IO ()
-pgsqlExecStmt _ SqlStmtEmpty = return ()
 pgsqlExecStmt conn stmt = do
   let code = toSqlCode stmt
   _ <- execute_ conn (toQry code)
@@ -64,11 +63,11 @@ pgsqlConnectUrl url = do
         Right conn -> conn
 
 pgsqlHandleErr :: SqlStmt -> SqlError -> IO ()
-pgsqlHandleErr code e = do
+pgsqlHandleErr stmt e = do
   _ <-
     err $
     "An SQL error occured while executing the following statement" <>
-    showCode (toSqlCode code) <\>
+    showCode (toSqlCode stmt) <\>
     "The SQL-Server reported" <>
     showCode (decodeUtf8 (sqlErrorMsg e)) <->
     "(Error Code: " <>

@@ -25,12 +25,11 @@ instance ToSqlStmts (SqlContextObj Schema) where
     maybeMap privExecuteAll (schemaPrivExecuteAll s) ++
     concat (maybeMap privAllAll (schemaPrivAllAll s))
     where
-      postInst Nothing = SqlStmtEmpty
+      postInst Nothing = Nothing
       postInst (Just xs) = newSqlStmt SqlPostInstall obj xs
-      postInstallAndUpgrade Nothing = SqlStmtEmpty
+      postInstallAndUpgrade Nothing = Nothing
       postInstallAndUpgrade (Just xs) = newSqlStmt SqlPostInstallAndUpgrade obj xs
       
-      priv :: Text -> SqlName -> SqlStmt
       priv p r =
         newSqlStmt SqlPriv obj $
         "GRANT " <> p <> " " <> sqlIdCode obj <> " TO " <> prefixedRole setup r

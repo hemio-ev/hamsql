@@ -12,18 +12,18 @@ import qualified Data.Text  as T
 import Database.HamSql.Internal.Stmt.Basic
 
 stmtsDropFunction' :: SqlId -> [SqlStmt]
-stmtsDropFunction' x =
+stmtsDropFunction' x = catMaybes
   [newSqlStmt SqlDropFunction x $ "DROP FUNCTION " <> toSqlCode x]
 
-stmtsDropFunction :: SqlIdContentSqoArgtypes -> [SqlStmt]
-stmtsDropFunction x = stmtsDropFunction' $ sqlId x
+stmtsDropFunction :: SqlIdContentSqoArgtypes -> [Maybe SqlStmt]
+stmtsDropFunction x = map Just $ stmtsDropFunction' $ sqlId x
 
 instance ToSqlStmts (SqlContextSqoArgtypes Function) where
   toSqlStmts = stmtsDeployFunction
 
 stmtsDeployFunction :: SetupContext
                     -> SqlContextSqoArgtypes Function
-                    -> [SqlStmt]
+                    -> [Maybe SqlStmt]
 stmtsDeployFunction SetupContext {setupContextSetup = setup} obj@SqlContextSqoArgtypes {sqlSqoArgtypesObject = f} =
   stmtCreateFunction :
   sqlSetOwner (functionOwner f) :
@@ -53,7 +53,7 @@ stmtsDeployFunction SetupContext {setupContextSetup = setup} obj@SqlContextSqoAr
     sqlSetOwner (Just o) =
       newSqlStmt SqlPriv obj $
       "ALTER FUNCTION " <> sqlIdCode obj <> "OWNER TO " <> prefixedRole setup o
-    sqlSetOwner Nothing = SqlStmtEmpty
+    sqlSetOwner Nothing = Nothing
     sqlFunctionIdentifierDef =
       (toSqlCode . sqlIdNameOnly) obj <> "(\n" <>
       T.intercalate ",\n" (maybeMap sqlParameterDef (functionParameters f)) <>

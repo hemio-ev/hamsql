@@ -7,6 +7,7 @@
 --{-# LANGUAGE FlexibleInstances #-}
 module Database.HamSql.Internal.Stmt where
 
+import Data.Maybe
 import qualified Data.Text                            as T
 import           Database.PostgreSQL.Simple.FromField
 
@@ -24,26 +25,20 @@ instance Show SqlStmtId where
 data SqlStmt
   = SqlStmt SqlStmtId
             Text
-  | SqlStmtEmpty
   deriving (Show)
 
-stmtId :: SqlStmt -> Maybe SqlStmtId
-stmtId (SqlStmt x _) = Just x
-stmtId SqlStmtEmpty = Nothing
+stmtId :: SqlStmt -> SqlStmtId
+stmtId (SqlStmt x _) = x
 
-stmtBody :: SqlStmt -> Maybe Text
-stmtBody (SqlStmt _ x) = Just x
-stmtBody SqlStmtEmpty = Nothing
+stmtBody :: SqlStmt -> Text
+stmtBody (SqlStmt _ x) = x
 
-stmtIdType :: SqlStmt -> Maybe SqlStmtType
-stmtIdType (SqlStmt x _) = Just (stmtType x)
-stmtIdType SqlStmtEmpty = Nothing
+stmtIdType :: SqlStmt -> SqlStmtType
+stmtIdType (SqlStmt x _) = stmtType x
+
 
 stmtDesc :: SqlStmt -> Text
-stmtDesc stmt =
-  case stmtId stmt of
-    Nothing -> "EMPTY-STATEMENT"
-    Just x -> T.pack (sqlIdType $ stmtSqlId x) <-> toSqlCode (stmtSqlId x)
+stmtDesc stmt = T.pack (sqlIdType $ sqlId stmt) <-> sqlIdCode stmt
 
 instance Eq SqlStmt where
   x == y = stmtId x == stmtId y
@@ -52,10 +47,7 @@ instance Ord SqlStmt where
   x `compare` y = stmtId x `compare` stmtId y
 
 instance ToSqlId SqlStmt where
-  sqlId x =
-    case stmtId x of
-      Nothing -> SqlId $ SqlIdContentObj "?" (SqlName "")
-      Just y -> stmtSqlId y
+  sqlId = stmtSqlId . stmtId
 
 newSqlStmtId
   :: (ToSqlId a)
@@ -64,8 +56,8 @@ newSqlStmtId x y = SqlStmtId x (sqlId y)
 
 newSqlStmt
   :: (ToSqlId a)
-  => SqlStmtType -> a -> Text -> SqlStmt
-newSqlStmt t o b = SqlStmt (newSqlStmtId t o) b
+  => SqlStmtType -> a -> Text -> Maybe SqlStmt
+newSqlStmt t o b = Just $ SqlStmt (newSqlStmtId t o) b
 
 sqlPrinter :: [SqlStmt] -> Text
 sqlPrinter xs = T.concat $ map toSqlCode xs
@@ -78,12 +70,7 @@ instance FromField SqlName where
 
 -- | More like always perform unfiltered after delete
 allowInUpgrade :: SqlStmt -> Bool
-allowInUpgrade SqlStmtEmpty = False
-allowInUpgrade x =
-  case stmtId x of
-    Nothing -> False
-    Just y ->
-      case stmtType y of
+allowInUpgrade x = case stmtIdType x of
         SqlPreInstall -> False
         SqlPostInstall -> False
         _ -> True
@@ -91,11 +78,10 @@ allowInUpgrade x =
 stmtRequiresPermitDeletion :: SqlStmt -> Bool
 stmtRequiresPermitDeletion x =
   case stmtIdType x of
-    Nothing -> False
-    Just SqlDropDatabase -> True
-    Just SqlDropTable -> True
-    Just SqlDropTableColumn -> True
-    Just _ -> False
+    SqlDropDatabase -> True
+    SqlDropTable -> True
+    SqlDropTableColumn -> True
+    _ -> False
 
 data SqlStmtType
   = SqlDropDatabase
@@ -148,10 +134,7 @@ data SqlStmtType
   deriving (Eq, Ord, Show)
 
 instance ToSqlCode SqlStmt where
-  toSqlCode x =
-    case stmtBody x of
-      Nothing -> ""
-      Just y -> y <> ";\n"
+  toSqlCode x = stmtBody x <> ";\n"
 
 toSqlCodeString :: Text -> Text
 toSqlCodeString xs = "'" <> T.replace "'" "''" xs <> "'"

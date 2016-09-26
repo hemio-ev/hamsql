@@ -14,7 +14,7 @@ import Database.HamSql.Internal.Stmt.Function
 instance ToSqlStmts (SqlContextSqo Trigger) where
   toSqlStmts = stmtsDeployTrigger
 
-stmtsDeployTrigger :: SetupContext -> SqlContextSqo Trigger -> [SqlStmt]
+stmtsDeployTrigger :: SetupContext -> SqlContextSqo Trigger -> [Maybe SqlStmt]
 stmtsDeployTrigger context obj@SqlContextSqo { sqlSqoSchema = s
                                              , sqlSqoObject = t
                                              } =

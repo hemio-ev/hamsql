@@ -4,6 +4,8 @@
 -- Some rights reserved. See COPYING, AUTHORS.
 module Database.HamSql.Internal.Stmt.Create where
 
+import Data.Maybe
+
 import Database.HamSql.Internal.Option
 import Database.HamSql.Internal.Stmt
 import Database.HamSql.Internal.Stmt.Basic
@@ -37,7 +39,7 @@ fa source schema =
     toElemList x y = map (toSetupElement . x schema) . maybeList . y
     toElemList' x y = map (toSetupElement . x) . maybeList . y
 
-fb :: SetupContext -> [SetupElement] -> [SqlStmt]
+fb :: SetupContext -> [SetupElement] -> [Maybe SqlStmt]
 fb x = concatMap (toSqlStmts x)
 
 emptyName :: SqlId
@@ -45,11 +47,11 @@ emptyName = SqlId $ SqlIdContentObj "?" $ SqlName ""
 
 sqlAddTransact :: [SqlStmt] -> [SqlStmt]
 sqlAddTransact xs =
-  [newSqlStmt SqlUnclassified emptyName "BEGIN TRANSACTION"] ++
-  xs ++ [newSqlStmt SqlUnclassified emptyName "COMMIT"]
+  catMaybes [newSqlStmt SqlUnclassified emptyName "BEGIN TRANSACTION"] ++
+  xs ++ catMaybes [newSqlStmt SqlUnclassified emptyName "COMMIT"]
 
 -- | create database
-sqlCreateDatabase :: Bool -> SqlName -> [SqlStmt]
+sqlCreateDatabase :: Bool -> SqlName -> [Maybe SqlStmt]
 sqlCreateDatabase deleteDatabase dbName =
   [ sqlDelete deleteDatabase
   , newSqlStmt SqlCreateDatabase (SqlId $ SqlIdContentObj "DATABASE" dbName) $
@@ -63,10 +65,10 @@ sqlCreateDatabase deleteDatabase dbName =
     sqlDelete True =
       newSqlStmt SqlDropDatabase (SqlId $ SqlIdContentObj "DATABASE" dbName) $
       "DROP DATABASE IF EXISTS" <-> toSqlCode dbName
-    sqlDelete False = SqlStmtEmpty
+    sqlDelete False = Nothing
 
 -- | Setup
-getSetupStatements :: OptCommon -> Setup -> [SqlStmt]
+getSetupStatements :: OptCommon -> Setup -> [Maybe SqlStmt]
 getSetupStatements opts s =
   debug opts "stmtInstallSetup" $
   [getStmt $ setupPreCode s] ++ schemaStatements ++ [getStmt $ setupPostCode s]
@@ -74,8 +76,8 @@ getSetupStatements opts s =
     schemaStatements =
       concatMap (getSchemaStatements opts s) (maybeList $ setupSchemaData s)
     getStmt (Just code) = newSqlStmt SqlPre emptyName code
-    getStmt Nothing = SqlStmtEmpty
+    getStmt Nothing = Nothing
 
-getSchemaStatements :: OptCommon -> Setup -> Schema -> [SqlStmt]
+getSchemaStatements :: OptCommon -> Setup -> Schema -> [Maybe SqlStmt]
 getSchemaStatements _ setup s =
   fb (SetupContext setup) $ fa (Just ("src" :: String)) s

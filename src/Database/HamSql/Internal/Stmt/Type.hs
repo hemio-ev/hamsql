@@ -13,7 +13,7 @@ import Database.HamSql.Internal.Stmt.Basic
 instance ToSqlStmts (SqlContextSqo Type) where
   toSqlStmts = stmtsDeployType
 
-stmtsDeployType :: SetupContext -> SqlContextSqo Type -> [SqlStmt]
+stmtsDeployType :: SetupContext -> SqlContextSqo Type -> [Maybe SqlStmt]
 stmtsDeployType _ obj@SqlContextSqo {sqlSqoObject = t} =
   [ newSqlStmt SqlCreateType obj $
     "CREATE TYPE" <-> sqlIdCode obj <-> "AS (" <>

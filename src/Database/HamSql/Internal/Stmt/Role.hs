@@ -8,7 +8,7 @@ module Database.HamSql.Internal.Stmt.Role where
 
 import Database.HamSql.Internal.Stmt.Basic
 
-stmtsDropRole :: Setup -> SqlIdContentObj -> [SqlStmt]
+stmtsDropRole :: Setup -> SqlIdContentObj -> [Maybe SqlStmt]
 stmtsDropRole setup role = [newSqlStmt SqlDropRole role $ "DROP ROLE " <> prefixedRole setup (sqlObjId role)]
 
 instance ToSqlStmts (SqlContextObj Role) where

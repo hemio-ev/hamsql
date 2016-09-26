@@ -31,7 +31,7 @@ instance ToSqlStmts SetupElement where
     toSqlStmts x SetupElement{setupElement=y} = toSqlStmts x y
 
 class (Typeable a) => ToSqlStmts a where
-    toSqlStmts :: SetupContext -> a -> [SqlStmt]
+    toSqlStmts :: SetupContext -> a -> [Maybe SqlStmt]
 
 -- | Setup
 data Setup = Setup

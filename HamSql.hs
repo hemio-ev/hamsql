@@ -6,6 +6,7 @@ module Main where
 
 import Control.Monad (void, when)
 import Data.List
+import Data.Maybe
 
 import qualified Data.Text as T
 import qualified Data.Text.IO as T.IO
@@ -33,7 +34,7 @@ run (Install optCommon optDb optInstall)
              ((getConUrl optDb)
               { uriPath = "/postgres"
               })
-             (sqlCreateDatabase (optDeleteExistingDatabase optInstall) dbname)
+             (catMaybes $ sqlCreateDatabase (optDeleteExistingDatabase optInstall) dbname)
       else when (optDeleteExistingDatabase optInstall) $
            warn' $
            "In --emulate and --print mode the DROP/CREATE DATABASE" <->

@@ -101,15 +101,15 @@ sqlErrInvalidFunctionDefinition :: B.ByteString
 sqlErrInvalidFunctionDefinition = "42P13"
 
 pgsqlGetFullStatements :: OptCommon -> OptCommonDb -> Setup -> IO [SqlStmt]
-pgsqlGetFullStatements optCom _ setup = return $ getSetupStatements optCom setup
+pgsqlGetFullStatements optCom _ setup = return $ catMaybes $ getSetupStatements optCom setup
 
 pgsqlDeleteAllStmt :: Connection -> IO [SqlStmt]
 pgsqlDeleteAllStmt conn = do
   domainConstrs <- deployedDomainConstrIds conn
   tableConstrs <- deployedTableConstrIds conn
-  return
-    (concatMap stmtsDropDomainConstr domainConstrs ++
-     concatMap stmtsDropTableConstr tableConstrs)
+  return $ catMaybes $
+     concatMap stmtsDropDomainConstr domainConstrs ++
+     concatMap stmtsDropTableConstr tableConstrs
 
 pgsqlUpdateFragile :: Setup -> Connection -> [SqlStmt] -> IO [SqlStmt]
 pgsqlUpdateFragile setup conn stmts =
@@ -124,7 +124,7 @@ pgsqlUpdateFragile setup conn stmts =
       :: ToSqlId a
       => SqlStmtType
       -> (Connection -> IO [a])
-      -> (a -> [SqlStmt])
+      -> (a -> [Maybe SqlStmt])
       -> [SqlStmt]
       -> IO [SqlStmt]
     correctStmts createType existingInquire dropStmtGenerator =
@@ -133,12 +133,12 @@ pgsqlUpdateFragile setup conn stmts =
       :: ToSqlId a
       => SqlStmtType
       -> (Connection -> IO [a])
-      -> (a -> [SqlStmt])
+      -> (a -> [Maybe SqlStmt])
       -> [SqlStmt]
       -> IO [SqlStmt]
     dropResidual t isf f xs = do
       is <- isf conn
-      return (xs ++ concatMap f (removeSqlIdBySqlStmts t xs is))
+      return $ xs ++ (catMaybes $ concatMap f (removeSqlIdBySqlStmts t xs is))
 
 -- DB Utils
 pgsqlExecWithoutTransact :: URI -> [SqlStmt] -> IO Connection
@@ -173,7 +173,7 @@ pgsqlExecStmtList status (x:xs) failed conn = do
   where
     tryExec savepoint = do
       logStmt $
-        "-- Executing " <> tshow (fromMaybe SqlUnclassified (stmtIdType x)) <>
+        "-- Executing " <> tshow (stmtIdType x) <>
         " for " <>
         stmtDesc x
       pgsqlExecStmt conn x
@@ -214,14 +214,14 @@ addSqlStmtType
   :: ToSqlId a
   => SqlStmtType -- ^ statment
   -> [a] -- ^ SQL ids that should become a "SqlStmtId" type to use
-  -> [Maybe SqlStmtId]
-addSqlStmtType t = map (Just . SqlStmtId t . sqlId)
+  -> [SqlStmtId]
+addSqlStmtType t = map (SqlStmtId t . sqlId)
 
 filterSqlStmtType :: SqlStmtType -> [SqlStmt] -> [SqlStmt]
-filterSqlStmtType t xs = [x | x <- xs, stmtIdType x == Just t]
+filterSqlStmtType t xs = [x | x <- xs, stmtIdType x == t]
 
 removeStmtsMatchingIds
-  :: [Maybe SqlStmtId] -- ^ Statement ids to remove
+  :: [SqlStmtId] -- ^ Statement ids to remove
   -> [SqlStmt]
   -> [SqlStmt]
 removeStmtsMatchingIds ids stmts =
@@ -239,12 +239,12 @@ correctStatements
   :: ToSqlId a
   => SqlStmtType -- ^ install statements and the stmt type of interest
   -> IO [a] -- ^ deployed (existing) elements
-  -> (a -> [SqlStmt]) -- ^ drop statment generator
+  -> (a -> [Maybe SqlStmt]) -- ^ drop statment generator
   -> [SqlStmt] -- ^ install statements, representing desired state
   -> IO [SqlStmt]
 correctStatements t iois f xs = do
   is <- iois
   return $
     removeStmtsMatchingIds (addSqlStmtType t is) xs ++
-    concatMap f (removeSqlIdBySqlStmts t xs is)
+    (catMaybes $ concatMap f (removeSqlIdBySqlStmts t xs is))
 

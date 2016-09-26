@@ -8,10 +8,10 @@ module Database.HamSql.Internal.Stmt.Domain where
 
 import Database.HamSql.Internal.Stmt.Basic
 
-stmtsDropDomain :: SqlIdContentSqo -> [SqlStmt]
+stmtsDropDomain :: SqlIdContentSqo -> [Maybe SqlStmt]
 stmtsDropDomain x = [newSqlStmt SqlDropDomain x $ "DROP DOMAIN" <-> toSqlCode x]
 
-stmtsDropDomainConstr :: SqlIdContentSqoObj -> [SqlStmt]
+stmtsDropDomainConstr :: SqlIdContentSqoObj -> [Maybe SqlStmt]
 stmtsDropDomainConstr x =
   [ newSqlStmt SqlDropDomainConstr x $
     "ALTER DOMAIN" <-> sqlSqoIdCode x <-> "DROP CONSTRAINT" <->
@@ -21,7 +21,7 @@ stmtsDropDomainConstr x =
 instance ToSqlStmts (SqlContextSqo Domain) where
   toSqlStmts = stmtsDeployDomain
 
-stmtsDeployDomain :: SetupContext -> SqlContextSqo Domain -> [SqlStmt]
+stmtsDeployDomain :: SetupContext -> SqlContextSqo Domain -> [Maybe SqlStmt]
 stmtsDeployDomain _ obj@SqlContextSqo {sqlSqoObject = d} =
   stmtCreateDomain :
   sqlDefault (domainDefault d) : maybeMap sqlCheck (domainChecks d)
@@ -29,7 +29,7 @@ stmtsDeployDomain _ obj@SqlContextSqo {sqlSqoObject = d} =
     stmtCreateDomain =
       newSqlStmt SqlCreateDomain obj $
       "CREATE DOMAIN" <-> sqlIdCode obj <-> "AS" <-> toSqlCode (domainType d)
-    sqlCheck :: Check -> SqlStmt
+    sqlCheck :: Check -> Maybe SqlStmt
     sqlCheck c =
       newSqlStmt SqlCreateCheckConstr obj $
       "ALTER DOMAIN" <-> sqlIdCode obj <-> "ADD CONSTRAINT" <->
