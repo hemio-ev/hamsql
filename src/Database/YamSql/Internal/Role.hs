@@ -2,22 +2,27 @@
 --
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
-
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric      #-}
-{-# LANGUAGE OverloadedStrings  #-}
 
 module Database.YamSql.Internal.Role where
 
 import Database.YamSql.Internal.Basic
 
-data Role = Role {
-    roleName        :: SqlName,
-    roleDescription :: Text,
-    roleLogin       :: Maybe Bool,
-    rolePassword    :: Maybe Text,
-    roleMemberIn    :: Maybe [SqlName]
-} deriving (Generic, Show, Data, Typeable)
-instance FromJSON Role where parseJSON = strictParseYaml
-instance ToJSON Role where toJSON = genericToJSON myOpt
+data Role = Role
+  { roleName        :: SqlName
+  , roleDescription :: Text
+  , roleLogin       :: Maybe Bool
+  , rolePassword    :: Maybe Text
+  , roleMemberIn    :: Maybe [SqlName]
+  } deriving (Generic, Show, Data)
 
+instance FromJSON Role where
+  parseJSON = parseYamSql
+
+instance ToJSON Role where
+  toJSON = toYamSqlJson
+
+instance ToSqlIdPart Role where
+  sqlIdPart = roleName
+  sqlIdPartType = const "ROLE"

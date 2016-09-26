@@ -1,5 +1,4 @@
 schemas: 
  - table-install
-schema_dirs:
- - .
 
+role_prefix: hamsql-test_

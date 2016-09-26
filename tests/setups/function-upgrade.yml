@@ -1,0 +1,5 @@
+schemas: 
+ - function-install-upgrade
+ - public
+
+role_prefix: hamsql-test_

@@ -1,0 +1,12 @@
+name: role
+description: Simple ROLEs
+
+roles:
+ - name: group1
+   description: A group
+ - name: role1
+   description: |
+    Role #1
+   member_in:
+    - group1
+

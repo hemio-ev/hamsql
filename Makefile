@@ -1,30 +1,59 @@
 update-and-build: update build
 
 update:
-	cabal update
 	cabal sandbox init
-	cabal install --force-reinstalls --only-dependencies --disable-optimization
-	cabal configure --disable-optimization
+	cabal update
+	cabal install -ffast --allow-newer --force-reinstalls --only-dependencies --disable-optimization
+
+test:
+	cabal configure --disable-optimization --enable-coverage --enable-tests
+	cabal test --show-details direct
+	cabal build
+	-rm tests/hamsql.tix
+	-rm -r tests/coverage
+	-rm tests/hamsql-stmt-log.sql
+	make -C tests
+	hpc report tests/hamsql.tix --hpcdir dist/hpc/vanilla/mix/hamsql
+	hpc markup tests/hamsql.tix --hpcdir dist/hpc/vanilla/mix/hamsql/ --destdir=tests/coverage --verbosity=0
+
+doc:
+	cabal haddock
 
 build:
-	cabal build
+	cabal configure --disable-optimization
+	cabal build --ghc-options="-Wall -fwarn-incomplete-record-updates -fno-warn-orphans"
 
 install:
 	cp dist/build/hamsql/hamsql /usr/local/bin/ 
 
-clean:
+# ununsual options
+
+dev-clean:
 	cabal clean
 	find src/ \( -name '*.hi' -or -name '*.o' \) -exec rm {} ';'
+	-rm -r .cabal-sandbox/ cabal.sandbox.config
 
-build-without-dep:
+dev-build-without-dep:
 	cabal sandbox init
 	cabal install frontmatter
 	cabal configure --disable-optimization
 	cabal build
 
-build-wall:
+dev-rebuild:
+	cabal clean
 	cabal configure --disable-optimization
-	cabal build --ghc-options="-fforce-recomp -Wall"
+	cabal build --ghc-options="-fforce-recomp -Wall -fwarn-incomplete-record-updates -fno-warn-orphans"
+
+dev-build-optim:
+	cabal configure --enable-optimization
+	cabal build --ghc-options="-fforce-recomp"
+
+dev-modules:
+	find src/ -name '*.hs' -printf '    %P\n' | sort | sed -e 's/\.hs//' -e 's/\//\./g' | grep Internal
+	find src/ -name '*.hs' -printf '    %P\n' | sort | sed -e 's/\.hs//' -e 's/\//\./g' | grep -v Internal
+
+dev-lang-ext:
+	grep -h -r '# LANGUAGE' src/ | sort | uniq | sed -e 's/{-# LANGUAGE /    /' | sed -e 's/ #-}/,/'
 
 dev-package-status:
 	dpkg-query -l \
@@ -39,3 +68,4 @@ dev-package-status:
 	 libghc-text-dev \
 	 libghc-unordered-containers-dev \
 	 libghc-yaml-dev
+

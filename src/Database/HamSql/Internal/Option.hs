@@ -2,145 +2,140 @@
 --
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
-
 module Database.HamSql.Internal.Option where
 
+import Data.Semigroup
 import Options.Applicative
+import Options.Applicative.Builder.Internal (HasMetavar, HasValue)
 
 -- helper functions
+boolFlag :: Mod FlagFields Bool -> Parser Bool
 boolFlag = flag False True
-val xs = value xs <> metavar ("\""++xs++"\"")
+
+val
+  :: (HasMetavar f, HasValue f)
+  => String -> Mod f String
+val xs = value xs <> metavar ("\"" ++ xs ++ "\"")
 
 -- Global
-
-parserInfoHamsql = info (helper <*> parserCommand)
-      ( fullDesc
-     <> progDesc "A YamSql interpreter and smart executor."
-     <> header "hamsql - YamSql interperter written in Haskell" )
-
+parserInfoHamsql :: ParserInfo Command
+parserInfoHamsql =
+  info
+    (helper <*> parserCommand)
+    (fullDesc <> progDesc "A YamSql interpreter and smart executor." <>
+     header "hamsql - YamSql interperter written in Haskell")
 
 -- Command
-data Command =
-    Install OptCommon OptCommonDb OptInstall |
-    Upgrade OptCommon OptCommonDb OptUpgrade |
-    Doc     OptCommon OptDoc
-    deriving Show
+data Command
+  = Install OptCommon
+            OptCommonDb
+            OptInstall
+  | Upgrade OptCommon
+            OptCommonDb
+            OptUpgrade
+  | Doc OptCommon
+        OptDoc
+  deriving (Show)
 
 parserCommand :: Parser Command
-parserCommand = subparser
-  ( command "install" (info parserCmdInstall
-      ( progDesc "Installs the setup on a database from scratch." ))
- <> command "upgrade" (info parserCmdUpgrade
-      ( progDesc "Upgrades an existing setup on a database." ))
- <> command "doc" (info parserCmdDoc
-      ( progDesc "Produces a documentation of the setup." ))
-  )
+parserCommand =
+  subparser
+    (command
+       "install"
+       (info
+          (parserCmdInstall <**> helper)
+          (progDesc "Installs the setup on a database from scratch.")) <>
+     command
+       "upgrade"
+       (info
+          (parserCmdUpgrade <**> helper)
+          (progDesc "Upgrades an existing setup on a database.")) <>
+     command
+       "doc"
+       (info
+          (parserCmdDoc <**> helper)
+          (progDesc "Produces a documentation of the setup.")))
 
 parserCmdInstall :: Parser Command
-parserCmdInstall = Install
-    <$> parserOptCommon
-    <*> parserOptCommonDb
-    <*> parserOptInstall
+parserCmdInstall = Install <$> parserOptCommon <*> parserOptCommonDb <*> parserOptInstall
 
 parserCmdUpgrade :: Parser Command
-parserCmdUpgrade = Upgrade
-    <$> parserOptCommon
-    <*> parserOptCommonDb
-    <*> parserOptUpgrade
+parserCmdUpgrade = Upgrade <$> parserOptCommon <*> parserOptCommonDb <*> parserOptUpgrade
 
 parserCmdDoc :: Parser Command
-parserCmdDoc = Doc
-    <$> parserOptCommon
-    <*> parserOptDoc
+parserCmdDoc = Doc <$> parserOptCommon <*> parserOptDoc
 
 -- Commons
-
-data OptCommon = OptCommon {
-    optSetup   :: FilePath,
-    optVerbose :: Bool
-}
-    deriving Show
+data OptCommon = OptCommon
+  { optSetup   :: FilePath
+  , optVerbose :: Bool
+  , optDebug   :: Bool
+  } deriving (Show)
 
 parserOptCommon :: Parser OptCommon
-parserOptCommon = OptCommon
-    <$> strOption
-        (long "setup" <>
-        short 's' <>
-        help "Setup file (yaml)" <>
-        val "setup.yml" <>
-        action "file -X '!*.yml'" <>
-        action "directory"
-        )
-    <*> boolFlag
-        (long "verbose" <> short 'v' <> help "Verbose")
+parserOptCommon =
+  OptCommon <$>
+  strOption
+    (long "setup" <> short 's' <> help "Setup file (yaml)" <> val "setup.yml" <>
+     action "file -X '!*.yml'" <>
+     action "directory") <*>
+  boolFlag (long "verbose" <> short 'v' <> help "Verbose") <*>
+  boolFlag (long "debug" <> help "Debug")
 
 -- Commons Execute
-
-data OptCommonDb = OptCommonDb {
-    optEmulate    :: Bool,
-    optPrint      :: Bool,
-    optConnection :: String
-}
-    deriving Show
+data OptCommonDb = OptCommonDb
+  { optEmulate            :: Bool
+  , optPrint              :: Bool
+  , optConnection         :: String
+  , optPermitDataDeletion :: Bool
+  } deriving (Show)
 
 parserOptCommonDb :: Parser OptCommonDb
-parserOptCommonDb = OptCommonDb
-    <$> boolFlag
-        (long "emulate" <> short 'e' <> help "Perform changes but rollback")
-    <*> boolFlag
-        (long "print" <> short 'p' <> help "Print SQL code instead of executing")
-    <*> strOption
-        (long "connection" <> short 'c' <> val "postgresql://")
+parserOptCommonDb =
+  OptCommonDb <$>
+  boolFlag (long "emulate" <> short 'e' <> help "Perform changes but rollback") <*>
+  boolFlag
+    (long "print" <> short 'p' <> help "Print SQL code instead of executing") <*>
+  strOption (long "connection" <> short 'c' <> val "postgresql://") <*>
+  boolFlag
+    (long "permit-data-deletion" <> help "Permit deletion of columns and tables")
 
 -- Command Install
-data OptInstall = OptInstall {
-    optDeleteExistingDatabase :: Bool
-}
-    deriving Show
+data OptInstall = OptInstall
+  { optDeleteExistingDatabase :: Bool
+  } deriving (Show)
 
 parserOptInstall :: Parser OptInstall
-parserOptInstall = OptInstall
-    <$> boolFlag
-        (long "delete-existing-database"
-        <> short 'd'
-        <> help "Delete database if it allready exists"
-        )
+parserOptInstall =
+  OptInstall <$>
+  boolFlag
+    (long "delete-existing-database" <> short 'd' <>
+     help "Delete database if it allready exists")
 
 -- Command Upgrade
-data OptUpgrade = OptUpgrade {
-    optPermitDataDeletion :: Bool
-}
-    deriving Show
+data OptUpgrade = OptUpgrade
+  { optNone :: Bool
+  } deriving (Show)
 
 parserOptUpgrade :: Parser OptUpgrade
-parserOptUpgrade = OptUpgrade
-    <$> boolFlag
-        (long "perimit-data-deletion"
-        <> help "Permit deletion of columns or tables"
-        )
+parserOptUpgrade =
+  OptUpgrade <$>
+  boolFlag (long "X" <> help "(currently no upgade specific options)")
 
 -- Command Doc
-data OptDoc = OptDoc {
-    optOutputDir :: FilePath,
-    optTemplate  :: FilePath
-}
-    deriving Show
+data OptDoc = OptDoc
+  { optOutputDir :: FilePath
+  , optTemplate  :: FilePath
+  } deriving (Show)
 
 parserOptDoc :: Parser OptDoc
-parserOptDoc = OptDoc
-    <$> strOption
-        (long "output-dir" <>
-        short 'o' <>
-        val "doc/" <>
-        action "directory"
-        )
-    <*> strOption
-        (long "template" <>
-        short 't' <>
-        val "DEFAULT.rst" <>
-        action "file -X '!*.html'" <>
-        action "file -X '!*.md'" <>
-        action "file -X '!*.rst'" <>
-        action "directory"
-        )
-
+parserOptDoc =
+  OptDoc <$>
+  strOption
+    (long "output-dir" <> short 'o' <> val "docs/" <> action "directory") <*>
+  strOption
+    (long "template" <> short 't' <> val "DEFAULT.rst" <>
+     action "file -X '!*.html'" <>
+     action "file -X '!*.md'" <>
+     action "file -X '!*.rst'" <>
+     action "directory")

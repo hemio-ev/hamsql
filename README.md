@@ -11,7 +11,7 @@ Interpreter for SQL-structure definitions in Yaml ([YamSql](http://yamsql.readth
 Install haskell compiler and required libraries:
 
 ```sh
-apt-get install \
+apt install \
  make \
  ghc \
  cabal-install \
@@ -30,3 +30,9 @@ Now you can
 
     make
     make install
+
+Completly building from sources
+
+    apt install make ghc cabal-install libpq-dev happy
+    make
+

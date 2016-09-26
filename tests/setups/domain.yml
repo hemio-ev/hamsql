@@ -1,5 +1,4 @@
 schemas: 
  - domain-install
-schema_dirs:
- - .
 
+role_prefix: hamsql-test_

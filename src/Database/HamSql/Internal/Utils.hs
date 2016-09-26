@@ -2,57 +2,68 @@
 --
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
+module Database.HamSql.Internal.Utils
+  ( module Database.HamSql.Internal.Utils
+  , Text
+  , (<>)
+  ) where
 
-{-# LANGUAGE OverloadedStrings #-}
-
-module Database.HamSql.Internal.Utils (module Database.HamSql.Internal.Utils, Text (..), (<>)) where
-
-import           Control.Monad
-import           Data.Char
-import           Data.List        (group, intercalate, sort)
-import           Data.Monoid      ((<>))
-import           Data.Text        (Text (..), pack)
-import qualified Data.Text        as T
-import           Data.Text.IO
-import           Debug.Trace
-import           System.Exit
-import           System.IO        (stderr)
-import           System.IO.Unsafe
+import Data.List (group, intercalate, sort)
+import Data.Monoid ((<>))
+import Data.Text (Text, pack)
+import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
+import Debug.Trace
+import System.Exit
+import System.IO (stderr)
+import System.IO.Unsafe
+import Text.Groom
 
 import Database.HamSql.Internal.Option
 
+logStmt :: Text -> IO ()
+logStmt x = TIO.appendFile "hamsql-stmt-log.sql" (x <> "\n")
+
+join :: [a] -> [[a]] -> [a]
 join = intercalate
 
 err :: Text -> a
-err xs = unsafePerformIO $ do
-  hPutStrLn stderr ("error: " <> xs)
-  exitWith $ ExitFailure 1
+err xs =
+  unsafePerformIO $
+  do TIO.hPutStrLn stderr ("error: " <> xs)
+     exitWith $ ExitFailure 1
 
-inf = msg "info"
+warn :: Text -> a -> a
 warn = msg "warning"
+
+warn' :: Text -> IO ()
 warn' = msg' "warning"
 
-msg typ xs ys = unsafePerformIO $ do
-  msg' typ xs
-  return ys
+msg :: Text -> Text -> a -> a
+msg typ xs ys =
+  unsafePerformIO $
+  do msg' typ xs
+     return ys
 
-msg' typ xs = hPutStrLn stderr (typ <> ": " <> xs)
+msg' :: Text -> Text -> IO ()
+msg' typ xs = TIO.hPutStrLn stderr (typ <> ": " <> xs)
 
-debug opt
-  | optVerbose opt = msg "debug"
-  | otherwise = id'
-      where
-        id' _ = id
+info :: OptCommon -> Text -> a -> a
+info opts xs
+  | optVerbose opts = msg "info" xs
+  | otherwise = id
 
-info :: OptCommon -> Text -> IO ()
-info opts xs = when(optVerbose opts) $
-    msg' "debug" xs
+debug :: OptCommon -> Text -> a -> a
+debug opts xs
+  | optDebug opts = msg "debug" xs
+  | otherwise = id
 
-removeDuplicates :: (Ord a) => [a] -> [a]
+removeDuplicates
+  :: (Ord a)
+  => [a] -> [a]
 removeDuplicates = map head . group . sort
 
 --- Maybe Utils
-
 -- Makes list out of Maybe
 maybeList :: Maybe [a] -> [a]
 maybeList Nothing = []
@@ -75,7 +86,7 @@ maybeText (Just text) = text
 -- Takes the right value, if Just there
 maybeRight :: Maybe a -> Maybe a -> Maybe a
 maybeRight _ (Just r) = Just r
-maybeRight l _        = l
+maybeRight l _ = l
 
 appendToMaybe :: Maybe [a] -> a -> Maybe [a]
 appendToMaybe Nothing x = Just [x]
@@ -91,18 +102,32 @@ fromJustReason reason Nothing = err $ "fromJust failed: " <> reason
 
 selectUniqueReason :: Text -> [a] -> a
 selectUniqueReason _ [x] = x
-selectUniqueReason msg [] = err $ "No element found while trying to find exactly one: " <> msg
-selectUniqueReason msg xs = err $
-  "More then one element (" <> tshow (length xs) <> ") found while trying to extrac one: " <> msg
+selectUniqueReason msgt [] =
+  err $ "No element found while trying to find exactly one: " <> msgt
+selectUniqueReason msgt xs =
+  err $
+  "More then one element (" <> tshow (length xs) <>
+  ") found while trying to extrac one: " <>
+  msgt
 
-tshow :: (Show a) => a -> Text
-tshow = pack . show
+tshow
+  :: (Show a)
+  => a -> Text
+tshow = T.replace "\\\"" "“" . pack . groom
 
+showCode :: Text -> Text
+showCode = T.replace "\n" "\n  " . T.cons '\n'
+
+tr
+  :: Show a
+  => a -> a
 tr x = trace (show x <> "\n") x
 
 isIn :: Char -> Text -> Bool
 isIn c t = T.singleton c `T.isInfixOf` t
 
+(<->) :: Text -> Text -> Text
 (<->) a b = a <> " " <> b
-(<\>) a b = a <> "\n" <> b
 
+(<\>) :: Text -> Text -> Text
+(<\>) a b = a <> "\n" <> b
