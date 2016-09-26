@@ -25,4 +25,4 @@ instance ToJSON Role where
 
 instance ToSqlIdPart Role where
   sqlIdPart = roleName
-  sqlIdPartType = const "SEQUENCE"
+  sqlIdPartType = const "ROLE"

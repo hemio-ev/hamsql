@@ -25,7 +25,6 @@ stmtsDeployDomain :: SetupContext -> SqlContextSqo Domain -> [SqlStmt]
 stmtsDeployDomain _ obj@SqlContextSqo {sqlSqoObject = d} =
   stmtCreateDomain :
   sqlDefault (domainDefault d) : maybeMap sqlCheck (domainChecks d)
---stmtCommentOn "DOMAIN" fullName (domainDescription d)
   where
     stmtCreateDomain =
       newSqlStmt SqlCreateDomain obj $
@@ -34,7 +33,7 @@ stmtsDeployDomain _ obj@SqlContextSqo {sqlSqoObject = d} =
     sqlCheck c =
       newSqlStmt SqlCreateCheckConstr obj $
       "ALTER DOMAIN" <-> sqlIdCode obj <-> "ADD CONSTRAINT" <->
-      toSqlCode (constrName (checkName c)) <->
+      toSqlCode ((checkName c)) <->
       "CHECK (" <>
       checkCheck c <>
       ")"
@@ -44,4 +43,4 @@ stmtsDeployDomain _ obj@SqlContextSqo {sqlSqoObject = d} =
     sqlDefault (Just def) =
       newSqlStmt SqlAddDefault obj $
       "ALTER DOMAIN" <-> sqlIdCode obj <-> "SET DEFAULT" <-> def
-    constrName a = SqlName "DOMAIN_" // domainName d // SqlName "__" // a
+

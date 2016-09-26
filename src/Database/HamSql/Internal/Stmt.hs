@@ -103,6 +103,7 @@ data SqlStmtType
   | SqlPreInstall
   | SqlDropRole
   | SqlCreateRole
+  | SqlAlterRole
   | SqlRoleMembership
   | SqlCreateSchema
   | SqlCreateDomain

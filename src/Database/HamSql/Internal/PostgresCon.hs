@@ -117,8 +117,8 @@ pgsqlUpdateFragile setup conn stmts =
   correctStmts SqlCreateTable deployedTableIds stmtsDropTable >>=
   correctStmts SqlAddColumn deployedTableColumnIds stmtsDropTableColumn >>=
   correctStmts SqlCreateSequence deployedSequenceIds stmtsDropSequence >>=
-  dropResidual SqlCreateFunction deployedFunctionIds stmtsDropFunction >>=
-  dropResidual SqlCreateRole (deployedRoleIds setup) (stmtsDropRole setup)
+  correctStmts SqlCreateRole (deployedRoleIds setup) (stmtsDropRole setup) >>=
+  dropResidual SqlCreateFunction deployedFunctionIds stmtsDropFunction
   where
     correctStmts
       :: ToSqlId a
@@ -158,8 +158,8 @@ pgsqlExecStmtList
   -> [SqlStmt] -- ^ Statements that have failed during execution
   -> Connection
   -> IO ()
-pgsqlExecStmtList Init _ (_:_) _ =
-  err "supplied failed statements to (pgsqlExecStmtList Init)"
+pgsqlExecStmtList Init _ (x:_) _ =
+  err $ "supplied failed statements to (pgsqlExecStmtList Init): " <> tshow x
 -- No remaining statements to execute
 pgsqlExecStmtList _ [] [] conn = commit conn
 pgsqlExecStmtList Unchanged [] failed conn =
@@ -195,7 +195,11 @@ pgsqlExecStmtList status (x:xs) failed conn = do
       logStmt "ROLLBACK TO SAVEPOINT retry;"
       rollbackToSavepoint conn savepoint
       releaseSavepoint conn savepoint
-      pgsqlExecStmtList status xs (failed ++ stmts) conn
+      pgsqlExecStmtList forwardStatus xs (failed ++ stmts) conn
+    -- Init may not be forwarded to next iteration
+    forwardStatus = case status of
+      Init -> Unchanged
+      s -> s
 
 pgsqlExecIntern :: PgSqlMode -> URI -> [SqlStmt] -> IO Connection
 pgsqlExecIntern mode connUrl xs = do
@@ -244,10 +248,3 @@ correctStatements t iois f xs = do
     removeStmtsMatchingIds (addSqlStmtType t is) xs ++
     concatMap f (removeSqlIdBySqlStmts t xs is)
 
-abc :: Int
-abc = 1
---    if optPermitDataDeletion optUpgrade
---      then stmts
---     else filter
---             (\t -> not (typeEq SqlDropTable t) && not (typeEq SqlDropColumn t))
---             stmts

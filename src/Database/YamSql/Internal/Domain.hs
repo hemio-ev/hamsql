@@ -6,7 +6,7 @@ module Database.YamSql.Internal.Domain where
 import Database.YamSql.Internal.Basic
 import Database.YamSql.Internal.Check
 
--- Domains --
+-- | Domains are aliases of an existing SQL types, possibly with checks
 data Domain = Domain
   { domainName        :: SqlName
   , domainDescription :: Text

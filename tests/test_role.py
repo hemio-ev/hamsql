@@ -5,6 +5,7 @@ def test_roles():
     xs = {
      'roles':
      [
+      ('hamsql-test_group1', False, True, False, False, False, -1, False, None),
       ('hamsql-test_role1', False, True, False, False, False, -1, False, None)
      ]
     }
