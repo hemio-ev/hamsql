@@ -73,7 +73,7 @@ getSetupStatements opts s =
   where
     schemaStatements =
       concatMap (getSchemaStatements opts s) (maybeList $ setupSchemaData s)
-    getStmt (Just code) = newSqlStmt SqlPreInstall emptyName code
+    getStmt (Just code) = newSqlStmt SqlPre emptyName code
     getStmt Nothing = SqlStmtEmpty
 
 getSchemaStatements :: OptCommon -> Setup -> Schema -> [SqlStmt]

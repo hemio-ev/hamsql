@@ -100,6 +100,7 @@ stmtRequiresPermitDeletion x =
 data SqlStmtType
   = SqlDropDatabase
   | SqlCreateDatabase
+  | SqlPre
   | SqlPreInstall
   | SqlDropRole
   | SqlCreateRole
@@ -142,6 +143,7 @@ data SqlStmtType
   | SqlPriv
   | SqlComment
   | SqlUnclassified
+  | SqlPostInstallAndUpgrade
   | SqlPostInstall
   deriving (Eq, Ord, Show)
 

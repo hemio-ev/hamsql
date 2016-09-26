@@ -13,6 +13,7 @@ instance ToSqlStmts (SqlContextObj Schema) where
     [ newSqlStmt SqlCreateSchema obj $
       "CREATE SCHEMA IF NOT EXISTS" <-> sqlIdCode obj
     , postInst $ schemaExecPostInstall s
+    , postInstallAndUpgrade $ schemaExecPostInstallAndUpgrade s
     , stmtCommentOn "SCHEMA" obj (schemaDescription s)
     ] ++
     maybeMap privUsage (schemaPrivUsage s) ++
@@ -26,6 +27,9 @@ instance ToSqlStmts (SqlContextObj Schema) where
     where
       postInst Nothing = SqlStmtEmpty
       postInst (Just xs) = newSqlStmt SqlPostInstall obj xs
+      postInstallAndUpgrade Nothing = SqlStmtEmpty
+      postInstallAndUpgrade (Just xs) = newSqlStmt SqlPostInstallAndUpgrade obj xs
+      
       priv :: Text -> SqlName -> SqlStmt
       priv p r =
         newSqlStmt SqlPriv obj $

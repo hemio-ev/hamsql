@@ -59,6 +59,7 @@ data Schema = Schema
   , schemaDomains :: Maybe [Domain]
   , schemaTypes :: Maybe [Type]
   , schemaExecPostInstall :: Maybe Text
+  , schemaExecPostInstallAndUpgrade :: Maybe Text
   } deriving (Generic, Show, Data)
 
 instance FromJSON Schema where
