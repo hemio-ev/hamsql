@@ -1,7 +1,8 @@
-import System.Exit (ExitCode(ExitSuccess))
-import System.Process (system)
+module Main where
+
+import Database.HamSql.Cli
 
 main :: IO ()
 main = do
-  ExitSuccess <- system "make -C tests"
-  return ()
+    exec ["--help"] 
+  where exec xs = parseThisArgv xs >>= run

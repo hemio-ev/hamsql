@@ -6,11 +6,15 @@ update:
 	cabal install -ffast --allow-newer --force-reinstalls --only-dependencies --disable-optimization
 
 test:
-	cabal clean
 	cabal configure --disable-optimization --enable-coverage --enable-tests
-	#cabal build --ghc-options="-Wall -fwarn-incomplete-record-updates -fno-warn-orphans"
-	#cabal build
 	cabal test --show-details direct
+	cabal build
+	-rm tests/hamsql.tix
+	-rm -r tests/coverage
+	-rm tests/hamsql-stmt-log.sql
+	make -C tests
+	hpc report tests/hamsql.tix --hpcdir dist/hpc/vanilla/mix/hamsql
+	hpc markup tests/hamsql.tix --hpcdir dist/hpc/vanilla/mix/hamsql/ --destdir=tests/coverage --verbosity=0
 
 doc:
 	cabal haddock

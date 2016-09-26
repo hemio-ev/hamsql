@@ -2,7 +2,7 @@
 --
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
-module Main where
+module Database.HamSql.Cli (run, parseArgv, parseThisArgv) where
 
 import Control.Monad (void, when)
 import Data.List
@@ -11,13 +11,20 @@ import Data.Maybe
 import qualified Data.Text as T
 import qualified Data.Text.IO as T.IO
 import Network.URI
-import Options.Applicative (execParser)
+import Options.Applicative hiding ( info)
+import System.Environment (getArgs)
 
 import Database.HamSql
 import Database.YamSql
 
-main :: IO ()
-main = execParser parserInfoHamsql >>= run
+parserPrefs :: ParserPrefs
+parserPrefs = defaultPrefs { prefShowHelpOnEmpty = True }
+
+parseArgv :: IO Command
+parseArgv = getArgs >>= parseThisArgv
+
+parseThisArgv :: [String] -> IO Command
+parseThisArgv xs = handleParseResult $ execParserPure parserPrefs parserInfoHamsql xs
 
 run :: Command -> IO ()
 -- Install
