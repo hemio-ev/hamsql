@@ -20,8 +20,8 @@ def test_domains():
      ]
     }
 
-    runAssertSilent('install', 'nothing.yml', delete_db=True)
-    runAssertSilent('upgrade', 'nothing.yml')
+    #runAssertSilent('install', 'nothing.yml', delete_db=True)
+    #runAssertSilent('upgrade', 'nothing.yml')
 
     runAssertSilent('install', 'domain.yml', delete_db=True)
     check(**xs)

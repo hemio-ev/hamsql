@@ -16,6 +16,17 @@ def test_roles():
     runAssertSilent('upgrade', 'role.yml')
     check(**xs)
 
+    runAssertSilent('upgrade', 'role.yml')
+    check(**xs)
+
     runAssertSilent('upgrade', 'nothing.yml')
     check()
 
+    runAssertSilent('install', 'role.yml', delete_db=True)
+    check(**xs)
+
+    runAssertSilent('install', 'role.yml', delete_db=True)
+    check(**xs)
+
+    runAssertSilent('install', 'nothing.yml', delete_db=True)
+    check()

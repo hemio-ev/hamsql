@@ -41,9 +41,13 @@ run (Install optCommon optDb optInstall)
            "statements are skipped. You have to ensure that an empty" <->
            "database exists for those commands to make sense."
     setup <- loadSetup optCommon (optSetup optCommon)
-    return ()
-    statements <- pgsqlGetFullStatements optCommon optDb setup
-    useSqlStmts optCommon optDb (sort statements)
+    stmts <- pgsqlGetFullStatements optCommon optDb setup
+    -- TODO: Own option for this
+    dropRoleStmts <- if optDeleteExistingDatabase optInstall then     
+        pgsqlDropAllRoleStmts optDb setup
+      else
+        return []
+    useSqlStmts optCommon optDb $ sort $ stmts ++ dropRoleStmts
 -- Upgrade
 run (Upgrade optCommon optDb _) = do
   setup <- loadSetup optCommon (optSetup optCommon)

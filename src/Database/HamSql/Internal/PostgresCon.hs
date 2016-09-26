@@ -136,9 +136,12 @@ pgsqlUpdateFragile setup conn stmts =
       -> (a -> [Maybe SqlStmt])
       -> [SqlStmt]
       -> IO [SqlStmt]
-    dropResidual t isf f xs = do
-      is <- isf conn
-      return $ xs ++ (catMaybes $ concatMap f (removeSqlIdBySqlStmts t xs is))
+    dropResidual t isf f xs = addDropResidual t (isf conn) f xs
+
+pgsqlDropAllRoleStmts :: OptCommonDb -> Setup -> IO [SqlStmt]
+pgsqlDropAllRoleStmts optDb setup = do
+  conn<-pgsqlConnectUrl $ getConUrl optDb
+  addDropResidual SqlCreateRole (deployedRoleIds setup conn) (stmtsDropRole setup) []
 
 -- DB Utils
 pgsqlExecWithoutTransact :: URI -> [SqlStmt] -> IO Connection
@@ -242,9 +245,20 @@ correctStatements
   -> (a -> [Maybe SqlStmt]) -- ^ drop statment generator
   -> [SqlStmt] -- ^ install statements, representing desired state
   -> IO [SqlStmt]
-correctStatements t iois f xs = do
+correctStatements t iois f xs =
+    do 
+      is <- iois
+      xs' <- addDropResidual t iois f xs
+      return $ removeStmtsMatchingIds (addSqlStmtType t is) xs'
+
+addDropResidual
+  :: ToSqlId a
+  => SqlStmtType
+  -> IO [a]
+  -> (a -> [Maybe SqlStmt])
+  -> [SqlStmt]
+  -> IO [SqlStmt]
+addDropResidual t iois f xs = do
   is <- iois
-  return $
-    removeStmtsMatchingIds (addSqlStmtType t is) xs ++
-    (catMaybes $ concatMap f (removeSqlIdBySqlStmts t xs is))
+  return $ xs ++ (catMaybes $ concatMap f (removeSqlIdBySqlStmts t xs is))
 
