@@ -8,16 +8,16 @@ module Database.HamSql.Internal.Utils
   , (<>)
   ) where
 
-import           Data.List        (group, intercalate, sort)
-import           Data.Monoid      ((<>))
-import           Data.Text        (Text, pack)
-import qualified Data.Text        as T
-import qualified Data.Text.IO     as TIO
-import           Debug.Trace
-import           System.Exit
-import           System.IO        (stderr)
-import           System.IO.Unsafe
-import           Text.Groom
+import Data.List (group, intercalate, sort)
+import Data.Monoid ((<>))
+import Data.Text (Text, pack)
+import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
+import Debug.Trace
+import System.Exit
+import System.IO (stderr)
+import System.IO.Unsafe
+import Text.Groom
 
 import Database.HamSql.Internal.Option
 

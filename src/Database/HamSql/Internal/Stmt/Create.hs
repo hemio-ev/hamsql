@@ -9,15 +9,15 @@ import Data.Maybe
 import Database.HamSql.Internal.Option
 import Database.HamSql.Internal.Stmt
 import Database.HamSql.Internal.Stmt.Basic
-import Database.HamSql.Internal.Stmt.Commons  ()
-import Database.HamSql.Internal.Stmt.Domain   ()
+import Database.HamSql.Internal.Stmt.Commons ()
+import Database.HamSql.Internal.Stmt.Domain ()
 import Database.HamSql.Internal.Stmt.Function ()
-import Database.HamSql.Internal.Stmt.Role     ()
-import Database.HamSql.Internal.Stmt.Schema   ()
+import Database.HamSql.Internal.Stmt.Role ()
+import Database.HamSql.Internal.Stmt.Schema ()
 import Database.HamSql.Internal.Stmt.Sequence ()
-import Database.HamSql.Internal.Stmt.Table    ()
-import Database.HamSql.Internal.Stmt.Trigger  ()
-import Database.HamSql.Internal.Stmt.Type     ()
+import Database.HamSql.Internal.Stmt.Table ()
+import Database.HamSql.Internal.Stmt.Trigger ()
+import Database.HamSql.Internal.Stmt.Type ()
 
 fa
   :: Show b
@@ -32,8 +32,7 @@ fa source schema =
   toElemList SqlContextSqo schemaTypes schema ++
   concat
     [ map (toSetupElement . SqlContextSqoObj schema table) $ tableColumns table
-    | table <- maybeList $ schemaTables schema
-    ]
+    | table <- maybeList $ schemaTables schema ]
   where
     toSetupElement x = SetupElement x source
     toElemList x y = map (toSetupElement . x schema) . maybeList . y

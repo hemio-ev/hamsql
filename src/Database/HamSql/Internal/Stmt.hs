@@ -8,8 +8,8 @@
 module Database.HamSql.Internal.Stmt where
 
 import Data.Maybe
-import qualified Data.Text                            as T
-import           Database.PostgreSQL.Simple.FromField
+import qualified Data.Text as T
+import Database.PostgreSQL.Simple.FromField
 
 import Database.HamSql.Internal.Utils
 import Database.YamSql
@@ -22,9 +22,9 @@ data SqlStmtId = SqlStmtId
 instance Show SqlStmtId where
   show (SqlStmtId x y) = "(SqlStmtId " ++ show x ++ " " ++ show y ++ ")"
 
-data SqlStmt
-  = SqlStmt SqlStmtId
-            Text
+data SqlStmt =
+  SqlStmt SqlStmtId
+          Text
   deriving (Show)
 
 stmtId :: SqlStmt -> SqlStmtId
@@ -35,7 +35,6 @@ stmtBody (SqlStmt _ x) = x
 
 stmtIdType :: SqlStmt -> SqlStmtType
 stmtIdType (SqlStmt x _) = stmtType x
-
 
 stmtDesc :: SqlStmt -> Text
 stmtDesc stmt = T.pack (sqlIdType $ sqlId stmt) <-> sqlIdCode stmt
@@ -70,10 +69,11 @@ instance FromField SqlName where
 
 -- | More like always perform unfiltered after delete
 allowInUpgrade :: SqlStmt -> Bool
-allowInUpgrade x = case stmtIdType x of
-        SqlPreInstall -> False
-        SqlPostInstall -> False
-        _ -> True
+allowInUpgrade x =
+  case stmtIdType x of
+    SqlPreInstall -> False
+    SqlPostInstall -> False
+    _ -> True
 
 stmtRequiresPermitDeletion :: SqlStmt -> Bool
 stmtRequiresPermitDeletion x =

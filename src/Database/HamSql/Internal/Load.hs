@@ -6,16 +6,15 @@ module Database.HamSql.Internal.Load where
 
 import Control.Exception
 import Control.Monad
+import qualified Data.ByteString as B
+import Data.Char
+import Data.Frontmatter
+import Data.List
 import Data.Maybe
-import qualified Data.ByteString    as B
-import           Data.Char
-import           Data.Frontmatter
-import           Data.List
-import qualified Data.Text          as T
-import           Data.Text.Encoding (decodeUtf8)
-import           Data.Yaml
-import           System.Directory   (doesDirectoryExist, doesFileExist,
-                                     getDirectoryContents)
+import qualified Data.Text as T
+import Data.Text.Encoding (decodeUtf8)
+import Data.Yaml
+import System.Directory (doesDirectoryExist, doesFileExist, getDirectoryContents)
 import System.FilePath.Posix (combine, dropFileName, takeFileName)
 
 import Database.HamSql.Internal.Option
@@ -41,7 +40,10 @@ loadSetup opts filePath = do
 loadSetupSchemas :: OptCommon -> FilePath -> Setup -> IO Setup
 loadSetupSchemas opts path s = do
   schemaData <- loadSchemas opts path s [] (setupSchemas s)
-  return s {setupSchemaData = Just schemaData}
+  return
+    s
+    { setupSchemaData = Just schemaData
+    }
 
 loadSchemas :: OptCommon
             -> FilePath
@@ -54,13 +56,10 @@ loadSchemas optCom path setup loadedSchemas missingSchemas = do
   schemas <-
     sequence
       [ loadSchema (T.unpack $ unsafePlainName schema)
-      | schema <- missingSchemas
-      ]
-  let newDependencyNames =
-        nub . concat $ map (maybeList . schemaDependencies) schemas
+      | schema <- missingSchemas ]
+  let newDependencyNames = nub . concat $ map (maybeList . schemaDependencies) schemas
   let allLoadedSchemas = schemas ++ loadedSchemas
-  let newMissingDepencenyNames =
-        newDependencyNames \\ map schemaName allLoadedSchemas
+  let newMissingDepencenyNames = newDependencyNames \\ map schemaName allLoadedSchemas
   loadSchemas optCom path setup allLoadedSchemas newMissingDepencenyNames
   where
     loadSchema :: FilePath -> IO Schema
@@ -125,24 +124,38 @@ readSchema opts md = do
   schemaData <- readObjectFromFile opts schemaConfig
   domains <-
     do files <- confDirFiles "domains.d"
-       sequence [readObjectFromFile opts f | f <- files]
+       sequence
+         [ readObjectFromFile opts f
+         | f <- files ]
   tables <-
     do files <- confDirFiles "tables.d"
-       sequence [readObjectFromFile opts f | f <- files]
+       sequence
+         [ readObjectFromFile opts f
+         | f <- files ]
   functions <-
     do files <- confDirFiles "functions.d"
-       let ins x s = x {functionBody = Just s}
-       sequence [readFunctionFromFile ins opts f | f <- files]
+       let ins x s =
+             x
+             { functionBody = Just s
+             }
+       sequence
+         [ readFunctionFromFile ins opts f
+         | f <- files ]
   triggers <-
     do files <- confDirFiles "triggers.d"
-       let ins x s = x {triggerBody = Just s}
-       sequence [readFunctionFromFile ins opts f | f <- files]
+       let ins x s =
+             x
+             { triggerBody = Just s
+             }
+       sequence
+         [ readFunctionFromFile ins opts f
+         | f <- files ]
   let schemaData' =
         schemaData
         { schemaDomains = maybeJoin (schemaDomains schemaData) (Just domains)
         , schemaTables = maybeJoin (schemaTables schemaData) (Just tables)
         , schemaFunctions =
-            maybeJoin (schemaFunctions schemaData) (Just functions)
+          maybeJoin (schemaFunctions schemaData) (Just functions)
         , schemaTriggers = maybeJoin (schemaTriggers schemaData) (Just triggers)
         }
   return schemaData'

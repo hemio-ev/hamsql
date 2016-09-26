@@ -73,12 +73,12 @@ Properties all via ALTER SEQUENCE.
 -}
 module Database.HamSql.Internal.PostgresCon where
 
-import           Control.Exception
-import           Control.Monad                          (void, when)
-import qualified Data.ByteString.Char8                  as B
-import           Data.Maybe
-import           Database.PostgreSQL.Simple
-import           Database.PostgreSQL.Simple.Transaction
+import Control.Exception
+import Control.Monad (void, when)
+import qualified Data.ByteString.Char8 as B
+import Data.Maybe
+import Database.PostgreSQL.Simple
+import Database.PostgreSQL.Simple.Transaction
 
 import Network.URI (URI)
 
@@ -90,9 +90,9 @@ import Database.HamSql.Internal.Stmt.Create
 import Database.HamSql.Internal.Stmt.Domain
 import Database.HamSql.Internal.Stmt.Drop
 import Database.HamSql.Internal.Stmt.Function
+import Database.HamSql.Internal.Stmt.Role
 import Database.HamSql.Internal.Stmt.Sequence
 import Database.HamSql.Internal.Stmt.Table
-import Database.HamSql.Internal.Stmt.Role
 import Database.HamSql.Internal.Utils
 import Database.HamSql.Setup
 import Database.YamSql
@@ -101,15 +101,17 @@ sqlErrInvalidFunctionDefinition :: B.ByteString
 sqlErrInvalidFunctionDefinition = "42P13"
 
 pgsqlGetFullStatements :: OptCommon -> OptCommonDb -> Setup -> IO [SqlStmt]
-pgsqlGetFullStatements optCom _ setup = return $ catMaybes $ getSetupStatements optCom setup
+pgsqlGetFullStatements optCom _ setup =
+  return $ catMaybes $ getSetupStatements optCom setup
 
 pgsqlDeleteAllStmt :: Connection -> IO [SqlStmt]
 pgsqlDeleteAllStmt conn = do
   domainConstrs <- deployedDomainConstrIds conn
   tableConstrs <- deployedTableConstrIds conn
-  return $ catMaybes $
-     concatMap stmtsDropDomainConstr domainConstrs ++
-     concatMap stmtsDropTableConstr tableConstrs
+  return $
+    catMaybes $
+    concatMap stmtsDropDomainConstr domainConstrs ++
+    concatMap stmtsDropTableConstr tableConstrs
 
 pgsqlUpdateFragile :: Setup -> Connection -> [SqlStmt] -> IO [SqlStmt]
 pgsqlUpdateFragile setup conn stmts =
@@ -140,8 +142,12 @@ pgsqlUpdateFragile setup conn stmts =
 
 pgsqlDropAllRoleStmts :: OptCommonDb -> Setup -> IO [SqlStmt]
 pgsqlDropAllRoleStmts optDb setup = do
-  conn<-pgsqlConnectUrl $ getConUrl optDb
-  addDropResidual SqlCreateRole (deployedRoleIds setup conn) (stmtsDropRole setup) []
+  conn <- pgsqlConnectUrl $ getConUrl optDb
+  addDropResidual
+    SqlCreateRole
+    (deployedRoleIds setup conn)
+    (stmtsDropRole setup)
+    []
 
 -- DB Utils
 pgsqlExecWithoutTransact :: URI -> [SqlStmt] -> IO Connection
@@ -171,14 +177,10 @@ pgsqlExecStmtList Changed [] failed conn =
   void $ pgsqlExecStmtList Unchanged failed [] conn
 pgsqlExecStmtList status (x:xs) failed conn = do
   savepoint <- newSavepoint conn
-  tryExec savepoint `catch` handleSqlError savepoint `catch`
-    handleQueryError savepoint
+  tryExec savepoint `catch` handleSqlError savepoint `catch` handleQueryError savepoint
   where
     tryExec savepoint = do
-      logStmt $
-        "-- Executing " <> tshow (stmtIdType x) <>
-        " for " <>
-        stmtDesc x
+      logStmt $ "-- Executing " <> tshow (stmtIdType x) <> " for " <> stmtDesc x
       pgsqlExecStmt conn x
       logStmt $ toSqlCode x
       proceed savepoint
@@ -200,16 +202,17 @@ pgsqlExecStmtList status (x:xs) failed conn = do
       releaseSavepoint conn savepoint
       pgsqlExecStmtList forwardStatus xs (failed ++ stmts) conn
     -- Init may not be forwarded to next iteration
-    forwardStatus = case status of
-      Init -> Unchanged
-      s -> s
+    forwardStatus =
+      case status of
+        Init -> Unchanged
+        s -> s
 
 pgsqlExecIntern :: PgSqlMode -> URI -> [SqlStmt] -> IO Connection
 pgsqlExecIntern mode connUrl xs = do
   conn <- pgsqlConnectUrl connUrl
-  when (mode == PgSqlWithTransaction) $ do
-    begin conn
-    pgsqlExecStmtList Init xs [] conn
+  when (mode == PgSqlWithTransaction) $
+    do begin conn
+       pgsqlExecStmtList Init xs [] conn
   when (mode == PgSqlWithoutTransaction) $ mapM_ (pgsqlExecStmtHandled conn) xs
   return conn
 
@@ -221,19 +224,27 @@ addSqlStmtType
 addSqlStmtType t = map (SqlStmtId t . sqlId)
 
 filterSqlStmtType :: SqlStmtType -> [SqlStmt] -> [SqlStmt]
-filterSqlStmtType t xs = [x | x <- xs, stmtIdType x == t]
+filterSqlStmtType t xs =
+  [ x
+  | x <- xs
+  , stmtIdType x == t ]
 
 removeStmtsMatchingIds
   :: [SqlStmtId] -- ^ Statement ids to remove
   -> [SqlStmt]
   -> [SqlStmt]
 removeStmtsMatchingIds ids stmts =
-  [stmt | stmt <- stmts, stmtId stmt `notElem` ids]
+  [ stmt
+  | stmt <- stmts
+  , stmtId stmt `notElem` ids ]
 
 removeSqlIdBySqlStmts
   :: ToSqlId a
   => SqlStmtType -> [SqlStmt] -> [a] -> [a]
-removeSqlIdBySqlStmts t xs is = [x | x <- is, sqlId x `notElem` ids]
+removeSqlIdBySqlStmts t xs is =
+  [ x
+  | x <- is
+  , sqlId x `notElem` ids ]
   where
     ids = map sqlId $ filterSqlStmtType t xs
 
@@ -245,11 +256,10 @@ correctStatements
   -> (a -> [Maybe SqlStmt]) -- ^ drop statment generator
   -> [SqlStmt] -- ^ install statements, representing desired state
   -> IO [SqlStmt]
-correctStatements t iois f xs =
-    do 
-      is <- iois
-      xs' <- addDropResidual t iois f xs
-      return $ removeStmtsMatchingIds (addSqlStmtType t is) xs'
+correctStatements t iois f xs = do
+  is <- iois
+  xs' <- addDropResidual t iois f xs
+  return $ removeStmtsMatchingIds (addSqlStmtType t is) xs'
 
 addDropResidual
   :: ToSqlId a
@@ -261,4 +271,3 @@ addDropResidual
 addDropResidual t iois f xs = do
   is <- iois
   return $ xs ++ (catMaybes $ concatMap f (removeSqlIdBySqlStmts t xs is))
-

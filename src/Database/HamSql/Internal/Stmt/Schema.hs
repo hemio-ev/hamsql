@@ -28,8 +28,8 @@ instance ToSqlStmts (SqlContextObj Schema) where
       postInst Nothing = Nothing
       postInst (Just xs) = newSqlStmt SqlPostInstall obj xs
       postInstallAndUpgrade Nothing = Nothing
-      postInstallAndUpgrade (Just xs) = newSqlStmt SqlPostInstallAndUpgrade obj xs
-      
+      postInstallAndUpgrade (Just xs) =
+        newSqlStmt SqlPostInstallAndUpgrade obj xs
       priv p r =
         newSqlStmt SqlPriv obj $
         "GRANT " <> p <> " " <> sqlIdCode obj <> " TO " <> prefixedRole setup r

@@ -91,17 +91,17 @@ applyFunctionTpl :: FunctionTpl -> Function -> Function
 applyFunctionTpl t f =
   f
   { functionPrivExecute =
-      maybeRight (functiontplPrivExecute t) (functionPrivExecute f)
+    maybeRight (functiontplPrivExecute t) (functionPrivExecute f)
   , functionSecurityDefiner =
-      maybeRight (functiontplSecurityDefiner t) (functionSecurityDefiner f)
+    maybeRight (functiontplSecurityDefiner t) (functionSecurityDefiner f)
   , functionOwner = maybeRight (functiontplOwner t) (functionOwner f)
   , functionParameters =
-      maybeJoin (functionParameters f) (functiontplParameters t)
+    maybeJoin (functionParameters f) (functiontplParameters t)
   , functionVariables = maybeJoin (functionVariables f) (functiontplVariables t)
   , functionBody =
-      Just $
-      maybeStringL (functiontplBodyPrelude t) <> maybeText (functionBody f) <>
-      maybeStringR (functiontplBodyPostlude t)
+    Just $
+    maybeStringL (functiontplBodyPrelude t) <> maybeText (functionBody f) <>
+    maybeStringR (functiontplBodyPostlude t)
   }
   where
     maybeStringL (Just xs) = xs <> "\n"

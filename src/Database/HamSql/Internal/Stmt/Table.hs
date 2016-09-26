@@ -42,9 +42,8 @@ instance ToSqlStmts (SqlContextSqo Table) where
   toSqlStmts = stmtsDeployTable
 
 stmtsDeployTable :: SetupContext -> SqlContextSqo Table -> [Maybe SqlStmt]
-stmtsDeployTable context@SetupContext {setupContextSetup = setup} obj@SqlContextSqo { sqlSqoSchema = m
-                                                                                    , sqlSqoObject = t
-                                                                                    }
+stmtsDeployTable context@SetupContext {setupContextSetup = setup} obj@SqlContextSqo {sqlSqoSchema = m
+                                                                                    ,sqlSqoObject = t}
                                                                   -- table with columns
  =
   [ stmtCreateTable
@@ -60,9 +59,7 @@ stmtsDeployTable context@SetupContext {setupContextSetup = setup} obj@SqlContext
   concat (sequences (tableColumns t)) ++
   maybeMap stmtCheck (tableChecks t) ++
   -- column comments
-  map
-    (\c -> stmtCommentOn "COLUMN" (columnObj obj c) (columnDescription c))
-    columns ++
+  map (\c -> stmtCommentOn "COLUMN" (columnObj obj c) (columnDescription c)) columns ++
   -- grant rights to roles
   maybeMap (sqlGrant "SELECT") (tablePrivSelect t) ++
   maybeMap (sqlGrant "UPDATE") (tablePrivUpdate t) ++
@@ -114,7 +111,7 @@ stmtsDeployTable context@SetupContext {setupContextSetup = setup} obj@SqlContext
         sqlSetNull Nothing = sqlSetNull (Just False)
         sqlSetNull (Just False) = "SET NOT NULL"
         sqlSetNull (Just True) = "DROP NOT NULL"
-    stmtAddColumnDefault c = columnDefault c >>= sqlDefault 
+    stmtAddColumnDefault c = columnDefault c >>= sqlDefault
       where
         sqlDefault d =
           newSqlStmt SqlAddDefault (columnObj obj c) $
@@ -126,7 +123,7 @@ stmtsDeployTable context@SetupContext {setupContextSetup = setup} obj@SqlContext
         c
         { columnType = SqlType "integer"
         , columnDefault =
-            Just $ "nextval('" <> sqlIdCode (serialSqlContext c) <> "')"
+          Just $ "nextval('" <> sqlIdCode (serialSqlContext c) <> "')"
         }
       | otherwise = c
     columnIsSerial c = toSqlCode (columnType c) == "SERIAL"
@@ -140,16 +137,16 @@ stmtsDeployTable context@SetupContext {setupContextSetup = setup} obj@SqlContext
       SqlContextSqo
       { sqlSqoSchema = m
       , sqlSqoObject =
-          Sequence
-          { sequenceName = serialSequenceName c
-          , sequenceIncrement = Nothing
-          , sequenceMinValue = Nothing
-          , sequenceMaxValue = Nothing
-          , sequenceStartValue = Nothing
-          , sequenceCache = Nothing
-          , sequenceCycle = Nothing
-          , sequenceOwnedByColumn = Just $ SqlName $ sqlIdCode (columnObj obj c)
-          }
+        Sequence
+        { sequenceName = serialSequenceName c
+        , sequenceIncrement = Nothing
+        , sequenceMinValue = Nothing
+        , sequenceMaxValue = Nothing
+        , sequenceStartValue = Nothing
+        , sequenceCache = Nothing
+        , sequenceCycle = Nothing
+        , sequenceOwnedByColumn = Just $ SqlName $ sqlIdCode (columnObj obj c)
+        }
       }
     -- PRIMARY KEY
     sqlAddPrimaryKey :: [SqlName] -> Maybe SqlStmt

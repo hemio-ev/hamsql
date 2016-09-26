@@ -43,4 +43,3 @@ stmtsDeployDomain _ obj@SqlContextSqo {sqlSqoObject = d} =
     sqlDefault (Just def) =
       newSqlStmt SqlAddDefault obj $
       "ALTER DOMAIN" <-> sqlIdCode obj <-> "SET DEFAULT" <-> def
-

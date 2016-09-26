@@ -6,14 +6,14 @@
 
 module Database.HamSql.Internal.Stmt.Function where
 
-import           Data.Maybe
-import qualified Data.Text  as T
+import Data.Maybe
+import qualified Data.Text as T
 
 import Database.HamSql.Internal.Stmt.Basic
 
 stmtsDropFunction' :: SqlId -> [SqlStmt]
-stmtsDropFunction' x = catMaybes
-  [newSqlStmt SqlDropFunction x $ "DROP FUNCTION " <> toSqlCode x]
+stmtsDropFunction' x =
+  catMaybes [newSqlStmt SqlDropFunction x $ "DROP FUNCTION " <> toSqlCode x]
 
 stmtsDropFunction :: SqlIdContentSqoArgtypes -> [Maybe SqlStmt]
 stmtsDropFunction x = map Just $ stmtsDropFunction' $ sqlId x
