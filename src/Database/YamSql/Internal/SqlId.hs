@@ -91,7 +91,7 @@ instance ToSqlId SqlIdContentObj where
 
 instance ToSqlCode SqlIdContentObj where
   toSqlCode (SqlIdContentObj _ x) = toSqlCode x
-  
+
 instance ToSqlObjId SqlIdContentObj where
   sqlObjId (SqlIdContentObj _ x) = x
 

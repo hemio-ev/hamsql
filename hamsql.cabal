@@ -36,6 +36,7 @@ library
     Database.YamSql.Parser
 
   other-modules:
+    Paths_hamsql
     Database.HamSql.Internal.DbUtils
     Database.HamSql.Internal.Documentation
     Database.HamSql.Internal.InquireDeployed

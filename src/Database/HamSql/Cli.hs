@@ -11,12 +11,14 @@ module Database.HamSql.Cli
 import Control.Monad (void, when)
 import Data.List
 import Data.Maybe
-
 import qualified Data.Text as T
 import qualified Data.Text.IO as T.IO
+import Data.Version (showVersion)
 import Network.URI
 import Options.Applicative hiding (info)
 import System.Environment (getArgs)
+
+import Paths_hamsql (version)
 
 import Database.HamSql
 import Database.YamSql
@@ -77,6 +79,9 @@ run (Upgrade optCommon optDb _) = do
 run (Doc optCommon optDoc) = do
   setup <- loadSetup optCommon (optSetup optCommon)
   docWrite optDoc setup
+run (NoCommand opt)
+  | optVersion opt = putStrLn $ "hamsql " ++ showVersion version
+  | otherwise = err "UNEXPECTED: You supplied an unsupported option."
 
 useSqlStmts :: OptCommon -> OptCommonDb -> [SqlStmt] -> IO ()
 useSqlStmts optCommon optDb unfilteredStmts

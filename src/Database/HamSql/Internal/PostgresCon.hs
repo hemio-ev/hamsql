@@ -270,4 +270,4 @@ addDropResidual
   -> IO [SqlStmt]
 addDropResidual t iois f xs = do
   is <- iois
-  return $ xs ++ (catMaybes $ concatMap f (removeSqlIdBySqlStmts t xs is))
+  return $ xs ++ catMaybes (concatMap f (removeSqlIdBySqlStmts t xs is))

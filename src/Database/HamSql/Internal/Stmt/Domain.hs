@@ -33,7 +33,7 @@ stmtsDeployDomain _ obj@SqlContextSqo {sqlSqoObject = d} =
     sqlCheck c =
       newSqlStmt SqlCreateCheckConstr obj $
       "ALTER DOMAIN" <-> sqlIdCode obj <-> "ADD CONSTRAINT" <->
-      toSqlCode ((checkName c)) <->
+      toSqlCode (checkName c) <->
       "CHECK (" <>
       checkCheck c <>
       ")"

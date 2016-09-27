@@ -35,6 +35,7 @@ data Command
             OptUpgrade
   | Doc OptCommon
         OptDoc
+  | NoCommand OptNoCommand
   deriving (Show)
 
 parserCommand :: Parser Command
@@ -54,7 +55,8 @@ parserCommand =
        "doc"
        (info
           (parserCmdDoc <**> helper)
-          (progDesc "Produces a documentation of the setup.")))
+          (progDesc "Produces a documentation of the setup."))) <|>
+  parserOptNoCommand
 
 parserCmdInstall :: Parser Command
 parserCmdInstall = Install <$> parserOptCommon <*> parserOptCommonDb <*> parserOptInstall
@@ -111,6 +113,16 @@ parserOptInstall =
   boolFlag
     (long "delete-existing-database" <> short 'd' <>
      help "Delete database if it allready exists")
+
+-- Command NoCommand
+data OptNoCommand = OptNoCommand
+  { optVersion :: Bool
+  } deriving (Show)
+
+parserOptNoCommand :: Parser Command
+parserOptNoCommand =
+  NoCommand . OptNoCommand <$>
+  flag' True (long "version" <> help "Prints program version")
 
 -- Command Upgrade
 data OptUpgrade = OptUpgrade
