@@ -19,7 +19,7 @@ stmtsDeployType _ obj@SqlContextSqo {sqlSqoObject = t} =
     "CREATE TYPE" <-> sqlIdCode obj <-> "AS (" <>
     T.intercalate ", " (map sqlElement (typeElements t)) <>
     ")"
-  , stmtCommentOn "TYPE" obj (typeDescription t)
+  , stmtCommentOn obj (typeDescription t)
   ]
 -- ALTER TYPE name ALTER ATTRIBUTE attribute_name [ SET DATA ] TYPE data_type
   where

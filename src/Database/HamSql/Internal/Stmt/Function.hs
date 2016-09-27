@@ -48,8 +48,7 @@ stmtsDeployFunction SetupContext {setupContextSetup = setup} obj@SqlContextSqoAr
       "\nAS\n$BODY$\n" <>
       sqlBody <>
       "\n$BODY$\n"
-    stmtComment =
-      stmtCommentOn "FUNCTION" obj $ toSqlCodeString (functionDescription f)
+    stmtComment = stmtCommentOn obj $ toSqlCodeString (functionDescription f)
     sqlSetOwner (Just o) =
       newSqlStmt SqlPriv obj $
       "ALTER FUNCTION " <> sqlIdCode obj <> "OWNER TO " <> prefixedRole setup o

@@ -2,7 +2,11 @@
 --
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
-module Database.HamSql.Cli (run, parseArgv, parseThisArgv) where
+module Database.HamSql.Cli
+  ( run
+  , parseArgv
+  , parseThisArgv
+  ) where
 
 import Control.Monad (void, when)
 import Data.List
@@ -11,20 +15,24 @@ import Data.Maybe
 import qualified Data.Text as T
 import qualified Data.Text.IO as T.IO
 import Network.URI
-import Options.Applicative hiding ( info)
+import Options.Applicative hiding (info)
 import System.Environment (getArgs)
 
 import Database.HamSql
 import Database.YamSql
 
 parserPrefs :: ParserPrefs
-parserPrefs = defaultPrefs { prefShowHelpOnEmpty = True }
+parserPrefs =
+  defaultPrefs
+  { prefShowHelpOnEmpty = True
+  }
 
 parseArgv :: IO Command
 parseArgv = getArgs >>= parseThisArgv
 
 parseThisArgv :: [String] -> IO Command
-parseThisArgv xs = handleParseResult $ execParserPure parserPrefs parserInfoHamsql xs
+parseThisArgv xs =
+  handleParseResult $ execParserPure parserPrefs parserInfoHamsql xs
 
 run :: Command -> IO ()
 -- Install
@@ -41,7 +49,8 @@ run (Install optCommon optDb optInstall)
              ((getConUrl optDb)
               { uriPath = "/postgres"
               })
-             (catMaybes $ sqlCreateDatabase (optDeleteExistingDatabase optInstall) dbname)
+             (catMaybes $
+              sqlCreateDatabase (optDeleteExistingDatabase optInstall) dbname)
       else when (optDeleteExistingDatabase optInstall) $
            warn' $
            "In --emulate and --print mode the DROP/CREATE DATABASE" <->
@@ -50,10 +59,10 @@ run (Install optCommon optDb optInstall)
     setup <- loadSetup optCommon (optSetup optCommon)
     stmts <- pgsqlGetFullStatements optCommon optDb setup
     -- TODO: Own option for this
-    dropRoleStmts <- if optDeleteExistingDatabase optInstall then     
-        pgsqlDropAllRoleStmts optDb setup
-      else
-        return []
+    dropRoleStmts <-
+      if optDeleteExistingDatabase optInstall
+        then pgsqlDropAllRoleStmts optDb setup
+        else return []
     useSqlStmts optCommon optDb $ sort $ stmts ++ dropRoleStmts
 -- Upgrade
 run (Upgrade optCommon optDb _) = do
@@ -93,5 +102,5 @@ useSqlStmts optCommon optDb unfilteredStmts
       | otherwise =
         warnOnDiff
           [ x
-          | x <- unfilteredStmts 
+          | x <- unfilteredStmts
           , not $ stmtRequiresPermitDeletion x ]

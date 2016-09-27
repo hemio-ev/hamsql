@@ -7,7 +7,6 @@
 --{-# LANGUAGE FlexibleInstances #-}
 module Database.HamSql.Internal.Stmt where
 
-import Data.Maybe
 import qualified Data.Text as T
 import Database.PostgreSQL.Simple.FromField
 
@@ -37,7 +36,7 @@ stmtIdType :: SqlStmt -> SqlStmtType
 stmtIdType (SqlStmt x _) = stmtType x
 
 stmtDesc :: SqlStmt -> Text
-stmtDesc stmt = T.pack (sqlIdType $ sqlId stmt) <-> sqlIdCode stmt
+stmtDesc stmt = sqlIdType (sqlId stmt) <-> sqlIdCode stmt
 
 instance Eq SqlStmt where
   x == y = stmtId x == stmtId y

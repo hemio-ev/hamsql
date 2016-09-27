@@ -14,7 +14,7 @@ instance ToSqlStmts (SqlContextObj Schema) where
       "CREATE SCHEMA IF NOT EXISTS" <-> sqlIdCode obj
     , postInst $ schemaExecPostInstall s
     , postInstallAndUpgrade $ schemaExecPostInstallAndUpgrade s
-    , stmtCommentOn "SCHEMA" obj (schemaDescription s)
+    , stmtCommentOn obj (schemaDescription s)
     ] ++
     maybeMap privUsage (schemaPrivUsage s) ++
     maybeMap privSelectAll (schemaPrivSelectAll s) ++

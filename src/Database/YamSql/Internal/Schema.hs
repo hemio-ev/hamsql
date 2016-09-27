@@ -117,7 +117,7 @@ deriving instance Show (SqlContextSqoObj a0 a1)
 
 instance ToSqlId (SqlContextSqoObj a0 a1) where
     sqlId (SqlContextSqoObj s x1 x2) = SqlId $ SqlIdContentSqoObj
-        (sqlIdPartType x1 ++ "-" ++ sqlIdPartType x2)
+        (sqlIdPartType x1 <> "-" <> sqlIdPartType x2)
         (sqlIdPart s <.> sqlIdPart x1)
         (sqlIdPart x2)
 

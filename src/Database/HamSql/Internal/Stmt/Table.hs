@@ -48,7 +48,7 @@ stmtsDeployTable context@SetupContext {setupContextSetup = setup} obj@SqlContext
  =
   [ stmtCreateTable
     -- table comment
-  , stmtCommentOn "TABLE" obj (tableDescription t)
+  , stmtCommentOn obj (tableDescription t)
   ] ++
   map stmtAddColumn columns ++
   map stmtAlterColumnType columns ++
@@ -59,7 +59,7 @@ stmtsDeployTable context@SetupContext {setupContextSetup = setup} obj@SqlContext
   concat (sequences (tableColumns t)) ++
   maybeMap stmtCheck (tableChecks t) ++
   -- column comments
-  map (\c -> stmtCommentOn "COLUMN" (columnObj obj c) (columnDescription c)) columns ++
+  map (\c -> stmtCommentOn (columnObj obj c) (columnDescription c)) columns ++
   -- grant rights to roles
   maybeMap (sqlGrant "SELECT") (tablePrivSelect t) ++
   maybeMap (sqlGrant "UPDATE") (tablePrivUpdate t) ++

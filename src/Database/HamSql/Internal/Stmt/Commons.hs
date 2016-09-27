@@ -10,11 +10,16 @@ import Database.HamSql.Setup
 import Database.YamSql
 
 stmtCommentOn
-  :: ToSqlId a
-  => Text -> a -> Text -> Maybe SqlStmt
-stmtCommentOn on obj com =
+  :: (ToSqlId a)
+  => a -> Text -> Maybe SqlStmt
+stmtCommentOn obj comment =
   newSqlStmt SqlComment obj $
-  "COMMENT ON " <> on <> " " <> sqlIdCode obj <> " IS " <> toSqlCodeString com
+  "COMMENT ON " <> rewriteType (sqlIdType (sqlId obj)) <> " " <> sqlIdCode obj <>
+  " IS " <>
+  toSqlCodeString comment
+  where
+    rewriteType "TABLE-COLUMN" = "COLUMN"
+    rewriteType xs = xs
 
 prefixedRole :: Setup -> SqlName -> Text
 prefixedRole setup role = toSqlCode ((SqlName $ setupRolePrefix' setup) // role)

@@ -48,7 +48,7 @@ class ToSqlSqoObjId a  where
   sqlSqoObjIdCode = toSqlCode . sqlSqoObjId
 
 -- | Strings like /TABLE/
-type SqlContextObjType = String
+type SqlContextObjType = Text
 
 class ToSqlIdPartArgs a  where
   sqlIdPartArgs :: a -> [SqlType]
