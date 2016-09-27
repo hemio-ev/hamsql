@@ -21,7 +21,6 @@ module Database.YamSql.Internal.Schema
   , module Database.YamSql.Internal.Role
   , module Database.YamSql.Internal.Sequence
   , module Database.YamSql.Internal.Table
-  , module Database.YamSql.Internal.Trigger
   , module Database.YamSql.Internal.Type
   ) where
 
@@ -33,7 +32,6 @@ import Database.YamSql.Internal.Function
 import Database.YamSql.Internal.Role
 import Database.YamSql.Internal.Sequence
 import Database.YamSql.Internal.Table
-import Database.YamSql.Internal.Trigger
 import Database.YamSql.Internal.Type
 
 -- Schema --
@@ -47,7 +45,6 @@ data Schema = Schema
   , schemaTableTemplates :: Maybe [TableTpl]
   , schemaRoles :: Maybe [Role]
   , schemaSequences :: Maybe [Sequence]
-  , schemaTriggers :: Maybe [Trigger]
   , schemaPrivUsage :: Maybe [SqlName]
   , schemaPrivSelectAll :: Maybe [SqlName]
   , schemaPrivInsertAll :: Maybe [SqlName]

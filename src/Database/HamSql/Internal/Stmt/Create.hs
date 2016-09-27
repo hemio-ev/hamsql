@@ -16,7 +16,6 @@ import Database.HamSql.Internal.Stmt.Role ()
 import Database.HamSql.Internal.Stmt.Schema ()
 import Database.HamSql.Internal.Stmt.Sequence ()
 import Database.HamSql.Internal.Stmt.Table ()
-import Database.HamSql.Internal.Stmt.Trigger ()
 import Database.HamSql.Internal.Stmt.Type ()
 
 fa

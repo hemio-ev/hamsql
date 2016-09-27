@@ -141,22 +141,12 @@ readSchema opts md = do
        sequence
          [ readFunctionFromFile ins opts f
          | f <- files ]
-  triggers <-
-    do files <- confDirFiles "triggers.d"
-       let ins x s =
-             x
-             { triggerBody = Just s
-             }
-       sequence
-         [ readFunctionFromFile ins opts f
-         | f <- files ]
   let schemaData' =
         schemaData
         { schemaDomains = maybeJoin (schemaDomains schemaData) (Just domains)
         , schemaTables = maybeJoin (schemaTables schemaData) (Just tables)
         , schemaFunctions =
           maybeJoin (schemaFunctions schemaData) (Just functions)
-        , schemaTriggers = maybeJoin (schemaTriggers schemaData) (Just triggers)
         }
   return schemaData'
   where

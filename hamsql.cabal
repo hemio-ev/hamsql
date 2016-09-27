@@ -54,7 +54,6 @@ library
     Database.HamSql.Internal.Stmt.Schema
     Database.HamSql.Internal.Stmt.Sequence
     Database.HamSql.Internal.Stmt.Table
-    Database.HamSql.Internal.Stmt.Trigger
     Database.HamSql.Internal.Stmt.Type
     Database.HamSql.Internal.Utils
     Database.YamSql.Internal.Basic
@@ -67,7 +66,6 @@ library
     Database.YamSql.Internal.Sequence
     Database.YamSql.Internal.SqlId
     Database.YamSql.Internal.Table
-    Database.YamSql.Internal.Trigger
     Database.YamSql.Internal.Type
 
   build-depends:
