@@ -1,3 +1,7 @@
+
+VERSION = 0.7.0.0
+HPCDIRS = --hpcdir dist/hpc/vanilla/mix/hamsql --hpcdir dist/hpc/vanilla/mix/hamsql-${VERSION}
+
 update-and-build: update build
 
 update:
@@ -13,8 +17,8 @@ test:
 	-rm -r tests/coverage
 	-rm tests/hamsql-stmt-log.sql
 	make -C tests
-	hpc report tests/hamsql.tix --hpcdir dist/hpc/vanilla/mix/hamsql
-	hpc markup tests/hamsql.tix --hpcdir dist/hpc/vanilla/mix/hamsql/ --destdir=tests/coverage --verbosity=0
+	hpc report tests/hamsql.tix ${HPCDIRS}
+	hpc markup tests/hamsql.tix ${HPCDIRS} --destdir=tests/coverage --verbosity=0
 
 doc:
 	cabal haddock
