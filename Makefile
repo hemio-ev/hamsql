@@ -1,5 +1,5 @@
 
-VERSION = 0.7.0.0
+VERSION = 0.7.1.0
 HPCDIRS = --hpcdir dist/hpc/vanilla/mix/hamsql --hpcdir dist/hpc/vanilla/mix/hamsql-${VERSION}
 
 update-and-build: update build
@@ -53,8 +53,7 @@ dev-build-optim:
 	cabal build --ghc-options="-fforce-recomp"
 
 dev-modules:
-	find src/ -name '*.hs' -printf '    %P\n' | sort | sed -e 's/\.hs//' -e 's/\//\./g' | grep Internal
-	find src/ -name '*.hs' -printf '    %P\n' | sort | sed -e 's/\.hs//' -e 's/\//\./g' | grep -v Internal
+	find src/ -name '*.hs' -printf '    %P\n' | sort | sed -e 's/\.hs//' -e 's/\//\./g' | sort
 
 dev-lang-ext:
 	grep -h -r '# LANGUAGE' src/ | sort | uniq | sed -e 's/{-# LANGUAGE /    /' | sed -e 's/ #-}/,/'

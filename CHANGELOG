@@ -1,4 +1,8 @@
-v0.7.0
+v0.7.1.0
+  - Fixes unresolvable dependencies via new pandoc version
+  - Adds Internal libraries to exposed modules
+  - Updates README
+v0.7.0.0
   - Fixes all compiler warnings
   - Fixes several bugs related to ROLE upgrades
   - Fixes table checks missing after upgrade
@@ -12,7 +16,7 @@ v0.7.0
   - Removes support for column templates
   - Splits library from binary (cabal)
   - Started API and implementation docs
-v0.6.0
+v0.6.0.0
   - Adds resolve complicated dependency issues
   - Adds resolve change of function return type (if function can be dropped)
   - Changes connection options to suppress SQL NOTICE messages
