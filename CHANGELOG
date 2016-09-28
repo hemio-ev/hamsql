@@ -1,3 +1,17 @@
+v0.7.0
+  - Fixes all compiler warnings
+  - Fixes several bugs related to ROLE upgrades
+  - Fixes table checks missing after upgrade
+  - Adds --sql-log flag
+  - Adds --version flag
+  - Better SQL-Error presentation
+  - Better test coverage, now using pytest3
+  - Better usage information for CLI
+  - Code coverage reports
+  - Refactoring of many code parts
+  - Removes support for column templates
+  - Splits library from binary (cabal)
+  - Started API and implementation docs
 v0.6.0
   - Adds resolve complicated dependency issues
   - Adds resolve change of function return type (if function can be dropped)
