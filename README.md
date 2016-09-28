@@ -3,8 +3,9 @@ HamSql
 
 Interpreter for SQL-structure definitions in Yaml ([YamSql](http://yamsql.readthedocs.io/))
 
-- [![build status](https://git.hemio.de/hemio/hamsql/badges/master/build.svg)](https://git.hemio.de/hemio/hamsql/commits/master) *Debian Stable*
-- [![Build Status](https://travis-ci.org/qua-bla/hamsql.svg?branch=master)](https://travis-ci.org/qua-bla/hamsql) *GHC 7.6, 7.8*
+[![build status](https://git.hemio.de/hemio/hamsql/badges/master/build.svg)](https://git.hemio.de/hemio/hamsql/commits/master)
+[![Hackage-Deps](https://img.shields.io/hackage-deps/v/hamsql.svg?maxAge=2592000)](https://hackage.haskell.org/package/hamsql)
+[![Hackage](https://img.shields.io/hackage/v/hamsql.svg?maxAge=2592000)](https://hackage.haskell.org/package/hamsql)
 
 ## Building HamSql on Debian
 
