@@ -27,7 +27,7 @@ stmtsDeployFunction :: SetupContext
 stmtsDeployFunction SetupContext {setupContextSetup = setup} obj@SqlContextSqoArgtypes {sqlSqoArgtypesObject = f} =
   stmtCreateFunction :
   sqlSetOwner (functionOwner f) :
-  stmtComment : map sqlStmtGrantExecute (maybeList $ functionPrivExecute f)
+  stmtComment : maybeMap sqlStmtGrantExecute (functionPrivExecute f)
 --name = schemaName m <.> functionName f
   where
     sqlStmtGrantExecute u = newSqlStmt SqlPriv obj $ sqlGrantExecute u
@@ -79,7 +79,7 @@ stmtsDeployFunction SetupContext {setupContextSetup = setup} obj@SqlContextSqoAr
       | otherwise = body
       where
         body =
-          T.intercalate "\n" preludes <> maybeText (functionBody f) <>
+          T.intercalate "\n" preludes <> fromMaybe "" (functionBody f) <>
           T.intercalate "\n" postludes
         preludes :: [Text]
         preludes =

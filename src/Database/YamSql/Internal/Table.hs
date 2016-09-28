@@ -78,7 +78,7 @@ instance ToSqlIdPart Column where
 applyTableTpl :: TableTpl -> Table -> Table
 applyTableTpl tpl t =
   t
-  { tableColumns = maybeList (tabletplColumns tpl) ++ tableColumns t
+  { tableColumns = fromMaybe [] (tabletplColumns tpl) ++ tableColumns t
   , tableForeignKeys = maybeJoin (tabletplForeignKeys tpl) (tableForeignKeys t)
   , tableInherits = maybeJoin (tabletplInherits tpl) (tableInherits t)
   , tableChecks = maybeJoin (tabletplChecks tpl) (tableChecks t)

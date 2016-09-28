@@ -31,11 +31,11 @@ fa source schema =
   toElemList SqlContextSqo schemaTypes schema ++
   concat
     [ map (toSetupElement . SqlContextSqoObj schema table) $ tableColumns table
-    | table <- maybeList $ schemaTables schema ]
+    | table <- fromMaybe [] $ schemaTables schema ]
   where
     toSetupElement x = SetupElement x source
-    toElemList x y = map (toSetupElement . x schema) . maybeList . y
-    toElemList' x y = map (toSetupElement . x) . maybeList . y
+    toElemList x y = maybeMap (toSetupElement . x schema) . y
+    toElemList' x y = maybeMap (toSetupElement . x) . y
 
 fb :: SetupContext -> [SetupElement] -> [Maybe SqlStmt]
 fb x = concatMap (toSqlStmts x)
@@ -72,7 +72,7 @@ getSetupStatements opts s =
   [getStmt $ setupPreCode s] ++ schemaStatements ++ [getStmt $ setupPostCode s]
   where
     schemaStatements =
-      concatMap (getSchemaStatements opts s) (maybeList $ setupSchemaData s)
+      concat $ maybeMap (getSchemaStatements opts s) (setupSchemaData s)
     getStmt (Just code) = newSqlStmt SqlPre emptyName code
     getStmt Nothing = Nothing
 

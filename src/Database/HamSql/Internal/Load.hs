@@ -57,7 +57,8 @@ loadSchemas optCom path setup loadedSchemas missingSchemas = do
     sequence
       [ loadSchema (T.unpack $ unsafePlainName schema)
       | schema <- missingSchemas ]
-  let newDependencyNames = nub . concat $ map (maybeList . schemaDependencies) schemas
+  let newDependencyNames =
+        nub . concat $ map (fromMaybe [] . schemaDependencies) schemas
   let allLoadedSchemas = schemas ++ loadedSchemas
   let newMissingDepencenyNames = newDependencyNames \\ map schemaName allLoadedSchemas
   loadSchemas optCom path setup allLoadedSchemas newMissingDepencenyNames

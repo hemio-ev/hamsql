@@ -10,7 +10,6 @@
 
 module Database.HamSql.Setup where
 
-import Data.Maybe (fromMaybe)
 import Data.Typeable
 import Data.Yaml
 
@@ -78,7 +77,7 @@ selectTemplates ns ts
   [ withoutSchema $
    selectUniqueReason ("table or function tpl " <> n) $
    filter (\t -> n == name t) ts
-  | n <- map toSqlCode $ maybeList ns ]
+  | n <- maybeMap toSqlCode ns ]
 
 selectTemplate :: (ToSqlCode a1, WithName (WithSchema a)) =>
                         a1 -> [WithSchema a] -> a
@@ -89,7 +88,7 @@ selectTemplate x ts =
 
 -- get things from Setup
 setupAllSchemas :: Setup -> [Schema]
-setupAllSchemas = maybeList . setupSchemaData
+setupAllSchemas = fromMaybe [] . setupSchemaData
 
 setupAllFunctionTemplates :: Setup -> [WithSchema FunctionTpl]
 setupAllFunctionTemplates s =

@@ -100,7 +100,7 @@ applyFunctionTpl t f =
   , functionVariables = maybeJoin (functionVariables f) (functiontplVariables t)
   , functionBody =
     Just $
-    maybeStringL (functiontplBodyPrelude t) <> maybeText (functionBody f) <>
+    maybeStringL (functiontplBodyPrelude t) <> fromMaybe "" (functionBody f) <>
     maybeStringR (functiontplBodyPostlude t)
   }
   where
