@@ -1,17 +1,23 @@
 name:                hamsql
 version:             0.7.0.0
 synopsis:            HamSql
+category:            Database
 description:         Interpreter for SQL-structure definitions in Yaml (YamSql)
 homepage:            https://git.hemio.de/hemio/hamsql
 bug-reports:         https://git.hemio.de/hemio/hamsql/issues
 license:             GPL-3
 license-file:        COPYING
-author:              Michael Herold et al.
-maintainer:          quabla@hemio.de
-copyright:           Michael Herold et al.
+author:              Michael Herold <quabla@hemio.de>
+maintainer:          Michael Herold <quabla@hemio.de>
+copyright:           (c) 2014-2016 Michael Herold et al.
 build-type:          Simple
-extra-source-files:  AUTHORS, CHANGELOG, README.md, data/*
 cabal-version:       >=1.10
+
+extra-source-files:
+  AUTHORS,
+  CHANGELOG,
+  README.md,
+  data/doc-template.rst
 
 library
   hs-source-dirs: src
@@ -70,7 +76,7 @@ library
 
   build-depends:
     aeson >=1.0 && <1.1,
-    base >=4.8,
+    base >=4.8 && <5.0,
     bytestring >=0.10 && <0.11,
     directory >=1.2 && <1.3,
     file-embed >=0.0 && <0.1,
@@ -92,14 +98,16 @@ executable hamsql
   default-language: Haskell2010
   
   build-depends:
-    base >=4.8,
+    base >=4.8 && <5.0,
     hamsql
 
 test-suite hamsql-tests
   default-language:    Haskell2010
   type:       exitcode-stdio-1.0
   main-is:    hamsql-tests.hs
-  build-depends: base, hamsql
+  build-depends:
+    base >=4.8 && <5.0,
+    hamsql
 
 source-repository head
   type:     git
