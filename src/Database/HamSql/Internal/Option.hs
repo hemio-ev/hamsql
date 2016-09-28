@@ -4,9 +4,11 @@
 -- Some rights reserved. See COPYING, AUTHORS.
 module Database.HamSql.Internal.Option where
 
-import Data.Semigroup
+import Control.Monad.Trans.Reader
+import Data.Semigroup hiding (option)
 import Options.Applicative
 import Options.Applicative.Builder.Internal (HasMetavar, HasValue)
+import Options.Applicative.Types
 
 -- helper functions
 boolFlag :: Mod FlagFields Bool -> Parser Bool
@@ -32,7 +34,6 @@ data Command
             OptInstall
   | Upgrade OptCommon
             OptCommonDb
-            OptUpgrade
   | Doc OptCommon
         OptDoc
   | NoCommand OptNoCommand
@@ -62,7 +63,7 @@ parserCmdInstall :: Parser Command
 parserCmdInstall = Install <$> parserOptCommon <*> parserOptCommonDb <*> parserOptInstall
 
 parserCmdUpgrade :: Parser Command
-parserCmdUpgrade = Upgrade <$> parserOptCommon <*> parserOptCommonDb <*> parserOptUpgrade
+parserCmdUpgrade = Upgrade <$> parserOptCommon <*> parserOptCommonDb
 
 parserCmdDoc :: Parser Command
 parserCmdDoc = Doc <$> parserOptCommon <*> parserOptDoc
@@ -90,7 +91,11 @@ data OptCommonDb = OptCommonDb
   , optPrint              :: Bool
   , optConnection         :: String
   , optPermitDataDeletion :: Bool
+  , optSqlLog             :: Maybe FilePath
   } deriving (Show)
+
+justStr :: ReadM (Maybe String)
+justStr = Just <$> ReadM ask
 
 parserOptCommonDb :: Parser OptCommonDb
 parserOptCommonDb =
@@ -100,7 +105,15 @@ parserOptCommonDb =
     (long "print" <> short 'p' <> help "Print SQL code instead of executing") <*>
   strOption (long "connection" <> short 'c' <> val "postgresql://") <*>
   boolFlag
-    (long "permit-data-deletion" <> help "Permit deletion of columns and tables")
+    (long "permit-data-deletion" <> help "Permit deletion of columns and tables") <*>
+  option
+    justStr
+    (long "sql-log" <>
+     help
+       ("If specified, log sql statements to given file. " <>
+        "Existing logfiles will be extended, not deleted.") <>
+     value Nothing <>
+     metavar "<log file>")
 
 -- Command Install
 data OptInstall = OptInstall
@@ -123,16 +136,6 @@ parserOptNoCommand :: Parser Command
 parserOptNoCommand =
   NoCommand . OptNoCommand <$>
   flag' True (long "version" <> help "Prints program version")
-
--- Command Upgrade
-data OptUpgrade = OptUpgrade
-  { optNone :: Bool
-  } deriving (Show)
-
-parserOptUpgrade :: Parser OptUpgrade
-parserOptUpgrade =
-  OptUpgrade <$>
-  boolFlag (long "X" <> help "(currently no upgade specific options)")
 
 -- Command Doc
 data OptDoc = OptDoc

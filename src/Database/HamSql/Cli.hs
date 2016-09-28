@@ -48,6 +48,7 @@ run (Install optCommon optDb optInstall)
     if not (optEmulate optDb || optPrint optDb)
       then void $
            pgsqlExecWithoutTransact
+             optDb
              ((getConUrl optDb)
               { uriPath = "/postgres"
               })
@@ -67,7 +68,7 @@ run (Install optCommon optDb optInstall)
         else return []
     useSqlStmts optCommon optDb $ sort $ stmts ++ dropRoleStmts
 -- Upgrade
-run (Upgrade optCommon optDb _) = do
+run (Upgrade optCommon optDb) = do
   setup <- loadSetup optCommon (optSetup optCommon)
   conn <- pgsqlConnectUrl (getConUrl optDb)
   deleteStmts <- pgsqlDeleteAllStmt conn
@@ -86,8 +87,8 @@ run (NoCommand opt)
 useSqlStmts :: OptCommon -> OptCommonDb -> [SqlStmt] -> IO ()
 useSqlStmts optCommon optDb unfilteredStmts
   | optPrint optDb = T.IO.putStrLn $ sqlPrinter $ sqlAddTransact stmts
-  | optEmulate optDb = void $ pgsqlExec (getConUrl optDb) stmts
-  | otherwise = void $ pgsqlExec (getConUrl optDb) stmts
+  | optEmulate optDb = void $ pgsqlExec optDb (getConUrl optDb) stmts
+  | otherwise = void $ pgsqlExec optDb (getConUrl optDb) stmts
   where
     warnOnDiff xs =
       case unfilteredStmts \\ xs of

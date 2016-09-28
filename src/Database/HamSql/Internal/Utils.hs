@@ -23,9 +23,6 @@ import Text.Groom
 
 import Database.HamSql.Internal.Option
 
-logStmt :: Text -> IO ()
-logStmt x = TIO.appendFile "hamsql-stmt-log.sql" (x <> "\n")
-
 join :: [a] -> [[a]] -> [a]
 join = intercalate
 

@@ -150,44 +150,46 @@ pgsqlDropAllRoleStmts optDb setup = do
     []
 
 -- DB Utils
-pgsqlExecWithoutTransact :: URI -> [SqlStmt] -> IO Connection
-pgsqlExecWithoutTransact = pgsqlExecIntern PgSqlWithoutTransaction
+pgsqlExecWithoutTransact :: OptCommonDb -> URI -> [SqlStmt] -> IO Connection
+pgsqlExecWithoutTransact opt = pgsqlExecIntern opt PgSqlWithoutTransaction
 
-pgsqlExec :: URI -> [SqlStmt] -> IO Connection
-pgsqlExec = pgsqlExecIntern PgSqlWithTransaction
+pgsqlExec :: OptCommonDb -> URI -> [SqlStmt] -> IO Connection
+pgsqlExec opt = pgsqlExecIntern opt PgSqlWithTransaction
 
-pgsqlExecAndRollback :: URI -> [SqlStmt] -> IO ()
-pgsqlExecAndRollback url stmts = do
-  conn <- pgsqlExecIntern PgSqlWithTransaction url stmts
+pgsqlExecAndRollback :: OptCommonDb -> URI -> [SqlStmt] -> IO ()
+pgsqlExecAndRollback opt url stmts = do
+  conn <- pgsqlExecIntern opt PgSqlWithTransaction url stmts
   rollback conn
 
 pgsqlExecStmtList
-  :: Status
+  :: OptCommonDb
+  -> Status
   -> [SqlStmt] -- ^ Statements that still need to be executed
   -> [SqlStmt] -- ^ Statements that have failed during execution
   -> Connection
   -> IO ()
-pgsqlExecStmtList Init _ (x:_) _ =
-  err $ "supplied failed statements to (pgsqlExecStmtList Init): " <> tshow x
+pgsqlExecStmtList _ Init _ (x:_) _ =
+  err $ "supplied failed statements to (pgsqlExecStmtList _ Init): " <> tshow x
 -- No remaining statements to execute
-pgsqlExecStmtList _ [] [] conn = commit conn
-pgsqlExecStmtList Unchanged [] failed conn =
+pgsqlExecStmtList _ _ [] [] conn = commit conn
+pgsqlExecStmtList _ Unchanged [] failed conn =
   pgsqlExecStmtHandled conn (head failed)
-pgsqlExecStmtList Changed [] failed conn =
-  void $ pgsqlExecStmtList Unchanged failed [] conn
-pgsqlExecStmtList status (x:xs) failed conn = do
+pgsqlExecStmtList opt Changed [] failed conn =
+  void $ pgsqlExecStmtList opt Unchanged failed [] conn
+pgsqlExecStmtList opt status (x:xs) failed conn = do
   savepoint <- newSavepoint conn
   tryExec savepoint `catch` handleSqlError savepoint `catch` handleQueryError savepoint
   where
     tryExec savepoint = do
-      logStmt $ "-- Executing " <> tshow (stmtIdType x) <> " for " <> stmtDesc x
+      logStmt opt $
+        "-- Executing " <> tshow (stmtIdType x) <> " for " <> stmtDesc x
       pgsqlExecStmt conn x
-      logStmt $ toSqlCode x
+      logStmt opt $ toSqlCode x
       proceed savepoint
     -- action after execution has not failed
     proceed savepoint = do
       releaseSavepoint conn savepoint
-      pgsqlExecStmtList Changed xs failed conn
+      pgsqlExecStmtList opt Changed xs failed conn
     handleSqlError savepoint SqlError {sqlState = errCode}
       | errCode == sqlErrInvalidFunctionDefinition =
         skipQuery savepoint (stmtsDropFunction' (sqlId x) ++ [x])
@@ -195,24 +197,24 @@ pgsqlExecStmtList status (x:xs) failed conn = do
     handleQueryError savepoint QueryError {} = proceed savepoint
     -- action after execution has failed
     skipQuery savepoint stmts = do
-      logStmt "SAVEPOINT retry;"
-      logStmt $ toSqlCode x
-      logStmt "ROLLBACK TO SAVEPOINT retry;"
+      logStmt opt "SAVEPOINT retry;"
+      logStmt opt $ toSqlCode x
+      logStmt opt "ROLLBACK TO SAVEPOINT retry;"
       rollbackToSavepoint conn savepoint
       releaseSavepoint conn savepoint
-      pgsqlExecStmtList forwardStatus xs (failed ++ stmts) conn
+      pgsqlExecStmtList opt forwardStatus xs (failed ++ stmts) conn
     -- Init may not be forwarded to next iteration
     forwardStatus =
       case status of
         Init -> Unchanged
         s -> s
 
-pgsqlExecIntern :: PgSqlMode -> URI -> [SqlStmt] -> IO Connection
-pgsqlExecIntern mode connUrl xs = do
+pgsqlExecIntern :: OptCommonDb -> PgSqlMode -> URI -> [SqlStmt] -> IO Connection
+pgsqlExecIntern opt mode connUrl xs = do
   conn <- pgsqlConnectUrl connUrl
   when (mode == PgSqlWithTransaction) $
     do begin conn
-       pgsqlExecStmtList Init xs [] conn
+       pgsqlExecStmtList opt Init xs [] conn
   when (mode == PgSqlWithoutTransaction) $ mapM_ (pgsqlExecStmtHandled conn) xs
   return conn
 

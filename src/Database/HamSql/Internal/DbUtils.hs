@@ -12,6 +12,7 @@ import qualified Data.ByteString.Char8 as B
 import Data.String
 import qualified Data.Text as T
 import Data.Text.Encoding (decodeUtf8)
+import qualified Data.Text.IO as TIO
 import Database.PostgreSQL.Simple
 import Network.URI (URI, parseAbsoluteURI, uriToString)
 
@@ -22,6 +23,12 @@ import Database.YamSql
 
 toQry :: Text -> Query
 toQry = fromString . T.unpack
+
+logStmt :: OptCommonDb -> Text -> IO ()
+logStmt opt x =
+  case optSqlLog opt of
+    Nothing -> return ()
+    Just filename -> TIO.appendFile filename (x <> "\n")
 
 getConUrl :: OptCommonDb -> URI
 getConUrl xs =
