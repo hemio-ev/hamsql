@@ -63,13 +63,17 @@ removeDuplicates
 removeDuplicates = map head . group . sort
 
 --- Maybe Utils
+maybeMap :: (a -> b) -> Maybe [a] -> [b]
+maybeMap f = maybe [] (map f)
+
+maybePrefix :: Text -> Maybe Text -> Text
+maybePrefix _ Nothing = ""
+maybePrefix p (Just x) = p <> x
+
 -- | Joins two Maybe lists
 maybeJoin :: Maybe [a] -> Maybe [a] -> Maybe [a]
 maybeJoin Nothing Nothing = Nothing
 maybeJoin xs ys = Just (fromMaybe [] xs ++ fromMaybe [] ys)
-
-maybeMap :: (a -> b) -> Maybe [a] -> [b]
-maybeMap f = maybe [] (map f)
 
 -- | Takes the right value, if Just there
 maybeRight :: Maybe a -> Maybe a -> Maybe a
