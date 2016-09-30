@@ -8,8 +8,8 @@ module Database.HamSql.Internal.Stmt.Schema where
 
 import Database.HamSql.Internal.Stmt.Basic
 
-instance ToSqlStmts (SqlContextObj Schema) where
-  toSqlStmts SetupContext {setupContextSetup = setup} obj@SqlContextObj {sqlObjectObject = s} =
+instance ToSqlStmts (SqlContext Schema) where
+  toSqlStmts SetupContext {setupContextSetup = setup} obj@(SqlContext s) =
     [ newSqlStmt SqlCreateSchema obj $
       "CREATE SCHEMA IF NOT EXISTS" <-> sqlIdCode obj
     , postInst $ schemaExecPostInstall s

@@ -1,6 +1,3 @@
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric      #-}
-
 module Database.YamSql.Internal.Domain where
 
 import Database.YamSql.Internal.Basic
@@ -21,6 +18,16 @@ instance FromJSON Domain where
 instance ToJSON Domain where
   toJSON = toYamSqlJson
 
-instance ToSqlIdPart Domain where
-  sqlIdPart = domainName
-  sqlIdPartType = const "DOMAIN"
+data SQL_DOMAIN =
+  SQL_DOMAIN
+  deriving (SqlObjType, Show)
+
+instance ToSqlCode SQL_DOMAIN where
+  toSqlCode = const "DOMAIN"
+
+data SQL_DOMAIN_CONSTRAINT =
+  SQL_DOMAIN_CONSTRAINT
+  deriving (SqlObjType, Show)
+
+instance ToSqlCode SQL_DOMAIN_CONSTRAINT where
+  toSqlCode = const "DOMAIN_CONSTRAINT"

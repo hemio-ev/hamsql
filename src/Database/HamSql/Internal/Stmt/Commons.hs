@@ -14,12 +14,8 @@ stmtCommentOn
   => a -> Text -> Maybe SqlStmt
 stmtCommentOn obj comment =
   newSqlStmt SqlComment obj $
-  "COMMENT ON " <> rewriteType (sqlIdType (sqlId obj)) <> " " <> sqlIdCode obj <>
-  " IS " <>
+  "COMMENT ON " <> sqlIdTypeCode (sqlId obj) <> " " <> sqlIdCode obj <> " IS " <>
   toSqlCodeString comment
-  where
-    rewriteType "TABLE-COLUMN" = "COLUMN"
-    rewriteType xs = xs
 
 prefixedRole :: Setup -> SqlName -> Text
 prefixedRole setup role = toSqlCode ((SqlName $ setupRolePrefix' setup) // role)

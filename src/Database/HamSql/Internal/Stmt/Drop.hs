@@ -7,9 +7,9 @@ module Database.HamSql.Internal.Stmt.Drop where
 import Database.HamSql.Internal.Stmt.Basic
 
 -- TABLE
-stmtsDropTable :: SqlIdContentSqo -> [Maybe SqlStmt]
+stmtsDropTable :: SqlObj SQL_TABLE SqlName -> [Maybe SqlStmt]
 stmtsDropTable t = [newSqlStmt SqlDropTable t $ "DROP TABLE " <> toSqlCode t]
 
 -- TYPE
-stmtsDropType :: SqlIdContentSqo -> [Maybe SqlStmt]
+stmtsDropType :: SqlObj SQL_TYPE SqlName -> [Maybe SqlStmt]
 stmtsDropType t = [newSqlStmt SqlDropType t $ "DROP TYPE " <> toSqlCode t]

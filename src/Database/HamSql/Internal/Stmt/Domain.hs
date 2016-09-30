@@ -8,38 +8,35 @@ module Database.HamSql.Internal.Stmt.Domain where
 
 import Database.HamSql.Internal.Stmt.Basic
 
-stmtsDropDomain :: SqlIdContentSqo -> [Maybe SqlStmt]
+stmtsDropDomain :: SqlObj SQL_DOMAIN SqlName -> [Maybe SqlStmt]
 stmtsDropDomain x = [newSqlStmt SqlDropDomain x $ "DROP DOMAIN" <-> toSqlCode x]
 
-stmtsDropDomainConstr :: SqlIdContentSqoObj -> [Maybe SqlStmt]
-stmtsDropDomainConstr x =
-  [ newSqlStmt SqlDropDomainConstr x $
-    "ALTER DOMAIN" <-> sqlSqoIdCode x <-> "DROP CONSTRAINT" <->
-    sqlSqoObjIdCode x
+stmtsDropDomainConstr :: SqlObj SQL_DOMAIN_CONSTRAINT (SqlName, SqlName)
+                      -> [Maybe SqlStmt]
+stmtsDropDomainConstr obj@(SqlObj _ (d, c)) =
+  [ newSqlStmt SqlDropDomainConstr obj $
+    "ALTER DOMAIN" <-> toSqlCode d <-> "DROP CONSTRAINT" <-> toSqlCode c
   ]
 
-instance ToSqlStmts (SqlContextSqo Domain) where
-  toSqlStmts = stmtsDeployDomain
-
-stmtsDeployDomain :: SetupContext -> SqlContextSqo Domain -> [Maybe SqlStmt]
-stmtsDeployDomain _ obj@SqlContextSqo {sqlSqoObject = d} =
-  stmtCreateDomain :
-  sqlDefault (domainDefault d) : maybeMap sqlCheck (domainChecks d)
-  where
-    stmtCreateDomain =
-      newSqlStmt SqlCreateDomain obj $
-      "CREATE DOMAIN" <-> sqlIdCode obj <-> "AS" <-> toSqlCode (domainType d)
-    sqlCheck :: Check -> Maybe SqlStmt
-    sqlCheck c =
-      newSqlStmt SqlCreateCheckConstr obj $
-      "ALTER DOMAIN" <-> sqlIdCode obj <-> "ADD CONSTRAINT" <->
-      toSqlCode (checkName c) <->
-      "CHECK (" <>
-      checkCheck c <>
-      ")"
-    sqlDefault Nothing =
-      newSqlStmt SqlAddDefault obj $
-      "ALTER DOMAIN" <-> sqlIdCode obj <-> "DROP DEFAULT"
-    sqlDefault (Just def) =
-      newSqlStmt SqlAddDefault obj $
-      "ALTER DOMAIN" <-> sqlIdCode obj <-> "SET DEFAULT" <-> def
+instance ToSqlStmts (SqlContext (Schema, Domain)) where
+  toSqlStmts _ obj@(SqlContext (_, d)) =
+    stmtCreateDomain :
+    sqlDefault (domainDefault d) : maybeMap sqlCheck (domainChecks d)
+    where
+      stmtCreateDomain =
+        newSqlStmt SqlCreateDomain obj $
+        "CREATE DOMAIN" <-> sqlIdCode obj <-> "AS" <-> toSqlCode (domainType d)
+      sqlCheck :: Check -> Maybe SqlStmt
+      sqlCheck c =
+        newSqlStmt SqlCreateCheckConstr obj $
+        "ALTER DOMAIN" <-> sqlIdCode obj <-> "ADD CONSTRAINT" <->
+        toSqlCode (checkName c) <->
+        "CHECK (" <>
+        checkCheck c <>
+        ")"
+      sqlDefault Nothing =
+        newSqlStmt SqlAddDefault obj $
+        "ALTER DOMAIN" <-> sqlIdCode obj <-> "DROP DEFAULT"
+      sqlDefault (Just def) =
+        newSqlStmt SqlAddDefault obj $
+        "ALTER DOMAIN" <-> sqlIdCode obj <-> "SET DEFAULT" <-> def

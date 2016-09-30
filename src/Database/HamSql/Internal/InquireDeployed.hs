@@ -19,11 +19,12 @@ sqlManageSchemaJoin schemaid =
   "  NOT n.nspname LIKE 'pg_%' AND " <\>
   "  n.nspname NOT IN ('information_schema') "
 
-deployedTableConstrIds :: Connection -> IO [SqlIdContentSqoObj]
+deployedTableConstrIds :: Connection
+                       -> IO [SqlObj SQL_TABLE_CONSTRAINT (SqlName, SqlName, SqlName)]
 deployedTableConstrIds conn = map toSqlCodeId <$> query_ conn qry
   where
     toSqlCodeId (schema, table, constraint) =
-      SqlIdContentSqoObj "TABLE-CONSTRAINT" (schema <.> table) constraint
+      SqlObj SQL_TABLE_CONSTRAINT (schema, table, constraint)
     qry =
       toQry $
       "SELECT n.nspname, t.relname, c.conname" <\> "FROM pg_constraint AS c" <\>
@@ -31,11 +32,12 @@ deployedTableConstrIds conn = map toSqlCodeId <$> query_ conn qry
       " ON c.conrelid = t.oid" <->
       sqlManageSchemaJoin "c.connamespace"
 
-deployedDomainConstrIds :: Connection -> IO [SqlIdContentSqoObj]
+deployedDomainConstrIds :: Connection
+                        -> IO [SqlObj SQL_DOMAIN_CONSTRAINT (SqlName, SqlName)]
 deployedDomainConstrIds conn = map toSqlCodeId <$> query_ conn qry
   where
     toSqlCodeId (schema, table, constraint) =
-      SqlIdContentSqoObj "DOMAIN-CONSTRAINT" (schema <.> table) constraint
+      SqlObj SQL_DOMAIN_CONSTRAINT (schema <.> table, constraint)
     qry =
       toQry $
       "SELECT n.nspname, d.typname, c.conname" <\> "FROM pg_constraint AS c " <\>
@@ -44,17 +46,17 @@ deployedDomainConstrIds conn = map toSqlCodeId <$> query_ conn qry
       sqlManageSchemaJoin "c.connamespace"
 
 -- | List SEQUENCE
-deployedSequenceIds :: Connection -> IO [SqlIdContentSqo]
+deployedSequenceIds :: Connection -> IO [SqlObj SQL_SEQUENCE SqlName]
 deployedSequenceIds conn = map toSqlCodeId <$> query_ conn qry
   where
-    toSqlCodeId (s, t) = SqlIdContentSqo "SEQUENCE" $ s <.> t
+    toSqlCodeId (s, t) = SqlObj SQL_SEQUENCE (s <.> t)
     qry =
       toQry $
       "SELECT sequence_schema, sequence_name" <\>
       "FROM information_schema.sequences"
 
 -- | List TABLE
-deployedTableIds :: Connection -> IO [SqlIdContentSqo]
+deployedTableIds :: Connection -> IO [SqlObj SQL_TABLE SqlName]
 deployedTableIds conn = do
   dat <-
     query_ conn $
@@ -64,13 +66,14 @@ deployedTableIds conn = do
     " AND table_schema NOT IN ('information_schema', 'pg_catalog')"
   return $ map toSqlCodeId dat
   where
-    toSqlCodeId (s, t) = SqlIdContentSqo "TABLE" $ s <.> t
+    toSqlCodeId (s, t) = SqlObj SQL_TABLE (s <.> t)
 
 -- | List TABLE COLUMN
-deployedTableColumnIds :: Connection -> IO [SqlIdContentSqoObj]
+deployedTableColumnIds :: Connection
+                       -> IO [SqlObj SQL_COLUMN (SqlName, SqlName)]
 deployedTableColumnIds conn = map toSqlCodeId <$> query_ conn qry
   where
-    toSqlCodeId (s, t, u) = SqlIdContentSqoObj "TABLE-COLUMN" (s <.> t) u
+    toSqlCodeId (s, t, u) = SqlObj SQL_COLUMN (s <.> t, u)
     qry =
       toQry $
       "SELECT table_schema, table_name, column_name" <\>
@@ -79,10 +82,10 @@ deployedTableColumnIds conn = map toSqlCodeId <$> query_ conn qry
       " WHERE table_schema NOT IN ('information_schema', 'pg_catalog')"
 
 -- | List TYPE
-deployedTypeIds :: Connection -> IO [SqlIdContentSqo]
+deployedTypeIds :: Connection -> IO [SqlObj SQL_TYPE SqlName]
 deployedTypeIds conn = map toSqlCodeId <$> query_ conn qry
   where
-    toSqlCodeId (schema, t) = SqlIdContentSqo "TYPE" $ schema <.> t
+    toSqlCodeId (s, t) = SqlObj SQL_TYPE (s <.> t)
     qry =
       toQry $
       "SELECT user_defined_type_schema, user_defined_type_name" <\>
@@ -90,7 +93,7 @@ deployedTypeIds conn = map toSqlCodeId <$> query_ conn qry
       " WHERE user_defined_type_schema NOT IN ('information_schema', 'pg_catalog')"
 
 -- | List ROLE
-deployedRoleIds :: Setup -> Connection -> IO [SqlIdContentObj]
+deployedRoleIds :: Setup -> Connection -> IO [SqlObj SQL_ROLE SqlName]
 deployedRoleIds setup conn = do
   roles <-
     query conn "SELECT rolname FROM pg_roles WHERE rolname LIKE ?" $
@@ -101,25 +104,23 @@ deployedRoleIds setup conn = do
     unprefixed =
       fromJustReason "Retrived role without prefix from database" .
       stripPrefix prefix
-    toSqlCodeId (Only role) = SqlIdContentObj "ROLE" (SqlName $ unprefixed role)
+    toSqlCodeId (Only role) = SqlObj SQL_ROLE (SqlName $ unprefixed role)
 
-deployedDomainIds :: Connection -> IO [SqlIdContentSqo]
+deployedDomainIds :: Connection -> IO [SqlObj SQL_DOMAIN SqlName]
 deployedDomainIds conn = map toSqlCodeId <$> query_ conn qry
   where
-    toSqlCodeId (schema, domain) = SqlIdContentSqo "DOMAIN" $ schema <.> domain
+    toSqlCodeId (schema, domain) = SqlObj SQL_DOMAIN $ schema <.> domain
     qry =
       toQry $
       "SELECT domain_schema, domain_name" <\> " FROM information_schema.domains" <\>
       " WHERE domain_schema NOT IN ('information_schema', 'pg_catalog')"
 
-deployedFunctionIds :: Connection -> IO [SqlIdContentSqoArgtypes]
+deployedFunctionIds :: Connection
+                    -> IO [SqlObj SQL_FUNCTION (SqlName, [SqlType])]
 deployedFunctionIds conn = map toSqlCodeId <$> query_ conn qry
   where
     toSqlCodeId (schema, function, args) =
-      SqlIdContentSqoArgtypes
-        "FUNCTION"
-        (schema <.> function)
-        (fromPGArray args)
+      SqlObj SQL_FUNCTION (schema <.> function, fromPGArray args)
     qry =
       toQry $
       "SELECT n.nspname, p.proname, " <>

@@ -36,7 +36,7 @@ stmtIdType :: SqlStmt -> SqlStmtType
 stmtIdType (SqlStmt x _) = stmtType x
 
 stmtDesc :: SqlStmt -> Text
-stmtDesc stmt = sqlIdType (sqlId stmt) <-> sqlIdCode stmt
+stmtDesc stmt = sqlIdShowType (sqlId stmt) <-> sqlIdCode stmt
 
 instance Eq SqlStmt where
   x == y = stmtId x == stmtId y

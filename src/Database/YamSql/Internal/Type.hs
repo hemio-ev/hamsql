@@ -32,6 +32,9 @@ instance FromJSON TypeElement where
 instance ToJSON TypeElement where
   toJSON = toYamSqlJson
 
-instance ToSqlIdPart Type where
-  sqlIdPart = typeName
-  sqlIdPartType = const "TYPE"
+data SQL_TYPE =
+  SQL_TYPE
+  deriving (SqlObjType, Show)
+
+instance ToSqlCode SQL_TYPE where
+  toSqlCode = const "TYPE"

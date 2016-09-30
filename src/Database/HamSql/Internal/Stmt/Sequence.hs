@@ -8,15 +8,14 @@ module Database.HamSql.Internal.Stmt.Sequence where
 
 import Database.HamSql.Internal.Stmt.Basic
 
-stmtsDropSequence :: SqlIdContentSqo -> [Maybe SqlStmt]
+stmtsDropSequence :: SqlObj SQL_SEQUENCE SqlName -> [Maybe SqlStmt]
 stmtsDropSequence x =
   [newSqlStmt SqlDropSequence x $ "DROP SEQUENCE " <> toSqlCode x]
 
-instance ToSqlStmts (SqlContextSqo Sequence) where
-  toSqlStmts = stmtsDeploySequence
+instance ToSqlStmts (SqlContext (Schema, Sequence)) where
+  toSqlStmts = toSqlStmts'
 
-stmtsDeploySequence :: SetupContext -> SqlContextSqo Sequence -> [Maybe SqlStmt]
-stmtsDeploySequence _ obj@SqlContextSqo {sqlSqoObject = s} =
+toSqlStmts' _ obj@(SqlContext (_, s)) =
   [ newSqlStmt SqlCreateSequence obj $ "CREATE SEQUENCE" <-> sqlIdCode obj
   , newSqlStmt SqlAlterSequence obj $
     "ALTER SEQUENCE" <-> sqlIdCode obj <-> incrementBy (sequenceIncrement s) <->

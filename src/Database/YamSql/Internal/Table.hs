@@ -1,6 +1,3 @@
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric      #-}
-
 module Database.YamSql.Internal.Table where
 
 import Database.YamSql.Internal.Basic
@@ -29,9 +26,12 @@ instance FromJSON Table where
 instance ToJSON Table where
   toJSON = toYamSqlJson
 
-instance ToSqlIdPart Table where
-  sqlIdPart = tableName
-  sqlIdPartType = const "TABLE"
+data SQL_TABLE =
+  SQL_TABLE
+  deriving (SqlObjType, Show)
+
+instance ToSqlCode SQL_TABLE where
+  toSqlCode = const "TABLE"
 
 data TableTpl = TableTpl
   { tabletplTemplate    :: SqlName
@@ -71,9 +71,12 @@ instance FromJSON Column where
 instance ToJSON Column where
   toJSON = toYamSqlJson
 
-instance ToSqlIdPart Column where
-  sqlIdPart = columnName
-  sqlIdPartType = const "COLUMN"
+data SQL_COLUMN =
+  SQL_COLUMN
+  deriving (SqlObjType, Show)
+
+instance ToSqlCode SQL_COLUMN where
+  toSqlCode = const "COLUMN"
 
 applyTableTpl :: TableTpl -> Table -> Table
 applyTableTpl tpl t =
@@ -113,3 +116,10 @@ instance FromJSON ForeignKey where
 
 instance ToJSON ForeignKey where
   toJSON = toYamSqlJson
+
+data SQL_TABLE_CONSTRAINT =
+  SQL_TABLE_CONSTRAINT
+  deriving (SqlObjType, Show)
+
+instance ToSqlCode SQL_TABLE_CONSTRAINT where
+  toSqlCode = const "COLUMN"

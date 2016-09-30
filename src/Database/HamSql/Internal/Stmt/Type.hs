@@ -10,18 +10,15 @@ import qualified Data.Text as T
 
 import Database.HamSql.Internal.Stmt.Basic
 
-instance ToSqlStmts (SqlContextSqo Type) where
-  toSqlStmts = stmtsDeployType
-
-stmtsDeployType :: SetupContext -> SqlContextSqo Type -> [Maybe SqlStmt]
-stmtsDeployType _ obj@SqlContextSqo {sqlSqoObject = t} =
-  [ newSqlStmt SqlCreateType obj $
-    "CREATE TYPE" <-> sqlIdCode obj <-> "AS (" <>
-    T.intercalate ", " (map sqlElement (typeElements t)) <>
-    ")"
-  , stmtCommentOn obj (typeDescription t)
-  ]
--- ALTER TYPE name ALTER ATTRIBUTE attribute_name [ SET DATA ] TYPE data_type
-  where
-    sqlElement e =
-      toSqlCode (typeelementName e) <-> toSqlCode (typeelementType e)
+instance ToSqlStmts (SqlContext (Schema, Type)) where
+  toSqlStmts _ obj@(SqlContext (_, t)) =
+    [ newSqlStmt SqlCreateType obj $
+      "CREATE TYPE" <-> sqlIdCode obj <-> "AS (" <>
+      T.intercalate ", " (map sqlElement (typeElements t)) <>
+      ")"
+    , stmtCommentOn obj (typeDescription t)
+    ]
+  -- ALTER TYPE name ALTER ATTRIBUTE attribute_name [ SET DATA ] TYPE data_type
+    where
+      sqlElement e =
+        toSqlCode (typeelementName e) <-> toSqlCode (typeelementType e)

@@ -2,9 +2,6 @@
 --
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric      #-}
-
 module Database.YamSql.Internal.Function where
 
 import Database.YamSql.Internal.Basic
@@ -50,12 +47,12 @@ instance FromJSON Function where
 instance ToJSON Function where
   toJSON = toYamSqlJson
 
-instance ToSqlIdPart Function where
-  sqlIdPart = functionName
-  sqlIdPartType = const "FUNCTION"
+data SQL_FUNCTION =
+  SQL_FUNCTION
+  deriving (SqlObjType, Show)
 
-instance ToSqlIdPartArgs Function where
-  sqlIdPartArgs x = maybeMap variableType $ functionParameters x
+instance ToSqlCode SQL_FUNCTION where
+  toSqlCode = const "FUNCTION"
 
 data FunctionTpl = FunctionTpl
                    -- template name, used to refere the template via templates

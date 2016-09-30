@@ -20,8 +20,3 @@ instance FromJSON Check where
 
 instance ToJSON Check where
   toJSON = toYamSqlJson
-
--- TODO clearify if this is useful for uniqueness
-instance ToSqlIdPart Check where
-  sqlIdPart = checkName
-  sqlIdPartType = const "CHECK"

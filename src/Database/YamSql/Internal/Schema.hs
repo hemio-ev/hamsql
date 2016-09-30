@@ -3,18 +3,11 @@
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric #-}
-
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE GADTs              #-}
 
 module Database.YamSql.Internal.Schema
   ( Schema(..)
-  , SqlContextObj(..)
-  , SqlContextSqoArgtypes(..)
-  , SqlContextSqo(..)
-  , SqlContextSqoObj(..)
-  , sqlIdNameOnly
   , module Database.YamSql.Internal.Check
   , module Database.YamSql.Internal.Domain
   , module Database.YamSql.Internal.Function
@@ -25,6 +18,7 @@ module Database.YamSql.Internal.Schema
   ) where
 
 import Database.YamSql.Internal.Basic
+import Database.YamSql.Internal.Commons
 
 import Database.YamSql.Internal.Check
 import Database.YamSql.Internal.Domain
@@ -36,26 +30,27 @@ import Database.YamSql.Internal.Type
 
 -- Schema --
 data Schema = Schema
-  { schemaName :: SqlName
-  , schemaDescription :: Text
-  , schemaDependencies :: Maybe [SqlName]
-  , schemaFunctions :: Maybe [Function]
-  , schemaFunctionTemplates :: Maybe [FunctionTpl]
-  , schemaTables :: Maybe [Table]
-  , schemaTableTemplates :: Maybe [TableTpl]
-  , schemaRoles :: Maybe [Role]
-  , schemaSequences :: Maybe [Sequence]
-  , schemaPrivUsage :: Maybe [SqlName]
-  , schemaPrivSelectAll :: Maybe [SqlName]
-  , schemaPrivInsertAll :: Maybe [SqlName]
-  , schemaPrivUpdateAll :: Maybe [SqlName]
-  , schemaPrivDeleteAll :: Maybe [SqlName]
-  , schemaPrivSequenceAll :: Maybe [SqlName]
-  , schemaPrivExecuteAll :: Maybe [SqlName]
-  , schemaPrivAllAll :: Maybe [SqlName]
-  , schemaDomains :: Maybe [Domain]
-  , schemaTypes :: Maybe [Type]
-  , schemaExecPostInstall :: Maybe Text
+  { schemaName                      :: SqlName
+  , schemaDescription               :: Text
+  , schemaDependencies              :: Maybe [SqlName]
+  , schemaFunctions                 :: Maybe [Function]
+  , schemaFunctionTemplates         :: Maybe [FunctionTpl]
+  , schemaTables                    :: Maybe [Table]
+  , schemaTableTemplates            :: Maybe [TableTpl]
+  , schemaRoles                     :: Maybe [Role]
+  , schemaSequences                 :: Maybe [Sequence]
+  , schemaPrivUsage                 :: Maybe [SqlName]
+  , schemaPrivSelectAll             :: Maybe [SqlName]
+  , schemaPrivInsertAll             :: Maybe [SqlName]
+  , schemaPrivUpdateAll             :: Maybe [SqlName]
+  , schemaPrivDeleteAll             :: Maybe [SqlName]
+  , schemaPrivSequenceAll           :: Maybe [SqlName]
+  , schemaPrivExecuteAll            :: Maybe [SqlName]
+  , schemaPrivAllAll                :: Maybe [SqlName]
+  , schemaDomains                   :: Maybe [Domain]
+  , schemaTypes                     :: Maybe [Type]
+  , schemaExecPostInstall           :: Maybe Text
+    -- TODO: rename to execPostAll
   , schemaExecPostInstallAndUpgrade :: Maybe Text
   } deriving (Generic, Show, Data)
 
@@ -65,59 +60,41 @@ instance FromJSON Schema where
 instance ToJSON Schema where
   toJSON = toYamSqlJson
 
-instance ToSqlIdPart Schema where
-    sqlIdPart = schemaName
-    sqlIdPartType = const "SCHEMA"
+data SQL_SCHEMA =
+  SQL_SCHEMA
+  deriving (SqlObjType, Show)
 
-data SqlContextObj a where
-   SqlContextObj  :: ToSqlIdPart a => {
-    sqlObjectObject :: a
-   } -> SqlContextObj a
+instance ToSqlCode SQL_SCHEMA where
+  toSqlCode = const "SCHEMA"
 
-deriving instance Show (SqlContextObj a)
+instance ToSqlId (SqlContext Schema) where
+  sqlId (SqlContext s) = SqlId $ SqlObj SQL_SCHEMA (schemaName s)
 
-instance ToSqlId (SqlContextObj a) where
-    sqlId (SqlContextObj x) = SqlId $ SqlIdContentObj (sqlIdPartType x) (sqlIdPart x)
+-- Other stuff
+instance ToSqlId (SqlContext (Schema, Table)) where
+  sqlId (SqlContext (s, x)) =
+    SqlId $ SqlObj SQL_TABLE (schemaName s <.> tableName x)
 
-data SqlContextSqo a where  SqlContextSqo:: ToSqlIdPart a => {
-    sqlSqoSchema:: Schema,
-    sqlSqoObject :: a
-   } -> SqlContextSqo a
+instance ToSqlId (SqlContext (Schema, Table, Column)) where
+  sqlId (SqlContext (s, x, y)) =
+    SqlId $ SqlObj SQL_COLUMN (schemaName s <.> tableName x, columnName y)
 
-deriving instance Show (SqlContextSqo a)
+instance ToSqlId (SqlContext (Schema, Domain)) where
+  sqlId (SqlContext (s, x)) =
+    SqlId $ SqlObj SQL_DOMAIN (schemaName s <.> domainName x)
 
-instance ToSqlId (SqlContextSqo a) where
-    sqlId (SqlContextSqo s x) = SqlId $ SqlIdContentSqo
-        (sqlIdPartType x)
-        (sqlIdPart s <.> sqlIdPart x)
+instance ToSqlId (SqlContext (Schema, Function)) where
+  sqlId (SqlContext (s, x)) =
+    SqlId $
+    SqlObj
+      SQL_FUNCTION
+      ( schemaName s <.> functionName x
+      , maybeMap variableType $ functionParameters x)
 
-data SqlContextSqoArgtypes a where SqlContextSqoArgtypes :: (ToSqlIdPart a, ToSqlIdPartArgs a) => {
-    sqlSqoArgtypesSchema:: Schema,
-    sqlSqoArgtypesObject :: a
-   } -> SqlContextSqoArgtypes a
+instance ToSqlId (SqlContext (Schema, Sequence)) where
+  sqlId (SqlContext (s, x)) =
+    SqlId $ SqlObj SQL_SEQUENCE (schemaName s <.> sequenceName x)
 
-deriving instance Show (SqlContextSqoArgtypes a)
-
-instance ToSqlId (SqlContextSqoArgtypes a) where
-    sqlId (SqlContextSqoArgtypes s x) = SqlId $ SqlIdContentSqoArgtypes
-        (sqlIdPartType x)
-        (sqlIdPart s <.> sqlIdPart x)
-        (sqlIdPartArgs x)
-
-data SqlContextSqoObj a0 a1 where SqlContextSqoObj :: (ToSqlIdPart a0, ToSqlIdPart a1) =>  {
-    sqlSqoObjectSchema :: Schema,
-    sqlSqoObject1 :: a0,
-    sqlSqoObject2 :: a1
-} -> SqlContextSqoObj a0 a1
-
-deriving instance Show (SqlContextSqoObj a0 a1)
-
-instance ToSqlId (SqlContextSqoObj a0 a1) where
-    sqlId (SqlContextSqoObj s x1 x2) = SqlId $ SqlIdContentSqoObj
-        (sqlIdPartType x1 <> "-" <> sqlIdPartType x2)
-        (sqlIdPart s <.> sqlIdPart x1)
-        (sqlIdPart x2)
-
-sqlIdNameOnly :: SqlContextSqoArgtypes a -> SqlName
-sqlIdNameOnly (SqlContextSqoArgtypes s x) = (sqlIdPart s <.> sqlIdPart x)
-
+instance ToSqlId (SqlContext (Schema, Type)) where
+  sqlId (SqlContext (s, x)) =
+    SqlId $ SqlObj SQL_TYPE (schemaName s <.> typeName x)

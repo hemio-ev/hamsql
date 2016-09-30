@@ -22,26 +22,42 @@ fa
   :: Show b
   => Maybe b -> Schema -> [SetupElement]
 fa source schema =
-  [toSetupElement $ SqlContextObj schema] ++
-  toElemList' SqlContextObj schemaRoles schema ++
-  toElemList SqlContextSqo schemaDomains schema ++
-  toElemList SqlContextSqoArgtypes schemaFunctions schema ++
-  toElemList SqlContextSqo schemaSequences schema ++
-  toElemList SqlContextSqo schemaTables schema ++
-  toElemList SqlContextSqo schemaTypes schema ++
+  [toSetupElement $ SqlContext schema] ++
+  toElemList' schemaRoles schema ++
+  toElemList schemaDomains schema ++
+  toElemList schemaFunctions schema ++
+  toElemList schemaSequences schema ++
+  toElemList schemaTables schema ++
+  toElemList schemaTypes schema ++
   concat
-    [ map (toSetupElement . SqlContextSqoObj schema table) $ tableColumns table
+    [ map (toSetupElement . (\x -> SqlContext (schema, table, x))) $
+     tableColumns table
     | table <- fromMaybe [] $ schemaTables schema ]
   where
     toSetupElement x = SetupElement x source
-    toElemList x y = maybeMap (toSetupElement . x schema) . y
-    toElemList' x y = maybeMap (toSetupElement . x) . y
+    toElemList y =
+      maybeMap (toSetupElement . (\x -> SqlContext (schema, x))) . y
+    toElemList' y = maybeMap (toSetupElement . SqlContext) . y
 
 fb :: SetupContext -> [SetupElement] -> [Maybe SqlStmt]
 fb x = concatMap (toSqlStmts x)
 
+data SQL_OTHER =
+  SQL_OTHER
+  deriving (SqlObjType, Show)
+
+instance ToSqlCode SQL_OTHER where
+  toSqlCode = const "SQL_OTHER"
+
+data SQL_DATABASE =
+  SQL_DATABASE
+  deriving (SqlObjType, Show)
+
+instance ToSqlCode SQL_DATABASE where
+  toSqlCode = const "DATABASE"
+
 emptyName :: SqlId
-emptyName = SqlId $ SqlIdContentObj "?" $ SqlName ""
+emptyName = SqlId $ SqlObj SQL_OTHER $ SqlName ""
 
 sqlAddTransact :: [SqlStmt] -> [SqlStmt]
 sqlAddTransact xs =
@@ -52,16 +68,16 @@ sqlAddTransact xs =
 sqlCreateDatabase :: Bool -> SqlName -> [Maybe SqlStmt]
 sqlCreateDatabase deleteDatabase dbName =
   [ sqlDelete deleteDatabase
-  , newSqlStmt SqlCreateDatabase (SqlId $ SqlIdContentObj "DATABASE" dbName) $
+  , newSqlStmt SqlCreateDatabase (SqlId $ SqlObj SQL_DATABASE dbName) $
     "CREATE DATABASE " <> toSqlCode dbName
   , newSqlStmt
       SqlCreateDatabase
-      (SqlId $ SqlIdContentObj "DATABASE" dbName)
+      (SqlId $ SqlObj SQL_DATABASE dbName)
       "ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC"
   ]
   where
     sqlDelete True =
-      newSqlStmt SqlDropDatabase (SqlId $ SqlIdContentObj "DATABASE" dbName) $
+      newSqlStmt SqlDropDatabase (SqlId $ SqlObj SQL_DATABASE dbName) $
       "DROP DATABASE IF EXISTS" <-> toSqlCode dbName
     sqlDelete False = Nothing
 

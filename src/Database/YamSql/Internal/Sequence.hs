@@ -1,6 +1,3 @@
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric      #-}
-
 module Database.YamSql.Internal.Sequence where
 
 import Database.YamSql.Internal.Basic
@@ -23,6 +20,9 @@ instance FromJSON Sequence where
 instance ToJSON Sequence where
   toJSON = toYamSqlJson
 
-instance ToSqlIdPart Sequence where
-  sqlIdPart = sequenceName
-  sqlIdPartType = const "SEQUENCE"
+data SQL_SEQUENCE =
+  SQL_SEQUENCE
+  deriving (SqlObjType, Show)
+
+instance ToSqlCode SQL_SEQUENCE where
+  toSqlCode = const "SEQUENCE"

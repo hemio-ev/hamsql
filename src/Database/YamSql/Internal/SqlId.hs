@@ -7,6 +7,7 @@
 {-# LANGUAGE GADTs #-}
 
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Database.YamSql.Internal.SqlId where
 
@@ -23,51 +24,26 @@ class Show a =>
   sqlIdCode :: a -> Text
   sqlIdCode = toSqlCode . sqlId
 
-class (Typeable a, ToSqlCode a, Eq a, Show a) =>
-      SqlIdContent a  where
-  sqlIdContentType :: a -> SqlContextObjType
-
-class Show a =>
-      ToSqlIdPart a  where
-  sqlIdPart :: a -> SqlName
-  sqlIdPartType :: a -> SqlContextObjType
-
-class ToSqlObjId a  where
-  sqlObjId :: a -> SqlName
-  sqlObjIdCode :: a -> Text
-  sqlObjIdCode = toSqlCode . sqlObjId
-
-class ToSqlSqoId a  where
-  sqlSqoId :: a -> SqlName
-  sqlSqoIdCode :: a -> Text
-  sqlSqoIdCode = toSqlCode . sqlSqoId
-
-class ToSqlSqoObjId a  where
-  sqlSqoObjId :: a -> SqlName
-  sqlSqoObjIdCode :: a -> Text
-  sqlSqoObjIdCode = toSqlCode . sqlSqoObjId
-
--- | Strings like /TABLE/
-type SqlContextObjType = Text
-
-class ToSqlIdPartArgs a  where
-  sqlIdPartArgs :: a -> [SqlType]
+class (Typeable a, ToSqlCode a, Eq a, Show a) => SqlIdContent a
 
 -- | SqlId
 data SqlId where
-        SqlId :: (SqlIdContent a) => { sqlIdContent :: a } -> SqlId
+  SqlId :: (SqlObjType a, SqlIdContent b) => SqlObj a b -> SqlId
+
+sqlIdShowType :: SqlId -> Text
+sqlIdShowType (SqlId x) = tshow $ sqlObjType x
+
+sqlIdTypeCode :: SqlId -> Text
+sqlIdTypeCode (SqlId x) = toSqlCode $ sqlObjType x
 
 deriving instance Show SqlId
-
-sqlIdType :: SqlId -> SqlContextObjType
-sqlIdType (SqlId x) = sqlIdContentType x
 
 instance Eq SqlId where
   SqlId x == SqlId y = Just x == cast y
 
 instance Ord SqlId where
-  SqlId x `compare` SqlId y =
-    case sqlIdContentType x `compare` sqlIdContentType y of
+  (SqlId x) `compare` (SqlId y) =
+    case toSqlCode (sqlObjType x) `compare` toSqlCode (sqlObjType y) of
       EQ -> toSqlCode x `compare` toSqlCode y
       x' -> x'
 
@@ -75,85 +51,45 @@ instance ToSqlId SqlId where
   sqlId = id
 
 instance ToSqlCode SqlId where
-  toSqlCode (SqlId x) = toSqlCode x
+  toSqlCode (SqlId x) = toSqlCode $ sqlObjId x
 
--- | ROLE, DATABASE, SCHEMA
-data SqlIdContentObj =
-  SqlIdContentObj SqlContextObjType
-                  SqlName
-  deriving (Eq, Show)
+data SqlContext a = SqlContext a
 
-instance SqlIdContent SqlIdContentObj where
-  sqlIdContentType (SqlIdContentObj x _) = x
+-- FIXME
+instance Show (SqlContext a) where show= const ""
 
-instance ToSqlId SqlIdContentObj where
+instance (SqlObjType a, SqlIdContent b) => ToSqlId (SqlObj a b) where
   sqlId = SqlId
 
-instance ToSqlCode SqlIdContentObj where
-  toSqlCode (SqlIdContentObj _ x) = toSqlCode x
+class (Typeable a, ToSqlCode a, Show a) => SqlObjType a
 
-instance ToSqlObjId SqlIdContentObj where
-  sqlObjId (SqlIdContentObj _ x) = x
+data SqlObj a b where
+  SqlObj :: (SqlObjType a, SqlIdContent b)
+         => { sqlObjType :: a , sqlObjId :: b }
+         -> SqlObj a b
 
--- | TABLE
-data SqlIdContentSqo =
-  SqlIdContentSqo SqlContextObjType
-                  SqlName
-  deriving (Eq, Show)
+deriving instance Show (SqlObj a b)
 
-instance SqlIdContent SqlIdContentSqo where
-  sqlIdContentType (SqlIdContentSqo x _) = x
+instance Eq (SqlObj a b) where
+  SqlObj x1 y1 == SqlObj x2 y2 = (typeOf x1) == (typeOf x2) && y1 == y2
 
-instance ToSqlId SqlIdContentSqo where
-  sqlId = SqlId
+instance ToSqlCode (SqlObj a b) where
+  toSqlCode (SqlObj _ x) = toSqlCode x
 
-instance ToSqlCode SqlIdContentSqo where
-  toSqlCode (SqlIdContentSqo _ x) = toSqlCode x
+instance SqlIdContent SqlName
 
-instance ToSqlSqoId SqlIdContentSqo where
-  sqlSqoId (SqlIdContentSqo _ x) = x
+instance SqlIdContent (SqlName, SqlName)
+instance ToSqlCode (SqlName, SqlName) where
+  toSqlCode (x, y) = toSqlCode (x <.> y)
 
--- | TABLE TRIGGER, TABLE CONTRAINT
-data SqlIdContentSqoObj =
-  SqlIdContentSqoObj SqlContextObjType
-                     SqlName
-                     SqlName
-  deriving (Eq, Show)
-
-instance SqlIdContent SqlIdContentSqoObj where
-  sqlIdContentType (SqlIdContentSqoObj x _ _) = x
-
-instance ToSqlId SqlIdContentSqoObj where
-  sqlId = SqlId
-
-instance ToSqlCode SqlIdContentSqoObj where
-  toSqlCode (SqlIdContentSqoObj _ x y) = toSqlCode (x <.> y)
-
-instance ToSqlSqoId SqlIdContentSqoObj where
-  sqlSqoId (SqlIdContentSqoObj _ x _) = x
-
-instance ToSqlSqoObjId SqlIdContentSqoObj where
-  sqlSqoObjId (SqlIdContentSqoObj _ _ x) = x
-
--- | FUNCTION
-data SqlIdContentSqoArgtypes =
-  SqlIdContentSqoArgtypes SqlContextObjType
-                          SqlName
-                          [SqlType]
-  deriving (Eq, Show)
-
-instance SqlIdContent SqlIdContentSqoArgtypes where
-  sqlIdContentType (SqlIdContentSqoArgtypes x _ _) = x
-
-instance ToSqlId SqlIdContentSqoArgtypes where
-  sqlId = SqlId
-
-instance ToSqlSqoId SqlIdContentSqoArgtypes where
-  sqlSqoId (SqlIdContentSqoArgtypes _ x _) = x
-
-instance ToSqlCode SqlIdContentSqoArgtypes where
-  toSqlCode (SqlIdContentSqoArgtypes _ x ys) =
+instance SqlIdContent (SqlName, [SqlType])
+instance ToSqlCode (SqlName, [SqlType]) where
+  toSqlCode (x, ys) =
     toSqlCode x <> "(" <> T.intercalate ", " (map toSqlCode ys) <> ")"
+
+instance SqlIdContent (SqlName, SqlName, SqlName)
+instance ToSqlCode (SqlName, SqlName, SqlName) where
+  toSqlCode (x, _, y) = toSqlCode (x <.> y)
 
 -- ToSqlCode (right now only SqlName)
 unsafePlainName :: SqlName -> Text
@@ -210,11 +146,22 @@ toSqlCode' xs = T.intercalate "." $ map quotedName xs
   where
     quotedName (SqlName s) = "\"" <> s <> "\""
 
-class ToSqlCode a  where
+class ToSqlCode a where
   toSqlCode :: a -> Text
+
+class ToSqlName a where
+  toSqlName :: a -> SqlName
 
 class SqlIdentifierConcat a  where
   (//) :: a -> a -> a
+
+instance Monoid SqlName where
+  mempty = SqlName ""
+  mappend x@(SqlName x') y@(SqlName y')
+   | x == mempty = y
+   | y == mempty = x
+   | otherwise = SqlName (x' <> "_" <> y')
+
 
 -- SqlName
 newtype SqlName =

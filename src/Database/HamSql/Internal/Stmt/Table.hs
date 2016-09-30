@@ -16,18 +16,19 @@ import Database.HamSql.Internal.Stmt.Sequence
 
 -- | Assuming that CASCADE will only cause other constraints to be deleted.
 -- | Required since foreign keys may depend on other keys.
-stmtsDropTableConstr :: SqlIdContentSqoObj -> [Maybe SqlStmt]
-stmtsDropTableConstr x =
+stmtsDropTableConstr :: SqlObj SQL_TABLE_CONSTRAINT (SqlName, SqlName, SqlName)
+                     -> [Maybe SqlStmt]
+stmtsDropTableConstr x@(SqlObj _ (s, t, c)) =
   [ newSqlStmt SqlDropTableConstr x $
-    "ALTER TABLE" <-> sqlSqoIdCode x <-> "DROP CONSTRAINT IF EXISTS" <->
-    sqlSqoObjIdCode x <->
+    "ALTER TABLE" <-> toSqlCode (s <.> t) <-> "DROP CONSTRAINT IF EXISTS" <->
+    toSqlCode c <->
     "CASCADE"
   ]
 
-stmtsDropTableColumn :: SqlIdContentSqoObj -> [Maybe SqlStmt]
-stmtsDropTableColumn x =
+stmtsDropTableColumn :: SqlObj SQL_COLUMN (SqlName, SqlName) -> [Maybe SqlStmt]
+stmtsDropTableColumn x@(SqlObj _ (t, c)) =
   [ newSqlStmt SqlDropTableColumn x $
-    "ALTER TABLE" <-> sqlSqoIdCode x <-> "DROP COLUMN" <-> sqlSqoObjIdCode x
+    "ALTER TABLE" <-> toSqlCode t <-> "DROP COLUMN" <-> toSqlCode c
   ]
 
 -- tools
@@ -36,14 +37,14 @@ constrName
   => a -> Text
 constrName a = toSqlCode a
 
+-- FIXME: fixme
 constrId
-  :: (ToSqlId a, ToSqlCode a1)
-  => a -> a1 -> SqlIdContentSqoObj
-constrId obj a =
-  SqlIdContentSqoObj
-    "TABLE-CONSTRAINT"
-    (SqlName $ sqlIdCode obj)
-    (SqlName $ constrName a)
+  :: Schema
+  -> Table
+  -> SqlName
+  -> SqlObj SQL_TABLE_CONSTRAINT (SqlName, SqlName, SqlName)
+constrId s t c =
+  SqlObj SQL_TABLE_CONSTRAINT (schemaName s, tableName t, tableName t <> c)
 
 stmtCheck
   :: ToSqlId a
@@ -56,8 +57,8 @@ stmtCheck obj c =
   checkCheck c <>
   ")"
 
-instance ToSqlStmts (SqlContextSqoObj Table Column) where
-  toSqlStmts context obj =
+instance ToSqlStmts (SqlContext (Schema, Table, Column)) where
+  toSqlStmts context obj@(SqlContext (schema, table, rawColumn)) =
     [ stmtAddColumn
     , stmtAlterColumnType
     , stmtDropDefault
@@ -77,9 +78,11 @@ instance ToSqlStmts (SqlContextSqoObj Table Column) where
       -- UNIQUE
       stmtColumnUnique
         | columnUnique c == Just True =
-          newSqlStmt SqlCreateUniqueConstr (constrId obj (columnName c)) $
+          newSqlStmt
+            SqlCreateUniqueConstr
+            (constrId schema table (columnName c <> SqlName "key")) $
           "ALTER TABLE " <> tblId <> " ADD CONSTRAINT " <>
-          constrName (columnName c) <>
+          toSqlCode (tableName table <> columnName c <> SqlName "key") <>
           " UNIQUE (" <>
           toSqlCode (columnName c) <>
           ")"
@@ -107,7 +110,9 @@ instance ToSqlStmts (SqlContextSqoObj Table Column) where
         case columnReferences c of
           Nothing -> Nothing
           (Just ref) ->
-            newSqlStmt SqlCreateForeignKeyConstr (constrId obj (columnName c)) $
+            newSqlStmt
+              SqlCreateForeignKeyConstr
+              (constrId schema table (columnName c)) $
             "ALTER TABLE" <-> sqlIdCode obj <-> "ADD CONSTRAINT" <->
             constrName (columnName c) <->
             "FOREIGN KEY (" <>
@@ -122,7 +127,7 @@ instance ToSqlStmts (SqlContextSqoObj Table Column) where
             maybePrefix " ON DELETE " (columnOnRefDelete c)
       -- CREATE SEQUENCE (for type SERIAL)
       stmtsSerialSequence
-        | columnIsSerial = stmtsDeploySequence context serialSqlContext
+        | columnIsSerial = toSqlStmts context serialSequenceContext
         | otherwise = [Nothing]
       -- Helpers
       stmtAlterColumn t x =
@@ -130,39 +135,34 @@ instance ToSqlStmts (SqlContextSqoObj Table Column) where
         "ALTER TABLE " <> tblId <> " ALTER COLUMN " <> toSqlCode (columnName c) <>
         " " <>
         x
-      columnIsSerial = toSqlCode (columnType $ sqlSqoObject2 obj) == "SERIAL"
+      columnIsSerial = toSqlCode (columnType rawColumn) == "SERIAL"
       c
         | columnIsSerial =
-          (sqlSqoObject2 obj)
+          rawColumn
           { columnType = SqlType "integer"
           , columnDefault =
-            Just $ "nextval('" <> sqlIdCode serialSqlContext <> "')"
+            Just $
+            "nextval('" <> toSqlCode (sqlId serialSequenceContext) <> "')"
           }
-        | otherwise = sqlSqoObject2 obj
-      tblId =
-        toSqlCode $
-        schemaName (sqlSqoObjectSchema obj) <.> tableName (sqlSqoObject1 obj)
-      serialSqlContext =
-        SqlContextSqo
-        { sqlSqoSchema = sqlSqoObjectSchema obj
-        , sqlSqoObject =
-          Sequence
-          -- sequenceName follows PostgreSQL internal convention
-          { sequenceName =
-            tableName (sqlSqoObject1 obj) // SqlName "_" // columnName c //
-            SqlName "_seq"
-          , sequenceIncrement = Nothing
-          , sequenceMinValue = Nothing
-          , sequenceMaxValue = Nothing
-          , sequenceStartValue = Nothing
-          , sequenceCache = Nothing
-          , sequenceCycle = Nothing
-          , sequenceOwnedByColumn = Just $ SqlName $ sqlIdCode obj
-          }
-        }
+        | otherwise = rawColumn
+      tblId = toSqlCode $ schemaName schema <.> tableName table
+      serialSequenceContext =
+        SqlContext
+          ( schema
+          , Sequence
+            -- sequenceName follows PostgreSQL internal convention
+            { sequenceName = tableName table <> columnName c <> SqlName "_seq"
+            , sequenceIncrement = Nothing
+            , sequenceMinValue = Nothing
+            , sequenceMaxValue = Nothing
+            , sequenceStartValue = Nothing
+            , sequenceCache = Nothing
+            , sequenceCycle = Nothing
+            , sequenceOwnedByColumn = Just $ SqlName $ sqlIdCode obj
+            })
 
-instance ToSqlStmts (SqlContextSqo Table) where
-  toSqlStmts SetupContext {setupContextSetup = setup} obj@SqlContextSqo {sqlSqoObject = t} =
+instance ToSqlStmts (SqlContext (Schema, Table)) where
+  toSqlStmts SetupContext {setupContextSetup = setup} obj@(SqlContext (s, t)) =
     [ stmtCreateTable
       -- table comment
     , stmtCommentOn obj (tableDescription t)
@@ -189,17 +189,15 @@ instance ToSqlStmts (SqlContextSqo Table) where
       sqlAddPrimaryKey :: [SqlName] -> Maybe SqlStmt
       sqlAddPrimaryKey [] = Nothing
       sqlAddPrimaryKey ks =
-        newSqlStmt
-          SqlCreatePrimaryKeyConstr
-          (constrId obj (SqlName "primary_key")) $
+        newSqlStmt SqlCreatePrimaryKeyConstr (constrId s t (SqlName "pkey")) $
         "ALTER TABLE " <> sqlIdCode obj <> " ADD CONSTRAINT " <>
-        constrName (SqlName "primary_key") <>
+        toSqlCode (tableName t <> SqlName "pkey") <>
         " PRIMARY KEY (" <>
         T.intercalate ", " (map toSqlCode ks) <>
         ")"
       sqlUniqueConstr :: UniqueKey -> Maybe SqlStmt
       sqlUniqueConstr ks =
-        newSqlStmt SqlCreateUniqueConstr (constrId obj (uniquekeyName ks)) $
+        newSqlStmt SqlCreateUniqueConstr (constrId s t (uniquekeyName ks)) $
         "ALTER TABLE " <> sqlIdCode obj <> " ADD CONSTRAINT " <>
         constrName (uniquekeyName ks) <>
         " UNIQUE (" <>
@@ -209,7 +207,7 @@ instance ToSqlStmts (SqlContextSqo Table) where
       --    " CONSTRAINT " <> name (checkName c) <> " CHECK (" <> checkCheck c <> ")"
       sqlAddForeignKey' :: ForeignKey -> Maybe SqlStmt
       sqlAddForeignKey' fk =
-        newSqlStmt SqlCreateForeignKeyConstr (constrId obj (foreignkeyName fk)) $
+        newSqlStmt SqlCreateForeignKeyConstr (constrId s t (foreignkeyName fk)) $
         "ALTER TABLE " <> sqlIdCode obj <> " ADD CONSTRAINT " <>
         constrName (foreignkeyName fk) <>
         " FOREIGN KEY (" <>

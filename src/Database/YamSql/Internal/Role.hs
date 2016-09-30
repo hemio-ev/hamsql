@@ -23,6 +23,12 @@ instance FromJSON Role where
 instance ToJSON Role where
   toJSON = toYamSqlJson
 
-instance ToSqlIdPart Role where
-  sqlIdPart = roleName
-  sqlIdPartType = const "ROLE"
+data SQL_ROLE =
+  SQL_ROLE
+  deriving (SqlObjType, Show)
+
+instance ToSqlCode SQL_ROLE where
+  toSqlCode = const "ROLE"
+
+instance ToSqlId (SqlContext Role) where
+  sqlId (SqlContext x) = SqlId $ SqlObj SQL_ROLE (roleName x)
