@@ -2,31 +2,28 @@
 --
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric      #-}
-{-# LANGUAGE GADTs              #-}
+{-# LANGUAGE GADTs #-}
 
-module Database.YamSql.Internal.Schema
+module Database.YamSql.Internal.Obj.Schema
   ( Schema(..)
-  , module Database.YamSql.Internal.Check
-  , module Database.YamSql.Internal.Domain
-  , module Database.YamSql.Internal.Function
-  , module Database.YamSql.Internal.Role
-  , module Database.YamSql.Internal.Sequence
-  , module Database.YamSql.Internal.Table
-  , module Database.YamSql.Internal.Type
+  , module Database.YamSql.Internal.Obj.Check
+  , module Database.YamSql.Internal.Obj.Domain
+  , module Database.YamSql.Internal.Obj.Function
+  , module Database.YamSql.Internal.Obj.Role
+  , module Database.YamSql.Internal.Obj.Sequence
+  , module Database.YamSql.Internal.Obj.Table
+  , module Database.YamSql.Internal.Obj.Type
   ) where
 
 import Database.YamSql.Internal.Basic
 import Database.YamSql.Internal.Commons
-
-import Database.YamSql.Internal.Check
-import Database.YamSql.Internal.Domain
-import Database.YamSql.Internal.Function
-import Database.YamSql.Internal.Role
-import Database.YamSql.Internal.Sequence
-import Database.YamSql.Internal.Table
-import Database.YamSql.Internal.Type
+import Database.YamSql.Internal.Obj.Check
+import Database.YamSql.Internal.Obj.Domain
+import Database.YamSql.Internal.Obj.Function
+import Database.YamSql.Internal.Obj.Role
+import Database.YamSql.Internal.Obj.Sequence
+import Database.YamSql.Internal.Obj.Table
+import Database.YamSql.Internal.Obj.Type
 
 -- Schema --
 data Schema = Schema

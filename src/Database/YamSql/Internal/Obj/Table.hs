@@ -1,7 +1,7 @@
-module Database.YamSql.Internal.Table where
+module Database.YamSql.Internal.Obj.Table where
 
 import Database.YamSql.Internal.Basic
-import Database.YamSql.Internal.Check
+import Database.YamSql.Internal.Obj.Check
 
 data Table = Table
   { tableName         :: SqlName

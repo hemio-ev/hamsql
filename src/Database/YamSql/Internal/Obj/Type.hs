@@ -5,7 +5,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric      #-}
 
-module Database.YamSql.Internal.Type where
+module Database.YamSql.Internal.Obj.Type where
 
 import Database.YamSql.Internal.Basic
 

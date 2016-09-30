@@ -2,7 +2,7 @@
 --
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
-module Database.YamSql.Internal.Function where
+module Database.YamSql.Internal.Obj.Function where
 
 import Database.YamSql.Internal.Basic
 import Database.YamSql.Internal.Commons

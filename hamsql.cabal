@@ -1,5 +1,5 @@
 name:                hamsql
-version:             0.7.1.0
+version:             0.8.0.0
 synopsis:            HamSql
 category:            Database
 description:         Interpreter for SQL-structure definitions in Yaml (YamSql)
@@ -63,16 +63,16 @@ library
     Database.HamSql.Setup
     Database.YamSql
     Database.YamSql.Internal.Basic
-    Database.YamSql.Internal.Check
     Database.YamSql.Internal.Commons
-    Database.YamSql.Internal.Domain
-    Database.YamSql.Internal.Function
-    Database.YamSql.Internal.Role
-    Database.YamSql.Internal.Schema
-    Database.YamSql.Internal.Sequence
+    Database.YamSql.Internal.Obj.Check
+    Database.YamSql.Internal.Obj.Domain
+    Database.YamSql.Internal.Obj.Function
+    Database.YamSql.Internal.Obj.Role
+    Database.YamSql.Internal.Obj.Schema
+    Database.YamSql.Internal.Obj.Sequence
+    Database.YamSql.Internal.Obj.Table
+    Database.YamSql.Internal.Obj.Type
     Database.YamSql.Internal.SqlId
-    Database.YamSql.Internal.Table
-    Database.YamSql.Internal.Type
     Database.YamSql.Parser
 
   other-modules:

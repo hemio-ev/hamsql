@@ -5,7 +5,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric      #-}
 
-module Database.YamSql.Internal.Trigger where
+module Database.YamSql.Internal.Obj.Trigger where
 
 import Database.YamSql.Internal.Basic
 import Database.YamSql.Internal.Commons

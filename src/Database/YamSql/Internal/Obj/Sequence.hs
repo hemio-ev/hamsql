@@ -1,4 +1,4 @@
-module Database.YamSql.Internal.Sequence where
+module Database.YamSql.Internal.Obj.Sequence where
 
 import Database.YamSql.Internal.Basic
 

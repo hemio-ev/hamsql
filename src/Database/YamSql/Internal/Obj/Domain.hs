@@ -1,7 +1,7 @@
-module Database.YamSql.Internal.Domain where
+module Database.YamSql.Internal.Obj.Domain where
 
 import Database.YamSql.Internal.Basic
-import Database.YamSql.Internal.Check
+import Database.YamSql.Internal.Obj.Check
 
 -- | Domains are aliases of an existing SQL types, possibly with checks
 data Domain = Domain

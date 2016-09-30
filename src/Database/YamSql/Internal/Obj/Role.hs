@@ -2,10 +2,7 @@
 --
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric      #-}
-
-module Database.YamSql.Internal.Role where
+module Database.YamSql.Internal.Obj.Role where
 
 import Database.YamSql.Internal.Basic
 
