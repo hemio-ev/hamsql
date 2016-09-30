@@ -4,7 +4,6 @@
 -- Some rights reserved. See COPYING, AUTHORS.
 {-# LANGUAGE GADTs #-}
 
---{-# LANGUAGE FlexibleInstances #-}
 module Database.HamSql.Internal.Stmt where
 
 import qualified Data.Text as T

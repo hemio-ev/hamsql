@@ -1,5 +1,5 @@
 name:                hamsql
-version:             0.7.0.0
+version:             0.7.1.0
 synopsis:            HamSql
 category:            Database
 description:         Interpreter for SQL-structure definitions in Yaml (YamSql)
@@ -37,14 +37,10 @@ library
     ScopedTypeVariables,
     StandaloneDeriving,
     TemplateHaskell
+
   exposed-modules:
     Database.HamSql
     Database.HamSql.Cli
-    Database.HamSql.Setup
-    Database.YamSql
-    Database.YamSql.Parser
-
-  other-modules:
     Database.HamSql.Internal.DbUtils
     Database.HamSql.Internal.Documentation
     Database.HamSql.Internal.InquireDeployed
@@ -64,6 +60,8 @@ library
     Database.HamSql.Internal.Stmt.Table
     Database.HamSql.Internal.Stmt.Type
     Database.HamSql.Internal.Utils
+    Database.HamSql.Setup
+    Database.YamSql
     Database.YamSql.Internal.Basic
     Database.YamSql.Internal.Check
     Database.YamSql.Internal.Commons
@@ -75,6 +73,9 @@ library
     Database.YamSql.Internal.SqlId
     Database.YamSql.Internal.Table
     Database.YamSql.Internal.Type
+    Database.YamSql.Parser
+
+  other-modules:
     Paths_hamsql
 
   build-depends:
@@ -88,7 +89,7 @@ library
     groom >=0.1 && < 0.2,
     network-uri >=2.6 && <2.7,
     optparse-applicative >=0.13 && <0.14,
-    pandoc >=1.17 && <1.18,
+    pandoc >=1.17.3 && <1.18,
     postgresql-simple >=0.4 && <0.6,
     semigroups >=0.18 && <0.19,
     text >=1.2 && <1.3,
