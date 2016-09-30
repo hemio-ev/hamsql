@@ -31,28 +31,21 @@ stmtsDropTableColumn x@(SqlObj _ (t, c)) =
     "ALTER TABLE" <-> toSqlCode t <-> "DROP COLUMN" <-> toSqlCode c
   ]
 
--- tools
-constrName
-  :: ToSqlCode a
-  => a -> Text
-constrName a = toSqlCode a
-
--- FIXME: fixme
 constrId
   :: Schema
   -> Table
   -> SqlName
   -> SqlObj SQL_TABLE_CONSTRAINT (SqlName, SqlName, SqlName)
-constrId s t c =
-  SqlObj SQL_TABLE_CONSTRAINT (schemaName s, tableName t, tableName t <> c)
+constrId s t c = SqlObj SQL_TABLE_CONSTRAINT (schemaName s, tableName t, c)
 
+-- TODO: prefix with table name
 stmtCheck
   :: ToSqlId a
   => a -> Check -> Maybe SqlStmt
 stmtCheck obj c =
   newSqlStmt SqlCreateCheckConstr obj $
   "ALTER TABLE " <> sqlIdCode obj <> " ADD CONSTRAINT " <>
-  constrName (checkName c) <>
+  toSqlCode (checkName c) <>
   " CHECK (" <>
   checkCheck c <>
   ")"
@@ -78,14 +71,12 @@ instance ToSqlStmts (SqlContext (Schema, Table, Column)) where
       -- UNIQUE
       stmtColumnUnique
         | columnUnique c == Just True =
-          newSqlStmt
-            SqlCreateUniqueConstr
-            (constrId schema table (columnName c <> SqlName "key")) $
-          "ALTER TABLE " <> tblId <> " ADD CONSTRAINT " <>
-          toSqlCode (tableName table <> columnName c <> SqlName "key") <>
-          " UNIQUE (" <>
-          toSqlCode (columnName c) <>
-          ")"
+          let constr = tableName table <> columnName c <> SqlName "key"
+          in newSqlStmt SqlCreateUniqueConstr (constrId schema table constr) $
+             "ALTER TABLE " <> tblId <> " ADD CONSTRAINT " <> toSqlCode constr <>
+             " UNIQUE (" <>
+             toSqlCode (columnName c) <>
+             ")"
         | otherwise = Nothing
       -- NOT NULL
       stmtAlterColumnNull =
@@ -110,21 +101,22 @@ instance ToSqlStmts (SqlContext (Schema, Table, Column)) where
         case columnReferences c of
           Nothing -> Nothing
           (Just ref) ->
-            newSqlStmt
-              SqlCreateForeignKeyConstr
-              (constrId schema table (columnName c)) $
-            "ALTER TABLE" <-> sqlIdCode obj <-> "ADD CONSTRAINT" <->
-            constrName (columnName c) <->
-            "FOREIGN KEY (" <>
-            toSqlCode (columnName c) <>
-            ")" <->
-            "REFERENCES" <->
-            toSqlCode' (init $ expSqlName ref) <->
-            "(" <>
-            toSqlCode (last $ expSqlName ref) <>
-            ")" <>
-            maybePrefix " ON UPDATE " (columnOnRefUpdate c) <>
-            maybePrefix " ON DELETE " (columnOnRefDelete c)
+            let constr = tableName table <> columnName c <> SqlName "fkey"
+            in newSqlStmt
+                 SqlCreateForeignKeyConstr
+                 (constrId schema table constr) $
+               "ALTER TABLE" <-> sqlIdCode obj <-> "ADD CONSTRAINT" <->
+               toSqlCode constr <->
+               "FOREIGN KEY (" <>
+               toSqlCode (columnName c) <>
+               ")" <->
+               "REFERENCES" <->
+               toSqlCode' (init $ expSqlName ref) <->
+               "(" <>
+               toSqlCode (last $ expSqlName ref) <>
+               ")" <>
+               maybePrefix " ON UPDATE " (columnOnRefUpdate c) <>
+               maybePrefix " ON DELETE " (columnOnRefDelete c)
       -- CREATE SEQUENCE (for type SERIAL)
       stmtsSerialSequence
         | columnIsSerial = toSqlStmts context serialSequenceContext
@@ -189,37 +181,36 @@ instance ToSqlStmts (SqlContext (Schema, Table)) where
       sqlAddPrimaryKey :: [SqlName] -> Maybe SqlStmt
       sqlAddPrimaryKey [] = Nothing
       sqlAddPrimaryKey ks =
-        newSqlStmt SqlCreatePrimaryKeyConstr (constrId s t (SqlName "pkey")) $
-        "ALTER TABLE " <> sqlIdCode obj <> " ADD CONSTRAINT " <>
-        toSqlCode (tableName t <> SqlName "pkey") <>
-        " PRIMARY KEY (" <>
-        T.intercalate ", " (map toSqlCode ks) <>
-        ")"
+        let constr = tableName t <> SqlName "pkey"
+        in newSqlStmt SqlCreatePrimaryKeyConstr (constrId s t constr) $
+           "ALTER TABLE " <> sqlIdCode obj <> " ADD CONSTRAINT " <> toSqlCode constr <>
+           " PRIMARY KEY (" <>
+           T.intercalate ", " (map toSqlCode ks) <>
+           ")"
+      -- TODO: allow empty name with "mconcat (uniquekeyColumns ks)"
       sqlUniqueConstr :: UniqueKey -> Maybe SqlStmt
       sqlUniqueConstr ks =
-        newSqlStmt SqlCreateUniqueConstr (constrId s t (uniquekeyName ks)) $
-        "ALTER TABLE " <> sqlIdCode obj <> " ADD CONSTRAINT " <>
-        constrName (uniquekeyName ks) <>
-        " UNIQUE (" <>
-        T.intercalate ", " (map toSqlCode (uniquekeyColumns ks)) <>
-        ")"
-      --sqlCheck c =
-      --    " CONSTRAINT " <> name (checkName c) <> " CHECK (" <> checkCheck c <> ")"
+        let constr = tableName t <> uniquekeyName ks
+        in newSqlStmt SqlCreateUniqueConstr (constrId s t constr) $
+           "ALTER TABLE " <> sqlIdCode obj <> " ADD CONSTRAINT " <> toSqlCode constr <>
+           " UNIQUE (" <>
+           T.intercalate ", " (map toSqlCode (uniquekeyColumns ks)) <>
+           ")"
       sqlAddForeignKey' :: ForeignKey -> Maybe SqlStmt
       sqlAddForeignKey' fk =
-        newSqlStmt SqlCreateForeignKeyConstr (constrId s t (foreignkeyName fk)) $
-        "ALTER TABLE " <> sqlIdCode obj <> " ADD CONSTRAINT " <>
-        constrName (foreignkeyName fk) <>
-        " FOREIGN KEY (" <>
-        T.intercalate ", " (map toSqlCode (foreignkeyColumns fk)) <>
-        ")" <>
-        " REFERENCES " <>
-        toSqlCode (foreignkeyRefTable fk) <>
-        " (" <>
-        T.intercalate ", " (map toSqlCode $ foreignkeyRefColumns fk) <>
-        ")" <>
-        maybePrefix " ON UPDATE " (foreignkeyOnUpdate fk) <>
-        maybePrefix " ON DELETE " (foreignkeyOnDelete fk)
+        let constr = tableName t <> foreignkeyName fk
+        in newSqlStmt SqlCreateForeignKeyConstr (constrId s t constr) $
+           "ALTER TABLE " <> sqlIdCode obj <> " ADD CONSTRAINT " <> toSqlCode constr <>
+           " FOREIGN KEY (" <>
+           T.intercalate ", " (map toSqlCode (foreignkeyColumns fk)) <>
+           ")" <>
+           " REFERENCES " <>
+           toSqlCode (foreignkeyRefTable fk) <>
+           " (" <>
+           T.intercalate ", " (map toSqlCode $ foreignkeyRefColumns fk) <>
+           ")" <>
+           maybePrefix " ON UPDATE " (foreignkeyOnUpdate fk) <>
+           maybePrefix " ON DELETE " (foreignkeyOnDelete fk)
       sqlGrant right role =
         newSqlStmt
           SqlPriv
