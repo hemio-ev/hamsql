@@ -1,6 +1,12 @@
 build-hamsql:
     script:
         - make
+
+build-hamsql-bin:
+    only:
+        - tags
+    script:
+        - make
         - cp dist/build/hamsql/hamsql ./
     artifacts:
         paths:
