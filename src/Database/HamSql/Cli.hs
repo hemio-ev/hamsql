@@ -63,7 +63,7 @@ run (Install optCommon optDb optInstall)
     stmts <- pgsqlGetFullStatements optCommon optDb setup
     -- TODO: Own option for this
     dropRoleStmts <-
-      if optDeleteExistingDatabase optInstall
+      if optDeleteResidualRoles optInstall
         then pgsqlDropAllRoleStmts optDb setup
         else return []
     useSqlStmts optCommon optDb $ sort $ stmts ++ dropRoleStmts

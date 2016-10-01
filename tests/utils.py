@@ -17,7 +17,11 @@ def run(cmd, setup, delete_db=False, capture=False, args=[]):
     params += args
     
     if delete_db:
-        params += [ '--permit-data-deletion', '--delete-existing-database' ]
+        params += [
+            '--permit-data-deletion',
+            '--delete-existing-database',
+            '--delete-residual-roles'
+            ]
     
     if capture:
         settings.update({

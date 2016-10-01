@@ -123,6 +123,7 @@ parserOptCommonDb =
 -- Command Install
 data OptInstall = OptInstall
   { optDeleteExistingDatabase :: Bool
+  , optDeleteResidualRoles    :: Bool
   } deriving (Show)
 
 parserOptInstall :: Parser OptInstall
@@ -130,7 +131,8 @@ parserOptInstall =
   OptInstall <$>
   boolFlag
     (long "delete-existing-database" <> short 'd' <>
-     help "Delete database if it allready exists")
+     help "Delete database if it allready exists") <*>
+  boolFlag (long "delete-residual-roles" <> help "Delete residual roles")
 
 -- Command NoCommand
 data OptNoCommand = OptNoCommand
