@@ -1,0 +1,8 @@
+name: function-many
+description: Many functions
+
+functions:
+ - name: f0
+   description: origin
+   returns: varchar
+   body: RETURN 'f0';

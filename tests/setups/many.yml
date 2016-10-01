@@ -1,0 +1,4 @@
+schemas:
+ - function-many
+
+role_prefix: hamsql-test_
