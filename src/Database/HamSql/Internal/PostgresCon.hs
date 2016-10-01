@@ -77,6 +77,7 @@ import Control.Exception
 import Control.Monad
 import qualified Data.ByteString.Char8 as B
 import Data.Maybe
+import qualified Data.Text as T
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.Transaction
 
@@ -86,6 +87,7 @@ import Database.HamSql.Internal.DbUtils
 import Database.HamSql.Internal.InquireDeployed
 import Database.HamSql.Internal.Option
 import Database.HamSql.Internal.Stmt
+import Database.HamSql.Internal.Stmt.Commons
 import Database.HamSql.Internal.Stmt.Create
 import Database.HamSql.Internal.Stmt.Domain
 import Database.HamSql.Internal.Stmt.Drop
@@ -120,7 +122,8 @@ pgsqlUpdateFragile setup conn stmts =
   correctStmts SqlAddColumn deployedTableColumnIds stmtsDropTableColumn >>=
   correctStmts SqlCreateSequence deployedSequenceIds stmtsDropSequence >>=
   correctStmts SqlCreateRole (deployedRoleIds setup) (stmtsDropRole setup) >>=
-  dropResidual SqlCreateFunction deployedFunctionIds stmtsDropFunction
+  dropResidual SqlCreateFunction deployedFunctionIds stmtsDropFunction >>=
+  revokeAllPrivileges setup (deployedRoleIds setup conn)
   where
     correctStmts
       :: ToSqlId a
@@ -139,6 +142,13 @@ pgsqlUpdateFragile setup conn stmts =
       -> [SqlStmt]
       -> IO [SqlStmt]
     dropResidual t isf f xs = addDropResidual t (isf conn) f xs
+
+revokeAllPrivileges :: Setup
+                    -> IO [SqlObj SQL_ROLE SqlName]
+                    -> [SqlStmt]
+                    -> IO [SqlStmt]
+revokeAllPrivileges setup roles stmts =
+  (++ stmts) <$> catMaybes <$> concatMap (stmtsDropAllPrivileges setup) <$> roles
 
 pgsqlDropAllRoleStmts :: OptCommonDb -> Setup -> IO [SqlStmt]
 pgsqlDropAllRoleStmts optDb setup = do

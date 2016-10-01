@@ -86,6 +86,7 @@ data SqlStmtType
   | SqlCreateDatabase
   | SqlPre
   | SqlPreInstall
+  | SqlRevokePrivilege
   | SqlDropRole
   | SqlCreateRole
   | SqlAlterRole

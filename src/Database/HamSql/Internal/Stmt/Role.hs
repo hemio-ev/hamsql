@@ -6,11 +6,26 @@
 
 module Database.HamSql.Internal.Stmt.Role where
 
+import qualified Data.Text as T
+
 import Database.HamSql.Internal.Stmt.Basic
 
 stmtsDropRole :: Setup -> SqlObj SQL_ROLE SqlName -> [Maybe SqlStmt]
 stmtsDropRole setup role@(SqlObj _ roleName) =
   [newSqlStmt SqlDropRole role $ "DROP ROLE " <> prefixedRole setup roleName]
+
+stmtsDropAllPrivileges :: Setup -> SqlObj SQL_ROLE SqlName -> [Maybe SqlStmt]
+stmtsDropAllPrivileges setup x@(SqlObj _ n)
+  | schemas == [] = [Nothing]
+  | otherwise =
+    [ newSqlStmt SqlRevokePrivilege x $
+     "REVOKE ALL PRIVILEGES ON ALL" <-> objType <-> "IN SCHEMA" <->
+     T.intercalate ", " (map toSqlCode schemas) <->
+     "FROM" <->
+     prefixedRole setup n
+    | objType <- ["TABLES", "SEQUENCES", "FUNCTIONS"] ]
+  where
+    schemas = maybeMap schemaName (setupSchemaData setup)
 
 instance ToSqlStmts (SqlContext Role) where
   toSqlStmts SetupContext {setupContextSetup = setup} obj@(SqlContext r) =
