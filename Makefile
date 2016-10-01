@@ -1,5 +1,5 @@
 
-VERSION = 0.7.1.0
+VERSION = 0.8.0.0
 HPCDIRS = --hpcdir dist/hpc/vanilla/mix/hamsql --hpcdir dist/hpc/vanilla/mix/hamsql-${VERSION}
 
 update-and-build: update build

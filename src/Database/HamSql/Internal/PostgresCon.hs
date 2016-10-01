@@ -74,7 +74,7 @@ Properties all via ALTER SEQUENCE.
 module Database.HamSql.Internal.PostgresCon where
 
 import Control.Exception
-import Control.Monad (void, when)
+import Control.Monad
 import qualified Data.ByteString.Char8 as B
 import Data.Maybe
 import Database.PostgreSQL.Simple
@@ -197,9 +197,10 @@ pgsqlExecStmtList opt status (x:xs) failed conn = do
     handleQueryError savepoint QueryError {} = proceed savepoint
     -- action after execution has failed
     skipQuery savepoint stmts = do
-      logStmt opt "SAVEPOINT retry;"
-      logStmt opt $ toSqlCode x
-      logStmt opt "ROLLBACK TO SAVEPOINT retry;"
+      unless (optSqlLogHideRollbacks opt) $
+        do logStmt opt "SAVEPOINT retry;"
+           logStmt opt $ toSqlCode x
+           logStmt opt "ROLLBACK TO SAVEPOINT retry;"
       rollbackToSavepoint conn savepoint
       releaseSavepoint conn savepoint
       pgsqlExecStmtList opt forwardStatus xs (failed ++ stmts) conn

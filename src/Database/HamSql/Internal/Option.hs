@@ -87,11 +87,12 @@ parserOptCommon =
 
 -- Commons Execute
 data OptCommonDb = OptCommonDb
-  { optEmulate            :: Bool
-  , optPrint              :: Bool
-  , optConnection         :: String
-  , optPermitDataDeletion :: Bool
-  , optSqlLog             :: Maybe FilePath
+  { optEmulate             :: Bool
+  , optPrint               :: Bool
+  , optConnection          :: String
+  , optPermitDataDeletion  :: Bool
+  , optSqlLog              :: Maybe FilePath
+  , optSqlLogHideRollbacks :: Bool
   } deriving (Show)
 
 justStr :: ReadM (Maybe String)
@@ -110,10 +111,14 @@ parserOptCommonDb =
     justStr
     (long "sql-log" <>
      help
-       ("If specified, log sql statements to given file. " <>
+       ("If specified, log SQL statements to given file. " <>
         "Existing logfiles will be extended, not deleted.") <>
      value Nothing <>
-     metavar "<log file>")
+     metavar "<log file>") <*>
+  boolFlag
+    (long "sql-log-hide-rollbacks" <>
+     help
+       "Hide ROLLBACK and SAVEPOINT statements. Useful for creating migration code via --log-sql.")
 
 -- Command Install
 data OptInstall = OptInstall
