@@ -11,8 +11,8 @@ import qualified Data.Text as T
 import Database.HamSql.Internal.Stmt.Basic
 
 stmtsDropRole :: Setup -> SqlObj SQL_ROLE SqlName -> [Maybe SqlStmt]
-stmtsDropRole setup role@(SqlObj _ roleName) =
-  [newSqlStmt SqlDropRole role $ "DROP ROLE " <> prefixedRole setup roleName]
+stmtsDropRole setup role@(SqlObj _ roleSqlName) =
+  [newSqlStmt SqlDropRole role $ "DROP ROLE " <> prefixedRole setup roleSqlName]
 
 stmtsDropAllPrivileges :: Setup -> SqlObj SQL_ROLE SqlName -> [Maybe SqlStmt]
 stmtsDropAllPrivileges setup x@(SqlObj _ n)
