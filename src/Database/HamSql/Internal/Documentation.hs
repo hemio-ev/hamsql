@@ -11,7 +11,7 @@ import qualified Data.Text as T
 import Data.Text.Encoding
 import qualified Data.Text.IO as T.IO
 import System.FilePath
-import Text.Pandoc.Templates
+import Text.DocTemplates
 
 import Database.HamSql.Internal.Option
 import Database.HamSql.Internal.Utils
