@@ -1,6 +1,14 @@
-v0.7.1.0
-  - Fixes unresolvable dependencies via new pandoc version
+v0.8.0.0
+  - Replaces pandoc with doctemplates to halve dependency compile time
+    Big thanks to @jgm for implementing doctemplates right away!
+    <https://github.com/jgm/pandoc/issues/3134>
+  - Adds --delete-residual-roles option (closes #30)
+  - Adds --sql-log-hide-rollbacks option (closes #55)
   - Adds Internal libraries to exposed modules
+  - Adds dropping of basic role privileges (#37)
+  - Changes YamSql objects to Internal.Obj.* (closes #58)
+  - Changes to a better SqlObj and SqlContext structure (closes #60)
+  - Changes to treat columns as independent objects (closes #33)
   - Updates README
 v0.7.0.0
   - Fixes all compiler warnings

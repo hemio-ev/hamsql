@@ -7,7 +7,7 @@ update-and-build: update build
 update:
 	cabal sandbox init
 	cabal update
-	cabal install -ffast --allow-newer --force-reinstalls --only-dependencies --disable-optimization
+	cabal install -ffast --force-reinstalls --only-dependencies --disable-optimization
 
 tests:
 	cabal configure --disable-optimization --enable-coverage --enable-tests
@@ -34,8 +34,7 @@ install:
 
 dev-clean:
 	cabal clean
-	find src/ \( -name '*.hi' -or -name '*.o' \) -exec rm {} ';'
-	-rm -r .cabal-sandbox/ cabal.sandbox.config
+	cabal sandbox delete
 
 dev-build-without-dep:
 	cabal sandbox init
