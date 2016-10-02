@@ -97,7 +97,7 @@ library
     yaml >=0.8 && <0.9
 
 executable hamsql
-  main-is: hamsql.hs
+  main-is: app/hamsql.hs
   default-language: Haskell2010
   
   build-depends:
@@ -107,7 +107,7 @@ executable hamsql
 test-suite hamsql-tests
   default-language:    Haskell2010
   type:       exitcode-stdio-1.0
-  main-is:    hamsql-tests.hs
+  main-is:    test/hamsql-tests.hs
   build-depends:
     base >=4.8 && <5.0,
     hamsql

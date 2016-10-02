@@ -14,9 +14,9 @@ cabal.sandbox.config
 *.pyc
 
 # project
-tests/coverage
-tests/docs
-tests/tmp
+test/coverage
+test/docs
+test/tmp
 hamsql.tix
 hamsql-stmt-log.sql
 .cache
