@@ -29,6 +29,7 @@ build:
 
 install:
 	cp dist/build/hamsql/hamsql /usr/local/bin/ 
+	hamsql --bash-completion-script hamsql > /etc/bash_completion.d/hamsql
 
 # ununsual options
 
