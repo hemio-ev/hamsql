@@ -14,9 +14,12 @@ stmtsDropRole :: Setup -> SqlObj SQL_ROLE SqlName -> [Maybe SqlStmt]
 stmtsDropRole setup role@(SqlObj _ roleSqlName) =
   [newSqlStmt SqlDropRole role $ "DROP ROLE " <> prefixedRole setup roleSqlName]
 
-stmtsDropAllPrivileges :: Setup -> SqlObj SQL_ROLE SqlName -> [Maybe SqlStmt]
-stmtsDropAllPrivileges setup x@(SqlObj _ n)
-  | schemas == [] = [Nothing]
+stmtsDropAllPrivileges :: Setup
+                       -> [SqlName]
+                       -> SqlObj SQL_ROLE SqlName
+                       -> [Maybe SqlStmt]
+stmtsDropAllPrivileges setup schemas x@(SqlObj _ n)
+  | null schemas = [Nothing]
   | otherwise =
     [ newSqlStmt SqlRevokePrivilege x $
      "REVOKE ALL PRIVILEGES ON ALL" <-> objType <-> "IN SCHEMA" <->
@@ -24,8 +27,14 @@ stmtsDropAllPrivileges setup x@(SqlObj _ n)
      "FROM" <->
      prefixedRole setup n
     | objType <- ["TABLES", "SEQUENCES", "FUNCTIONS"] ]
-  where
-    schemas = maybeMap schemaName (setupSchemaData setup)
+
+stmtRevokeMembership :: Setup
+                     -> SqlObj SQL_ROLE_MEMBERSHIP (SqlName, SqlName)
+                     -> [Maybe SqlStmt]
+stmtRevokeMembership setup x@(SqlObj _ (role, member)) =
+  [ newSqlStmt SqlRevokeMembership x $
+    "REVOKE" <-> prefixedRole setup role <-> "FROM" <-> prefixedRole setup member
+  ]
 
 instance ToSqlStmts (SqlContext Role) where
   toSqlStmts SetupContext {setupContextSetup = setup} obj@(SqlContext r) =
@@ -44,7 +53,7 @@ instance ToSqlStmts (SqlContext Role) where
         "COMMENT ON ROLE" <-> prefix (roleName r) <-> "IS" <->
         toSqlCodeString (roleDescription r)
       sqlRoleMembership group =
-        newSqlStmt SqlRoleMembership obj $
+        newSqlStmt SqlGrantMembership obj $
         "GRANT" <-> prefix group <-> "TO" <-> prefix (roleName r)
       sqlLogin (Just True) = "LOGIN"
       sqlLogin _ = "NOLOGIN"

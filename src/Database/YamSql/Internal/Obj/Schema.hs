@@ -6,6 +6,7 @@
 
 module Database.YamSql.Internal.Obj.Schema
   ( Schema(..)
+  , SQL_SCHEMA(..)
   , module Database.YamSql.Internal.Obj.Check
   , module Database.YamSql.Internal.Obj.Domain
   , module Database.YamSql.Internal.Obj.Function

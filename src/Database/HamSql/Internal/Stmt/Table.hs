@@ -12,7 +12,7 @@ module Database.HamSql.Internal.Stmt.Table
 import qualified Data.Text as T
 
 import Database.HamSql.Internal.Stmt.Basic
-import Database.HamSql.Internal.Stmt.Sequence()
+import Database.HamSql.Internal.Stmt.Sequence ()
 
 -- | Assuming that CASCADE will only cause other constraints to be deleted.
 -- | Required since foreign keys may depend on other keys.

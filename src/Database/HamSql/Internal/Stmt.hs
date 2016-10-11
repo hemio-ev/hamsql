@@ -87,10 +87,11 @@ data SqlStmtType
   | SqlPre
   | SqlPreInstall
   | SqlRevokePrivilege
+  | SqlRevokeMembership
   | SqlDropRole
   | SqlCreateRole
   | SqlAlterRole
-  | SqlRoleMembership
+  | SqlGrantMembership
   | SqlCreateSchema
   | SqlCreateDomain
   | SqlCreateType

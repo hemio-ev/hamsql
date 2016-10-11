@@ -120,8 +120,12 @@ pgsqlUpdateFragile setup conn stmts =
   correctStmts SqlAddColumn deployedTableColumnIds stmtsDropTableColumn >>=
   correctStmts SqlCreateSequence deployedSequenceIds stmtsDropSequence >>=
   correctStmts SqlCreateRole (deployedRoleIds setup) (stmtsDropRole setup) >>=
+  correctStmts
+    SqlGrantMembership
+    (deployedRoleMemberIds setup)
+    (stmtRevokeMembership setup) >>=
   dropResidual SqlCreateFunction deployedFunctionIds stmtsDropFunction >>=
-  revokeAllPrivileges setup (deployedRoleIds setup conn)
+  revokeAllPrivileges conn setup (deployedRoleIds setup conn)
   where
     correctStmts
       :: ToSqlId a
@@ -141,12 +145,15 @@ pgsqlUpdateFragile setup conn stmts =
       -> IO [SqlStmt]
     dropResidual t isf f xs = addDropResidual t (isf conn) f xs
 
-revokeAllPrivileges :: Setup
+revokeAllPrivileges :: Connection
+                    -> Setup
                     -> IO [SqlObj SQL_ROLE SqlName]
                     -> [SqlStmt]
                     -> IO [SqlStmt]
-revokeAllPrivileges setup roles stmts =
-  (++ stmts) <$> catMaybes <$> concatMap (stmtsDropAllPrivileges setup) <$> roles
+revokeAllPrivileges conn setup roles stmts = do
+  schemas <- map (\(SqlObj SQL_SCHEMA x) -> x) <$> deployedSchemaIds conn
+  ((++ stmts) <$> catMaybes) . concatMap (stmtsDropAllPrivileges setup schemas) <$>
+    roles
 
 pgsqlDropAllRoleStmts :: OptCommonDb -> Setup -> IO [SqlStmt]
 pgsqlDropAllRoleStmts optDb setup = do

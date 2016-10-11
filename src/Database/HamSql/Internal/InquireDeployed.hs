@@ -45,6 +45,15 @@ deployedDomainConstrIds conn = map toSqlCodeId <$> query_ conn qry
       " ON c.contypid = d.oid" <->
       sqlManageSchemaJoin "c.connamespace"
 
+-- | List SCHEMA
+deployedSchemaIds :: Connection -> IO [SqlObj SQL_SCHEMA SqlName]
+deployedSchemaIds conn = map toSqlCodeId <$> query_ conn qry
+  where
+    toSqlCodeId (Only s) = SqlObj SQL_SCHEMA s
+    qry =
+      toQry $
+      "SELECT s.nspname FROM pg_namespace AS s" <\> sqlManageSchemaJoin "s.oid"
+
 -- | List SEQUENCE
 deployedSequenceIds :: Connection -> IO [SqlObj SQL_SEQUENCE SqlName]
 deployedSequenceIds conn = map toSqlCodeId <$> query_ conn qry
@@ -94,18 +103,38 @@ deployedTypeIds conn = map toSqlCodeId <$> query_ conn qry
 
 -- | List ROLE
 deployedRoleIds :: Setup -> Connection -> IO [SqlObj SQL_ROLE SqlName]
-deployedRoleIds setup conn = do
-  roles <-
-    query conn "SELECT rolname FROM pg_roles WHERE rolname LIKE ?" $
-    Only $ prefix <> "%"
-  return $ map toSqlCodeId roles
+deployedRoleIds setup conn =
+  map toSqlCodeId <$> query conn qry (Only $ prefix <> "%")
   where
+    qry = "SELECT rolname FROM pg_roles WHERE rolname LIKE ?"
     prefix = setupRolePrefix' setup
     unprefixed =
       fromJustReason "Retrived role without prefix from database" .
       stripPrefix prefix
     toSqlCodeId (Only role) = SqlObj SQL_ROLE (SqlName $ unprefixed role)
 
+deployedRoleMemberIds :: Setup
+                      -> Connection
+                      -> IO [SqlObj SQL_ROLE_MEMBERSHIP (SqlName, SqlName)]
+deployedRoleMemberIds setup conn =
+  map toSqlCodeId <$> query conn qry (prefix <> "%", prefix <> "%")
+  where
+    prefix = setupRolePrefix' setup
+    unprefixed =
+      fromJustReason "Retrived role without prefix from database" .
+      stripPrefix prefix
+    toSqlCodeId (role, member) =
+      SqlObj
+        SQL_ROLE_MEMBERSHIP
+        (SqlName $ unprefixed role, SqlName $ unprefixed member)
+    qry =
+      toQry $
+      "SELECT a.rolname, b.rolname FROM pg_catalog.pg_auth_members AS m" <\>
+      " INNER JOIN pg_catalog.pg_roles AS a ON a.oid=m.roleid" <\>
+      " INNER JOIN pg_catalog.pg_roles AS b ON b.oid=m.member" <\>
+      "WHERE a.rolname LIKE ? AND b.rolname LIKE ?"
+
+-- | List DOMAIN
 deployedDomainIds :: Connection -> IO [SqlObj SQL_DOMAIN SqlName]
 deployedDomainIds conn = map toSqlCodeId <$> query_ conn qry
   where

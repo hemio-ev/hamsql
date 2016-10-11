@@ -6,6 +6,11 @@ def test_tables():
      'tables':
      [
       ('table-install', 't1', 'BASE TABLE') ,
+     ],
+     'roles':
+     [
+        ('hamsql-test_group1', False, True, False, False, False, -1, False, None),
+        ('hamsql-test_role1', False, True, False, False, False, -1, False, None)
      ]
     }
 

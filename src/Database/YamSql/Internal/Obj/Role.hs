@@ -29,3 +29,10 @@ instance ToSqlCode SQL_ROLE where
 
 instance ToSqlId (SqlContext Role) where
   sqlId (SqlContext x) = SqlId $ SqlObj SQL_ROLE (roleName x)
+
+data SQL_ROLE_MEMBERSHIP =
+  SQL_ROLE_MEMBERSHIP
+  deriving (SqlObjType, Show)
+
+instance ToSqlCode SQL_ROLE_MEMBERSHIP where
+  toSqlCode = const "ROLE_MEMBERSHIP"

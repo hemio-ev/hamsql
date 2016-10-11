@@ -9,3 +9,11 @@ tables:
     - name: a
       type: int
       description: A
+
+roles:
+ - name: group1
+   description: A group
+ - name: role1
+   description: |
+    Role #1
+
