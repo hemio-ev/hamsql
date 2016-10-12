@@ -22,9 +22,10 @@ data SetupContext = SetupContext
   { setupContextSetup :: Setup
   }
 
-data SetupElement where SetupElement :: (ToSqlStmts a, Show b) => { setupElement :: a
-    , setupElementSource :: Maybe b
-    } -> SetupElement
+data SetupElement where
+  SetupElement :: (ToSqlStmts a)
+               => { setupElement :: a }
+               -> SetupElement
 
 instance ToSqlStmts SetupElement where
     toSqlStmts x SetupElement{setupElement=y} = toSqlStmts x y

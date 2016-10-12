@@ -61,8 +61,8 @@ library
     Database.HamSql.Internal.Stmt.Basic
     Database.HamSql.Internal.Stmt.Commons
     Database.HamSql.Internal.Stmt.Create
+    Database.HamSql.Internal.Stmt.Database
     Database.HamSql.Internal.Stmt.Domain
-    Database.HamSql.Internal.Stmt.Drop
     Database.HamSql.Internal.Stmt.Function
     Database.HamSql.Internal.Stmt.Role
     Database.HamSql.Internal.Stmt.Schema

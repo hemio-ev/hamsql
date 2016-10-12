@@ -89,7 +89,6 @@ import Database.HamSql.Internal.Option
 import Database.HamSql.Internal.Stmt
 import Database.HamSql.Internal.Stmt.Create
 import Database.HamSql.Internal.Stmt.Domain
-import Database.HamSql.Internal.Stmt.Drop
 import Database.HamSql.Internal.Stmt.Function
 import Database.HamSql.Internal.Stmt.Role
 import Database.HamSql.Internal.Stmt.Sequence

@@ -10,6 +10,9 @@ import qualified Data.Text as T
 
 import Database.HamSql.Internal.Stmt.Basic
 
+stmtsDropType :: SqlObj SQL_TYPE SqlName -> [Maybe SqlStmt]
+stmtsDropType t = [newSqlStmt SqlDropType t $ "DROP TYPE" <-> toSqlCode t]
+
 instance ToSqlStmts (SqlContext (Schema, Type)) where
   toSqlStmts _ obj@(SqlContext (_, t)) =
     [ newSqlStmt SqlCreateType obj $

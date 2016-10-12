@@ -5,7 +5,8 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 module Database.HamSql.Internal.Stmt.Table
-  ( stmtsDropTableConstr
+  ( stmtsDropTable
+  , stmtsDropTableConstr
   , stmtsDropTableColumn
   ) where
 
@@ -24,6 +25,9 @@ stmtsDropTableConstr x@(SqlObj _ (s, t, c)) =
     toSqlCode c <->
     "CASCADE"
   ]
+
+stmtsDropTable :: SqlObj SQL_TABLE SqlName -> [Maybe SqlStmt]
+stmtsDropTable t = [newSqlStmt SqlDropTable t $ "DROP TABLE" <-> toSqlCode t]
 
 stmtsDropTableColumn :: SqlObj SQL_COLUMN (SqlName, SqlName) -> [Maybe SqlStmt]
 stmtsDropTableColumn x@(SqlObj _ (t, c)) =

@@ -21,6 +21,7 @@ import System.Environment (getArgs)
 import Paths_hamsql (version)
 
 import Database.HamSql
+import Database.HamSql.Internal.Stmt.Database
 import Database.YamSql
 
 parserPrefs :: ParserPrefs
@@ -53,7 +54,7 @@ run (Install optCommon optDb optInstall)
               { uriPath = "/postgres"
               })
              (catMaybes $
-              sqlCreateDatabase (optDeleteExistingDatabase optInstall) dbname)
+              stmtsCreateDatabase (optDeleteExistingDatabase optInstall) dbname)
       else when (optDeleteExistingDatabase optInstall) $
            warn' $
            "In --emulate and --print mode the DROP/CREATE DATABASE" <->
