@@ -77,6 +77,7 @@ import Control.Exception
 import Control.Monad
 import qualified Data.ByteString.Char8 as B
 import Data.Maybe
+import Data.Set (fromList, notMember)
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.Transaction
 
@@ -247,24 +248,23 @@ filterSqlStmtType t xs =
   | x <- xs
   , stmtIdType x == t ]
 
-removeStmtsMatchingIds
+filterStmtsMatchingIds
   :: [SqlStmtId] -- ^ Statement ids to remove
   -> [SqlStmt]
   -> [SqlStmt]
-removeStmtsMatchingIds ids stmts =
-  [ stmt
-  | stmt <- stmts
-  , stmtId stmt `notElem` ids ]
-
-removeSqlIdBySqlStmts
-  :: ToSqlId a
-  => SqlStmtType -> [SqlStmt] -> [a] -> [a]
-removeSqlIdBySqlStmts t xs is =
-  [ x
-  | x <- is
-  , sqlId x `notElem` ids ]
+filterStmtsMatchingIds ids = filter (\x -> stmtId x `notMember` ids')
   where
-    ids = map sqlId $ filterSqlStmtType t xs
+    ids' = fromList ids
+
+filterSqlIdBySqlStmts
+  :: ToSqlId a
+  => SqlStmtType -- ^ stmts to be considered by stmt type
+  -> [SqlStmt] -- ^ stmts that have the forbidden ids
+  -> [a] -- elements that get filtered
+  -> [a]
+filterSqlIdBySqlStmts t xs = filter (\x -> sqlId x `notMember` ids)
+  where
+    ids = fromList . map sqlId $ filterSqlStmtType t xs
 
 -- target set of sql ids
 correctStatements
@@ -277,7 +277,7 @@ correctStatements
 correctStatements t iois f xs = do
   is <- iois
   xs' <- addDropResidual t iois f xs
-  return $ removeStmtsMatchingIds (addSqlStmtType t is) xs'
+  return $ filterStmtsMatchingIds (addSqlStmtType t is) xs'
 
 addDropResidual
   :: ToSqlId a
@@ -288,4 +288,4 @@ addDropResidual
   -> IO [SqlStmt]
 addDropResidual t iois f xs = do
   is <- iois
-  return $ xs ++ catMaybes (concatMap f (removeSqlIdBySqlStmts t xs is))
+  return $ xs ++ catMaybes (concatMap f (filterSqlIdBySqlStmts t xs is))
