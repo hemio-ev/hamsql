@@ -148,7 +148,7 @@ instance ToSqlStmts (SqlContext (Schema, Table, Column)) where
           ( schema
           , Sequence
             -- sequenceName follows PostgreSQL internal convention
-            { sequenceName = tableName table <> columnName c <> SqlName "_seq"
+            { sequenceName = tableName table <> columnName c <> SqlName "seq"
             , sequenceIncrement = Nothing
             , sequenceMinValue = Nothing
             , sequenceMaxValue = Nothing
