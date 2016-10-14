@@ -5,7 +5,8 @@ def test_tables():
     xs = {
      'tables':
      [
-      ('table-install', 't1', 'BASE TABLE') ,
+      ('table-install', 't1', 'BASE TABLE'),
+      ('table-install', 't2', 'BASE TABLE'),
      ],
      'roles':
      [

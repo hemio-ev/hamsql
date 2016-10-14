@@ -99,7 +99,7 @@ instance ToSqlStmts (SqlContext (Schema, Table, Column)) where
         where
           sqlDefault d = stmtAlterColumn SqlAddDefault $ "SET DEFAULT " <> d
       -- [CHECK]
-      stmtsAddColumnCheck = maybeMap (stmtCheck obj) (columnChecks c)
+      stmtsAddColumnCheck = maybeMap (stmtCheck tbl) (columnChecks c)
       -- FOREIGN KEY
       stmtAddForeignKey =
         case columnReferences c of
@@ -109,7 +109,7 @@ instance ToSqlStmts (SqlContext (Schema, Table, Column)) where
             in newSqlStmt
                  SqlCreateForeignKeyConstr
                  (constrId schema table constr) $
-               "ALTER TABLE" <-> sqlIdCode obj <-> "ADD CONSTRAINT" <->
+               "ALTER TABLE" <-> tblId <-> "ADD CONSTRAINT" <->
                toSqlCode constr <->
                "FOREIGN KEY (" <>
                toSqlCode (columnName c) <>
@@ -141,7 +141,8 @@ instance ToSqlStmts (SqlContext (Schema, Table, Column)) where
             "nextval('" <> toSqlCode (sqlId serialSequenceContext) <> "')"
           }
         | otherwise = rawColumn
-      tblId = toSqlCode $ schemaName schema <.> tableName table
+      tblId = sqlIdCode tbl
+      tbl = SqlContext (schema, table)
       serialSequenceContext =
         SqlContext
           ( schema

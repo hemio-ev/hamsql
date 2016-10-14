@@ -9,6 +9,15 @@ tables:
     - name: a
       type: int
       description: A
+      unique: true
+ - name: t2
+   description: Table 2
+   primary_key: [a]
+   columns:
+    - name: a
+      type: int
+      description: A
+      references: table-install.t1.a
 
 roles:
  - name: group1
