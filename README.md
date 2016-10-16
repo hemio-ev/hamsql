@@ -146,10 +146,6 @@ To completely build HamSql from source
 
     apt install make ghc cabal-install libpq-dev happy
     make
-
-Now you can
-
-    make
     make install
     
 To avoid compiling all the dependencies you can use the following set of debian packages instead of the above ones
