@@ -11,7 +11,7 @@ An interpreter for SQL structure definitions in YAML ([YamSql](http://yamsql.rea
 
 HamSql is a software that parses SQL structures defined in a YAML based language and deploys them on PostgreSQL servers. It allows to maintain PostgreSQL projects in a form more similar to other programming languages.
 
-In contrast to the `CREATE FUNCTION OR REPLACE` approaches, residual structures are deleted, column properties are deleted without explicit definition of the migration and the ordering imposed by dependencies is resolved automatically.
+In contrast to the `CREATE OR REPLACE FUNCTION` approaches, residual structures are deleted, column properties are deleted without explicit definition of the migration and the ordering imposed by dependencies is resolved automatically.
 
 HamSql is on hackage, which means you can build it with `cabal install hamsql`. Please note the build requirements and details at the bottom. HamSql binaries for Linux amd64 are available as [build artifacts](https://git.hemio.de/hemio/hamsql/tags) from our build server.
 
@@ -34,7 +34,7 @@ HamSql is on hackage, which means you can build it with `cabal install hamsql`. 
   - Complicated dependencies are resolved via trial and error
 - `hamsql doc` creates a documentation of the complete sql structure
   - Custom templates can be provided using [doctemplates](https://hackage.haskell.org/package/doctemplates) known from pandoc
-  - The build-in template creates [Read the Docs ready](example-docs) *.rst* files
+  - The build-in template creates [Sphinx and Read the Docs](https://docs.readthedocs.io) ready *.rst* files
 - Code basis tailored for the support of many SQL features
 - [Basic documentation of the YamSql Language](http://yamsql.readthedocs.io)
 
@@ -71,7 +71,7 @@ The default documentation can be written to *docs/* via
 
     hamsql doc
 
-You can have a look at the [output rendered via Sphinx.](example-docs)
+You can have a look at the [output rendered via Sphinx.](http://yamsql-example-project.readthedocs.io/en/latest/)
 
 Those are the YamSql files for the project:
 
