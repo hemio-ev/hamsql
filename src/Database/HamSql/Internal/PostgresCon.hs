@@ -81,7 +81,7 @@ import Data.Set (fromList, notMember)
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.Transaction
 
-import Network.URI (URI)
+import Network.URI (URI, uriPath)
 
 import Database.HamSql.Internal.DbUtils
 import Database.HamSql.Internal.InquireDeployed
@@ -100,8 +100,8 @@ import Database.YamSql
 sqlErrInvalidFunctionDefinition :: B.ByteString
 sqlErrInvalidFunctionDefinition = "42P13"
 
-pgsqlGetFullStatements :: OptCommon -> OptCommonDb -> Setup -> IO [SqlStmt]
-pgsqlGetFullStatements optCom _ setup =
+pgsqlGetFullStatements :: OptCommon -> Setup -> IO [SqlStmt]
+pgsqlGetFullStatements optCom setup =
   return $ catMaybes $ getSetupStatements optCom setup
 
 pgsqlDeleteAllStmt :: Connection -> IO [SqlStmt]

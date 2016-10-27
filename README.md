@@ -71,7 +71,7 @@ The default documentation can be written to *docs/* via
 
     hamsql doc
 
-You can have a look at the [output rendered via Sphinx.](http://yamsql-example-project.readthedocs.io/en/latest/)
+You can have a look at the [output rendered via Sphinx.](http://yamsql-example-project.readthedocs.io)
 
 Those are the YamSql files for the project:
 

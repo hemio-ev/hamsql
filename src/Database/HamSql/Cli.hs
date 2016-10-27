@@ -45,6 +45,8 @@ run (Install optCommon optDb optInstall)
     "For installs either both --permit-data-deletion and --delete-existing-database" <->
     "must be supplied or non of them."
   | otherwise = do
+    setup <- loadSetup optCommon (optSetup optCommon)
+    stmts <- pgsqlGetFullStatements optCommon setup
     let dbname = SqlName $ T.pack $ tail $ uriPath $ getConUrl optDb
     if not (optEmulate optDb || optPrint optDb)
       then void $
@@ -60,9 +62,6 @@ run (Install optCommon optDb optInstall)
            "In --emulate and --print mode the DROP/CREATE DATABASE" <->
            "statements are skipped. You have to ensure that an empty" <->
            "database exists for those commands to make sense."
-    setup <- loadSetup optCommon (optSetup optCommon)
-    stmts <- pgsqlGetFullStatements optCommon optDb setup
-    -- TODO: Own option for this
     dropRoleStmts <-
       if optDeleteResidualRoles optInstall
         then pgsqlDropAllRoleStmts optDb setup
@@ -73,7 +72,7 @@ run (Upgrade optCommon optDb) = do
   setup <- loadSetup optCommon (optSetup optCommon)
   conn <- pgsqlConnectUrl (getConUrl optDb)
   deleteStmts <- pgsqlDeleteAllStmt conn
-  createStmts <- pgsqlGetFullStatements optCommon optDb setup
+  createStmts <- pgsqlGetFullStatements optCommon setup
   fragile <- pgsqlUpdateFragile setup conn createStmts
   let stmts = sort deleteStmts ++ Data.List.filter allowInUpgrade (sort fragile)
   useSqlStmts optCommon optDb stmts

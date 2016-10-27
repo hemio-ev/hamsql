@@ -109,8 +109,7 @@ instance ToSqlStmts (SqlContext (Schema, Table, Column)) where
             in newSqlStmt
                  SqlCreateForeignKeyConstr
                  (constrId schema table constr) $
-               "ALTER TABLE" <-> tblId <-> "ADD CONSTRAINT" <->
-               toSqlCode constr <->
+               "ALTER TABLE" <-> tblId <-> "ADD CONSTRAINT" <-> toSqlCode constr <->
                "FOREIGN KEY (" <>
                toSqlCode (columnName c) <>
                ")" <->

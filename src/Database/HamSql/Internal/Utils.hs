@@ -102,6 +102,10 @@ tshow = T.replace "\\\"" "“" . pack . groom
 showCode :: Text -> Text
 showCode = T.replace "\n" "\n  " . T.cons '\n'
 
+maybeHead :: [a] -> Maybe a
+maybeHead [] = Nothing
+maybeHead (x:_) = Just x
+
 tr
   :: Show a
   => a -> a

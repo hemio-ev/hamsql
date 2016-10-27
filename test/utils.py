@@ -4,14 +4,18 @@ import time
 import os.path
 
 dburl = "postgres://postgres@/hamsql-test"
+dburl_invalid = "postgres://postgresX@/hamsql-test"
 
-def run(cmd, setup, delete_db=False, capture=False, args=[]):
+def run(cmd, setup, delete_db=False, capture=False, invalid_connection=False, args=[]):
     global dburl
+
     settings = {}
     path = os.path.dirname(__file__) + '/../dist/build/hamsql/hamsql'
     params = [path, cmd, '-s', 'setups/' + setup]
     
-    if cmd != 'doc':
+    if invalid_connection:
+        params += ['-c', dburl_invalid]
+    elif cmd != 'doc':
         params += ['-c', dburl]
     
     params += args
@@ -67,7 +71,7 @@ def check(domains=[], functions=[], tables=[], roles=[]):
     
 def db_open():
     global dburl
-    conn = psycopg2.connect(dburl)
+    conn = psycopg2.connect(dburl + '?application_name=pytest')
     cur = conn.cursor()
     return conn, cur
     
