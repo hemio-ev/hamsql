@@ -1,3 +1,13 @@
+v0.9.0.0
+  - Fixes DELETE BASE before schema definitions are read (#64)
+  - Fixes incorrect naming of sequences for SERIAL emulation
+  - Fixes bugs in table constraint statements (#59)
+  - Adds listing of blocking connections if database can't be deleted
+  - Adds project status description to README
+  - Adds link to example project to README
+  - Adds bash completion install (closes #63)
+  - Adds revocation of role memberships (fixes #37)
+  - Better internal code structure
 v0.8.0.0
   - Replaces pandoc with doctemplates to halve dependency compile time
     Big thanks to @jgm for implementing doctemplates right away!
