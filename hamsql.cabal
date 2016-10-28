@@ -1,5 +1,5 @@
 name:                hamsql
-version:             0.9.0.0
+version:             0.9.90.0
 synopsis:            Interpreter for SQL-structure definitions in YAML (YamSql)
 category:            Database
 description:         Interpreter for SQL-structure definitions in YAML (YamSql)

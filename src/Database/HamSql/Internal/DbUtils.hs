@@ -8,7 +8,6 @@
 module Database.HamSql.Internal.DbUtils where
 
 import Control.Exception
-import Control.Monad
 import qualified Data.ByteString.Char8 as B
 import Data.String
 import qualified Data.Text as T

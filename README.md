@@ -13,7 +13,7 @@ HamSql is a software that parses SQL structures defined in a YAML based language
 
 In contrast to the `CREATE OR REPLACE FUNCTION` approaches, residual structures are deleted, column properties are deleted without explicit definition of the migration and the ordering imposed by dependencies is resolved automatically.
 
-HamSql is on hackage, which means you can build it with `cabal install hamsql`. Please note the build requirements and details at the bottom. HamSql binaries for Linux amd64 are available as [build artifacts](https://git.hemio.de/hemio/hamsql/tags) from our build server.
+HamSql is on hackage, which means you can build it with `cabal install hamsql`. Please note the build requirements and details at the bottom. HamSql binaries for Linux amd64 are available as [build artifacts](https://git.hemio.de/hemio/hamsql/pipelines?scope=tags) from our build server.
 
 **HamSql can be used for**
 

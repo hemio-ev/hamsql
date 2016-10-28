@@ -81,7 +81,7 @@ import Data.Set (fromList, notMember)
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.Transaction
 
-import Network.URI (URI, uriPath)
+import Network.URI (URI)
 
 import Database.HamSql.Internal.DbUtils
 import Database.HamSql.Internal.InquireDeployed
