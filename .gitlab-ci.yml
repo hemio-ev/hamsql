@@ -2,7 +2,7 @@ build-hamsql:
     script:
         - make
 
-build-hamsql-bin:
+hamsql-binary:
     only:
         - tags
     script:

@@ -14,8 +14,6 @@ Upgrades are tricky.
 
 == Tables
 
-__TODO__: Delete tables and columns if the user excplicitly agrees to data loss.
-
 CREATE TABLE IF NOT EXISTS without any columns.
 
 CREATE columns with their type on demand.
@@ -59,10 +57,6 @@ __TODO__: Issue error if domain type differs.
 == Roles
 
 Difficult since not schema qualified, but be have prefixes.
-
-__TODO__: LOGIN and PASSWORD are not implemented via ALTER ROLE
-
-__TODO__: Are role memberships revoked?
 
 == Sequences
 
