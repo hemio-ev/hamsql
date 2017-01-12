@@ -16,6 +16,7 @@ import Data.Text.Encoding (decodeUtf8)
 import Data.Yaml
 import System.Directory (doesDirectoryExist, doesFileExist, getDirectoryContents)
 import System.FilePath.Posix (combine, dropFileName, takeFileName)
+import System.IO (stdin)
 
 import Database.HamSql.Internal.Option
 import Database.HamSql.Internal.Utils
@@ -182,6 +183,8 @@ readFunctionFromFile rpl opts file = do
     _ -> readObject file b
 
 readYamSqlFile :: OptCommon -> FilePath -> IO B.ByteString
+readYamSqlFile opts "-" = do
+  debug opts "Reading file from STDIN" $ B.hGetContents stdin
 readYamSqlFile opts file = do
   fileExists <- doesFileExist file
   unless fileExists $ err $ "Expected file existance: '" <> tshow file <> "'"

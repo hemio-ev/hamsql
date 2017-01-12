@@ -79,7 +79,7 @@ parserOptCommon :: Parser OptCommon
 parserOptCommon =
   OptCommon <$>
   strOption
-    (long "setup" <> short 's' <> help "Setup file (yaml)" <> val "setup.yml" <>
+    (long "setup" <> short 's' <> help "Setup file (YAML). If '-' is supplied, the setup is read from STDIN." <> val "setup.yml" <>
      action "file -X '!*.yml'" <>
      action "directory") <*>
   boolFlag (long "verbose" <> short 'v' <> help "Verbose") <*>
