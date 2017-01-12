@@ -84,20 +84,20 @@ instance ToSqlStmts (SqlContext (Schema, Table, Column)) where
         | otherwise = Nothing
       -- NOT NULL
       stmtAlterColumnNull =
-        stmtAlterColumn SqlAlterColumn $
+        stmtAlterColumn SqlColumnSetNull $
         if columnNull c == Just True
           then "DROP NOT NULL"
           else "SET NOT NULL"
       -- SET DATA TYPE
       stmtAlterColumnType =
-        stmtAlterColumn SqlAlterColumn $
+        stmtAlterColumn SqlColumnSetType $
         "SET DATA TYPE " <> toSqlCode (columnType c)
       -- DROP DEFAULT
-      stmtDropDefault = stmtAlterColumn SqlDropColumnDefault "DROP DEFAULT"
+      stmtDropDefault = stmtAlterColumn SqlColumnSetDefault "DROP DEFAULT"
       -- SET DEFAULT
       stmtAddColumnDefault = columnDefault c >>= sqlDefault
         where
-          sqlDefault d = stmtAlterColumn SqlAddDefault $ "SET DEFAULT " <> d
+          sqlDefault d = stmtAlterColumn SqlColumnSetDefault $ "SET DEFAULT " <> d
       -- [CHECK]
       stmtsAddColumnCheck = maybeMap (stmtCheck tbl) (columnChecks c)
       -- FOREIGN KEY

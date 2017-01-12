@@ -110,7 +110,10 @@ data SqlStmtType
   | SqlAddColumn
   | SqlAlterTable
   | SqlDropColumnDefault
-  | SqlAlterColumn
+  -- DEFAULT erlier then NULL
+  | SqlColumnSetDefault
+  | SqlColumnSetNull
+  | SqlColumnSetType
     -- ALTER SEQUENCE
   | SqlAlterSequence
     -- FUNCTION
@@ -123,7 +126,7 @@ data SqlStmtType
   | SqlCreateUniqueConstr
   | SqlCreateForeignKeyConstr
   | SqlCreateCheckConstr
-  | SqlAddDefault
+  | SqlDomainSetDefault
     -- TRIGGER
   | SqlCreateTrigger
   | SqlPriv

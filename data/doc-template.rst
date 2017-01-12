@@ -3,7 +3,7 @@ $name$
 
 $description$
 
-.. contents:: Module Contents
+.. contents:: Schema Contents
    :local:
    :depth: 2
 
@@ -226,4 +226,6 @@ $sequences.description$
 
 $endfor$
 $endif$
+
+.. This file was generated via HamSql
 

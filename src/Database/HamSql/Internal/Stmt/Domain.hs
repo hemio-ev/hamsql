@@ -35,8 +35,8 @@ instance ToSqlStmts (SqlContext (Schema, Domain)) where
         checkCheck c <>
         ")"
       sqlDefault Nothing =
-        newSqlStmt SqlAddDefault obj $
+        newSqlStmt SqlDomainSetDefault obj $
         "ALTER DOMAIN" <-> sqlIdCode obj <-> "DROP DEFAULT"
       sqlDefault (Just def) =
-        newSqlStmt SqlAddDefault obj $
+        newSqlStmt SqlDomainSetDefault obj $
         "ALTER DOMAIN" <-> sqlIdCode obj <-> "SET DEFAULT" <-> def
