@@ -4,6 +4,7 @@ import Database.YamSql.Internal.Basic
 
 data Sequence = Sequence
   { sequenceName          :: SqlName
+  , sequenceDescription   :: Text
   , sequenceIncrement     :: Maybe Int
   , sequenceMinValue      :: Maybe Int
   , sequenceMaxValue      :: Maybe Int

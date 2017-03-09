@@ -1,5 +1,5 @@
 name:                hamsql
-version:             0.9.90.0
+version:             0.9.91.0
 synopsis:            Interpreter for SQL-structure definitions in YAML (YamSql)
 category:            Database
 description:         Interpreter for SQL-structure definitions in YAML (YamSql)
@@ -32,8 +32,6 @@ library
     OverloadedStrings
     
   other-extensions: 
-    DeriveDataTypeable,
-    DeriveGeneric,
     GADTs,
     ScopedTypeVariables,
     StandaloneDeriving,
@@ -80,7 +78,7 @@ library
     Paths_hamsql
 
   build-depends:
-    aeson >=1.0 && <1.1,
+    aeson >=1.1 && <1.2,
     base >=4.8 && <5.0,
     bytestring >=0.10 && <0.11,
     containers >=0.5 && <0.6,

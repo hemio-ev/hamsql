@@ -130,6 +130,7 @@ instance ToSqlStmts (SqlContext (Schema, Table, Column)) where
         "ALTER TABLE " <> tblId <> " ALTER COLUMN " <> toSqlCode (columnName c) <>
         " " <>
         x
+      -- TODO: there is also smallserial and bigserial
       columnIsSerial = toSqlCode (columnType rawColumn) == "SERIAL"
       c
         | columnIsSerial =
@@ -148,6 +149,7 @@ instance ToSqlStmts (SqlContext (Schema, Table, Column)) where
           , Sequence
             -- sequenceName follows PostgreSQL internal convention
             { sequenceName = tableName table <> columnName c <> SqlName "seq"
+            , sequenceDescription = ""
             , sequenceIncrement = Nothing
             , sequenceMinValue = Nothing
             , sequenceMaxValue = Nothing

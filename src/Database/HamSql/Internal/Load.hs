@@ -124,31 +124,17 @@ readSchema opts md = do
   doesDirectoryExist md >>=
     errorCheck ("module dir does not exist: " <> tshow md)
   schemaData <- readObjectFromFile opts schemaConfig
-  domains <-
-    do files <- confDirFiles "domains.d"
-       sequence
-         [ readObjectFromFile opts f
-         | f <- files ]
-  tables <-
-    do files <- confDirFiles "tables.d"
-       sequence
-         [ readObjectFromFile opts f
-         | f <- files ]
-  functions <-
-    do files <- confDirFiles "functions.d"
-       let ins x s =
-             x
-             { functionBody = Just s
-             }
-       sequence
-         [ readFunctionFromFile ins opts f
-         | f <- files ]
+  domains <- confDirFiles "domains.d" >>= mapM (readObjectFromFile opts)
+  sequences <- confDirFiles "sequences.d" >>= mapM (readObjectFromFile opts)
+  tables <- confDirFiles "tables.d" >>= mapM (readObjectFromFile opts)
+  functions <- let ins x s = x { functionBody = Just s }
+               in confDirFiles "functions.d" >>= mapM (readFunctionFromFile ins opts)
   let schemaData' =
         schemaData
-        { schemaDomains = maybeJoin (schemaDomains schemaData) (Just domains)
-        , schemaTables = maybeJoin (schemaTables schemaData) (Just tables)
-        , schemaFunctions =
-          maybeJoin (schemaFunctions schemaData) (Just functions)
+        { schemaDomains = schemaDomains schemaData <> Just domains
+        , schemaSequences = schemaSequences schemaData <> Just sequences
+        , schemaTables = schemaTables schemaData <> Just tables
+        , schemaFunctions = schemaFunctions schemaData <> Just functions
         }
   return schemaData'
   where

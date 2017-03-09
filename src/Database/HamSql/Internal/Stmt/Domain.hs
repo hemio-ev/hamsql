@@ -21,7 +21,9 @@ stmtsDropDomainConstr obj@(SqlObj _ (d, c)) =
 instance ToSqlStmts (SqlContext (Schema, Domain)) where
   toSqlStmts _ obj@(SqlContext (_, d)) =
     stmtCreateDomain :
-    sqlDefault (domainDefault d) : maybeMap sqlCheck (domainChecks d)
+    sqlDefault (domainDefault d) :
+    stmtCommentOn obj (domainDescription d) :
+    maybeMap sqlCheck (domainChecks d)
     where
       stmtCreateDomain =
         newSqlStmt SqlCreateDomain obj $
