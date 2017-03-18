@@ -16,7 +16,7 @@ import Text.DocTemplates
 import Database.HamSql.Internal.Option
 import Database.HamSql.Internal.Utils
 import Database.HamSql.Setup
-import Database.YamSql (Schema (..), SqlName (..))
+import Database.YamSql (Schema(..), SqlName(..))
 
 templateFromFile :: FilePath -> IO Template
 templateFromFile "DEFAULT.rst" = return templateDefaultSchema

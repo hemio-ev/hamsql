@@ -4,19 +4,19 @@ import Database.YamSql.Internal.Basic
 import Database.YamSql.Internal.Obj.Check
 
 data Table = Table
-  { tableName         :: SqlName
-  , tableDescription  :: Text
-  , tableColumns      :: [Column]
-  , tablePrimaryKey   :: [SqlName]
-  , tableUnique       :: Maybe [UniqueKey]
-  , tableForeignKeys  :: Maybe [ForeignKey]
-  , tableChecks       :: Maybe [Check]
-  , tableInherits     :: Maybe [SqlName]
-  , tablePrivSelect   :: Maybe [SqlName]
-  , tablePrivInsert   :: Maybe [SqlName]
-  , tablePrivUpdate   :: Maybe [SqlName]
-  , tablePrivDelete   :: Maybe [SqlName]
-  , tableTemplates    :: Maybe [SqlName]
+  { tableName :: SqlName
+  , tableDescription :: Text
+  , tableColumns :: [Column]
+  , tablePrimaryKey :: [SqlName]
+  , tableUnique :: Maybe [UniqueKey]
+  , tableForeignKeys :: Maybe [ForeignKey]
+  , tableChecks :: Maybe [Check]
+  , tableInherits :: Maybe [SqlName]
+  , tablePrivSelect :: Maybe [SqlName]
+  , tablePrivInsert :: Maybe [SqlName]
+  , tablePrivUpdate :: Maybe [SqlName]
+  , tablePrivDelete :: Maybe [SqlName]
+  , tableTemplates :: Maybe [SqlName]
   , tableTemplateData :: Maybe [TableTpl]
   } deriving (Data, Generic, Show)
 
@@ -34,16 +34,16 @@ instance ToSqlCode SQL_TABLE where
   toSqlCode = const "TABLE"
 
 data TableTpl = TableTpl
-  { tabletplTemplate    :: SqlName
+  { tabletplTemplate :: SqlName
   , tabletplDescription :: Text
   , tabletplForeignKeys :: Maybe [ForeignKey]
-  , tabletplInherits    :: Maybe [SqlName]
-  , tabletplColumns     :: Maybe [Column]
-  , tabletplChecks      :: Maybe [Check]
-  , tabletplPrivSelect  :: Maybe [SqlName]
-  , tabletplPrivInsert  :: Maybe [SqlName]
-  , tabletplPrivUpdate  :: Maybe [SqlName]
-  , tabletplPrivDelete  :: Maybe [SqlName]
+  , tabletplInherits :: Maybe [SqlName]
+  , tabletplColumns :: Maybe [Column]
+  , tabletplChecks :: Maybe [Check]
+  , tabletplPrivSelect :: Maybe [SqlName]
+  , tabletplPrivInsert :: Maybe [SqlName]
+  , tabletplPrivUpdate :: Maybe [SqlName]
+  , tabletplPrivDelete :: Maybe [SqlName]
   } deriving (Generic, Show, Data)
 
 instance FromJSON TableTpl where
@@ -53,16 +53,16 @@ instance ToJSON TableTpl where
   toJSON = toYamSqlJson
 
 data Column = Column
-  { columnName        :: SqlName
-  , columnType        :: SqlType
+  { columnName :: SqlName
+  , columnType :: SqlType
   , columnDescription :: Text
-  , columnDefault     :: Maybe Text
-  , columnNull        :: Maybe Bool
-  , columnReferences  :: Maybe SqlName
+  , columnDefault :: Maybe Text
+  , columnNull :: Maybe Bool
+  , columnReferences :: Maybe SqlName
   , columnOnRefDelete :: Maybe Text
   , columnOnRefUpdate :: Maybe Text
-  , columnUnique      :: Maybe Bool
-  , columnChecks      :: Maybe [Check]
+  , columnUnique :: Maybe Bool
+  , columnChecks :: Maybe [Check]
   } deriving (Generic, Show, Data)
 
 instance FromJSON Column where
@@ -92,7 +92,7 @@ applyTableTpl tpl t =
   }
 
 data UniqueKey = UniqueKey
-  { uniquekeyName    :: SqlName
+  { uniquekeyName :: SqlName
   , uniquekeyColumns :: [SqlName]
   } deriving (Generic, Show, Data)
 
@@ -103,12 +103,12 @@ instance ToJSON UniqueKey where
   toJSON = toYamSqlJson
 
 data ForeignKey = ForeignKey
-  { foreignkeyName       :: SqlName
-  , foreignkeyColumns    :: [SqlName]
-  , foreignkeyRefTable   :: SqlName
+  { foreignkeyName :: SqlName
+  , foreignkeyColumns :: [SqlName]
+  , foreignkeyRefTable :: SqlName
   , foreignkeyRefColumns :: [SqlName]
-  , foreignkeyOnDelete   :: Maybe Text
-  , foreignkeyOnUpdate   :: Maybe Text
+  , foreignkeyOnDelete :: Maybe Text
+  , foreignkeyOnUpdate :: Maybe Text
   } deriving (Generic, Show, Data)
 
 instance FromJSON ForeignKey where

@@ -13,7 +13,7 @@ import Database.HamSql.Internal.Utils
 import Database.YamSql
 
 data SqlStmtId = SqlStmtId
-  { stmtType  :: SqlStmtType
+  { stmtType :: SqlStmtType
   , stmtSqlId :: SqlId
   } deriving (Eq, Ord)
 

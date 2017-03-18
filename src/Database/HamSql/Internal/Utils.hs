@@ -28,9 +28,9 @@ join = intercalate
 
 err :: Text -> a
 err xs =
-  unsafePerformIO $
-  do TIO.hPutStrLn stderr ("error: " <> xs)
-     exitWith $ ExitFailure 1
+  unsafePerformIO $ do
+    TIO.hPutStrLn stderr ("error: " <> xs)
+    exitWith $ ExitFailure 1
 
 warn :: Text -> a -> a
 warn = msg "warning"
@@ -40,9 +40,9 @@ warn' = msg' "warning"
 
 msg :: Text -> Text -> a -> a
 msg typ xs ys =
-  unsafePerformIO $
-  do msg' typ xs
-     return ys
+  unsafePerformIO $ do
+    msg' typ xs
+    return ys
 
 msg' :: Text -> Text -> IO ()
 msg' typ xs = TIO.hPutStrLn stderr (typ <> ": " <> xs)

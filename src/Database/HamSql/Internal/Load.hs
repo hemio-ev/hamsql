@@ -14,7 +14,8 @@ import Data.Maybe
 import qualified Data.Text as T
 import Data.Text.Encoding (decodeUtf8)
 import Data.Yaml
-import System.Directory (doesDirectoryExist, doesFileExist, getDirectoryContents)
+import System.Directory
+       (doesDirectoryExist, doesFileExist, getDirectoryContents)
 import System.FilePath.Posix (combine, dropFileName, takeFileName)
 import System.IO (stdin)
 
@@ -41,10 +42,7 @@ loadSetup opts filePath = do
 loadSetupSchemas :: OptCommon -> FilePath -> Setup -> IO Setup
 loadSetupSchemas opts path s = do
   schemaData <- loadSchemas opts path s [] (setupSchemas s)
-  return
-    s
-    { setupSchemaData = Just schemaData
-    }
+  return s {setupSchemaData = Just schemaData}
 
 loadSchemas :: OptCommon
             -> FilePath
@@ -57,11 +55,13 @@ loadSchemas optCom path setup loadedSchemas missingSchemas = do
   schemas <-
     sequence
       [ loadSchema (T.unpack $ unsafePlainName schema)
-      | schema <- missingSchemas ]
+      | schema <- missingSchemas
+      ]
   let newDependencyNames =
         nub . concat $ map (fromMaybe [] . schemaDependencies) schemas
   let allLoadedSchemas = schemas ++ loadedSchemas
-  let newMissingDepencenyNames = newDependencyNames \\ map schemaName allLoadedSchemas
+  let newMissingDepencenyNames =
+        newDependencyNames \\ map schemaName allLoadedSchemas
   loadSchemas optCom path setup allLoadedSchemas newMissingDepencenyNames
   where
     loadSchema :: FilePath -> IO Schema
@@ -127,8 +127,9 @@ readSchema opts md = do
   domains <- confDirFiles "domains.d" >>= mapM (readObjectFromFile opts)
   sequences <- confDirFiles "sequences.d" >>= mapM (readObjectFromFile opts)
   tables <- confDirFiles "tables.d" >>= mapM (readObjectFromFile opts)
-  functions <- let ins x s = x { functionBody = Just s }
-               in confDirFiles "functions.d" >>= mapM (readFunctionFromFile ins opts)
+  functions <-
+    let ins x s = x {functionBody = Just s}
+    in confDirFiles "functions.d" >>= mapM (readFunctionFromFile ins opts)
   let schemaData' =
         schemaData
         { schemaDomains = schemaDomains schemaData <> Just domains

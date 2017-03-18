@@ -6,7 +6,7 @@ module Database.HamSql.Internal.InquireDeployed where
 
 import Data.Text (stripPrefix)
 import Database.PostgreSQL.Simple
-import Database.PostgreSQL.Simple.Types (PGArray (..), fromPGArray)
+import Database.PostgreSQL.Simple.Types (PGArray(..), fromPGArray)
 
 import Database.HamSql.Internal.DbUtils
 import Database.HamSql.Internal.Utils

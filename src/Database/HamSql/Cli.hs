@@ -25,10 +25,7 @@ import Database.HamSql.Internal.Stmt.Database
 import Database.YamSql
 
 parserPrefs :: ParserPrefs
-parserPrefs =
-  defaultPrefs
-  { prefShowHelpOnEmpty = True
-  }
+parserPrefs = defaultPrefs {prefShowHelpOnEmpty = True}
 
 parseArgv :: IO Command
 parseArgv = getArgs >>= parseThisArgv
@@ -52,9 +49,7 @@ run (Install optCommon optDb optInstall)
       then void $
            pgsqlExecWithoutTransact
              optDb
-             ((getConUrl optDb)
-              { uriPath = "/postgres"
-              })
+             ((getConUrl optDb) {uriPath = "/postgres"})
              (catMaybes $
               stmtsCreateDatabase (optDeleteExistingDatabase optInstall) dbname)
       else when (optDeleteExistingDatabase optInstall) $
@@ -107,6 +102,4 @@ useSqlStmts optCommon optDb unfilteredStmts
       | optPermitDataDeletion optDb = unfilteredStmts
       | otherwise =
         warnOnDiff
-          [ x
-          | x <- unfilteredStmts
-          , not $ stmtRequiresPermitDeletion x ]
+          [x | x <- unfilteredStmts, not $ stmtRequiresPermitDeletion x]

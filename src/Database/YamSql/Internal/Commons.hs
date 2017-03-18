@@ -3,17 +3,17 @@
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Database.YamSql.Internal.Commons where
 
 import Database.YamSql.Internal.Basic
 
 data Variable = Variable
-  { variableName        :: SqlName
+  { variableName :: SqlName
   , variableDescription :: Maybe Text
-  , variableType        :: SqlType
-  , variableDefault     :: Maybe Text
+  , variableType :: SqlType
+  , variableDefault :: Maybe Text
   } deriving (Generic, Show, Data)
 
 instance FromJSON Variable where
@@ -23,9 +23,9 @@ instance ToJSON Variable where
   toJSON = toYamSqlJson
 
 data Parameter = Parameter
-  { parameterName        :: SqlName
+  { parameterName :: SqlName
   , parameterDescription :: Maybe Text
-  , parameterType        :: SqlType
+  , parameterType :: SqlType
   } deriving (Generic, Show, Data)
 
 instance FromJSON Parameter where

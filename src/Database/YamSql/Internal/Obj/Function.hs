@@ -9,36 +9,36 @@ import Database.YamSql.Internal.Commons
 
 data Function = Function
                 -- function name
-  { functionName            :: SqlName
+  { functionName :: SqlName
     -- | description what the function is good for
-  , functionDescription     :: Text
+  , functionDescription :: Text
     -- | return type of the function, TABLE is special (see return_columns)
-  , functionReturns         :: SqlType
+  , functionReturns :: SqlType
     -- | parameters the function takes
-  , functionParameters      :: Maybe [Variable]
+  , functionParameters :: Maybe [Variable]
     -- | list of templates, used for this function
-  , functionTemplates       :: Maybe [SqlName]
+  , functionTemplates :: Maybe [SqlName]
     -- | loaded templates, not designed for use via Yaml
     --
     -- __TODO: move to xfunctionInternal__
-  , functionTemplateData    :: Maybe [FunctionTpl]
+  , functionTemplateData :: Maybe [FunctionTpl]
     -- | if return is TABLE, gives the columns that are returned (see parameter)
-  , functionReturnsColumns  :: Maybe [Parameter]
+  , functionReturnsColumns :: Maybe [Parameter]
     -- | variables that are defined (ignored if language is given)
-  , functionVariables       :: Maybe [Variable]
+  , functionVariables :: Maybe [Variable]
     -- | Role that has the privilege to execute the function
-  , functionPrivExecute     :: Maybe [SqlName]
+  , functionPrivExecute :: Maybe [SqlName]
     -- | If true, the function is executed with the privileges of the owner!
     -- | Owner has to be given, if this is true (not implemented yet!)
   , functionSecurityDefiner :: Maybe Bool
     -- | owner of the function
-  , functionOwner           :: Maybe SqlName
+  , functionOwner :: Maybe SqlName
     -- | language in which the body is written
     -- if not defined, pgsql is assumed an variables must be defined via variables
     -- if pgsql is given explicitly, variables are your problem...
-  , functionLanguage        :: Maybe Text
+  , functionLanguage :: Maybe Text
     -- | the code of the function (body)
-  , functionBody            :: Maybe Text
+  , functionBody :: Maybe Text
   } deriving (Generic, Show, Data)
 
 instance FromJSON Function where
@@ -56,26 +56,26 @@ instance ToSqlCode SQL_FUNCTION where
 
 data FunctionTpl = FunctionTpl
                    -- template name, used to refere the template via templates
-  { functiontplTemplate        :: SqlName
+  { functiontplTemplate :: SqlName
     -- description what the template is good for
-  , functiontplDescription     :: Text
+  , functiontplDescription :: Text
     -- language of the function has to be the same as for used templates
     -- TODO: implement checks to avoid explosions here ;)
-  , functiontplLanguage        :: Maybe Text
+  , functiontplLanguage :: Maybe Text
     -- parameters are joined with function definition parameters
-  , functiontplParameters      :: Maybe [Variable]
+  , functiontplParameters :: Maybe [Variable]
     -- variables are appended to the functions variables
-  , functiontplVariables       :: Maybe [Variable]
+  , functiontplVariables :: Maybe [Variable]
     -- defines priv_execute, can be overwritten by function definition
-  , functiontplPrivExecute     :: Maybe [SqlName]
+  , functiontplPrivExecute :: Maybe [SqlName]
     -- defines security_definer, can be overwritten by function definition
   , functiontplSecurityDefiner :: Maybe Bool
     -- defines owner, can be overwritten by function definition
-  , functiontplOwner           :: Maybe SqlName
+  , functiontplOwner :: Maybe SqlName
     -- code added before the body of the function
-  , functiontplBodyPrelude     :: Maybe Text
+  , functiontplBodyPrelude :: Maybe Text
     -- code added after the body of the function
-  , functiontplBodyPostlude    :: Maybe Text
+  , functiontplBodyPostlude :: Maybe Text
   } deriving (Generic, Show, Data)
 
 instance FromJSON FunctionTpl where
@@ -88,17 +88,17 @@ applyFunctionTpl :: FunctionTpl -> Function -> Function
 applyFunctionTpl t f =
   f
   { functionPrivExecute =
-    maybeRight (functiontplPrivExecute t) (functionPrivExecute f)
+      maybeRight (functiontplPrivExecute t) (functionPrivExecute f)
   , functionSecurityDefiner =
-    maybeRight (functiontplSecurityDefiner t) (functionSecurityDefiner f)
+      maybeRight (functiontplSecurityDefiner t) (functionSecurityDefiner f)
   , functionOwner = maybeRight (functiontplOwner t) (functionOwner f)
   , functionParameters =
-    maybeJoin (functionParameters f) (functiontplParameters t)
+      maybeJoin (functionParameters f) (functiontplParameters t)
   , functionVariables = maybeJoin (functionVariables f) (functiontplVariables t)
   , functionBody =
-    Just $
-    maybeStringL (functiontplBodyPrelude t) <> fromMaybe "" (functionBody f) <>
-    maybeStringR (functiontplBodyPostlude t)
+      Just $
+      maybeStringL (functiontplBodyPrelude t) <> fromMaybe "" (functionBody f) <>
+      maybeStringR (functiontplBodyPostlude t)
   }
   where
     maybeStringL (Just xs) = xs <> "\n"

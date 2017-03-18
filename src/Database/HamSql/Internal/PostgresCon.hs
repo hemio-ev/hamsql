@@ -2,7 +2,7 @@
 --
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
-{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 {-|
@@ -187,7 +187,8 @@ pgsqlExecStmtList opt Changed [] failed conn =
   void $ pgsqlExecStmtList opt Unchanged failed [] conn
 pgsqlExecStmtList opt status (x:xs) failed conn = do
   savepoint <- newSavepoint conn
-  tryExec savepoint `catch` handleSqlError savepoint `catch` handleQueryError savepoint
+  tryExec savepoint `catch` handleSqlError savepoint `catch`
+    handleQueryError savepoint
   where
     tryExec savepoint = do
       logStmt opt $
@@ -206,10 +207,10 @@ pgsqlExecStmtList opt status (x:xs) failed conn = do
     handleQueryError savepoint QueryError {} = proceed savepoint
     -- action after execution has failed
     skipQuery savepoint stmts = do
-      unless (optSqlLogHideRollbacks opt) $
-        do logStmt opt "SAVEPOINT retry;"
-           logStmt opt $ toSqlCode x
-           logStmt opt "ROLLBACK TO SAVEPOINT retry;"
+      unless (optSqlLogHideRollbacks opt) $ do
+        logStmt opt "SAVEPOINT retry;"
+        logStmt opt $ toSqlCode x
+        logStmt opt "ROLLBACK TO SAVEPOINT retry;"
       rollbackToSavepoint conn savepoint
       releaseSavepoint conn savepoint
       pgsqlExecStmtList opt forwardStatus xs (failed ++ stmts) conn
@@ -222,9 +223,9 @@ pgsqlExecStmtList opt status (x:xs) failed conn = do
 pgsqlExecIntern :: OptCommonDb -> PgSqlMode -> URI -> [SqlStmt] -> IO Connection
 pgsqlExecIntern opt mode connUrl xs = do
   conn <- pgsqlConnectUrl connUrl
-  when (mode == PgSqlWithTransaction) $
-    do begin conn
-       pgsqlExecStmtList opt Init xs [] conn
+  when (mode == PgSqlWithTransaction) $ do
+    begin conn
+    pgsqlExecStmtList opt Init xs [] conn
   when (mode == PgSqlWithoutTransaction) $ mapM_ (pgsqlExecStmtHandled conn) xs
   return conn
 
@@ -236,10 +237,7 @@ addSqlStmtType
 addSqlStmtType t = map (SqlStmtId t . sqlId)
 
 filterSqlStmtType :: SqlStmtType -> [SqlStmt] -> [SqlStmt]
-filterSqlStmtType t xs =
-  [ x
-  | x <- xs
-  , stmtIdType x == t ]
+filterSqlStmtType t xs = [x | x <- xs, stmtIdType x == t]
 
 filterStmtsMatchingIds
   :: [SqlStmtId] -- ^ Statement ids to remove

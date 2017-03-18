@@ -60,7 +60,8 @@ parserCommand =
   parserOptNoCommand
 
 parserCmdInstall :: Parser Command
-parserCmdInstall = Install <$> parserOptCommon <*> parserOptCommonDb <*> parserOptInstall
+parserCmdInstall =
+  Install <$> parserOptCommon <*> parserOptCommonDb <*> parserOptInstall
 
 parserCmdUpgrade :: Parser Command
 parserCmdUpgrade = Upgrade <$> parserOptCommon <*> parserOptCommonDb
@@ -70,16 +71,18 @@ parserCmdDoc = Doc <$> parserOptCommon <*> parserOptDoc
 
 -- Commons
 data OptCommon = OptCommon
-  { optSetup   :: FilePath
+  { optSetup :: FilePath
   , optVerbose :: Bool
-  , optDebug   :: Bool
+  , optDebug :: Bool
   } deriving (Show)
 
 parserOptCommon :: Parser OptCommon
 parserOptCommon =
   OptCommon <$>
   strOption
-    (long "setup" <> short 's' <> help "Setup file (YAML). If '-' is supplied, the setup is read from STDIN." <> val "setup.yml" <>
+    (long "setup" <> short 's' <>
+     help "Setup file (YAML). If '-' is supplied, the setup is read from STDIN." <>
+     val "setup.yml" <>
      action "file -X '!*.yml'" <>
      action "directory") <*>
   boolFlag (long "verbose" <> short 'v' <> help "Verbose") <*>
@@ -87,11 +90,11 @@ parserOptCommon =
 
 -- Commons Execute
 data OptCommonDb = OptCommonDb
-  { optEmulate             :: Bool
-  , optPrint               :: Bool
-  , optConnection          :: String
-  , optPermitDataDeletion  :: Bool
-  , optSqlLog              :: Maybe FilePath
+  { optEmulate :: Bool
+  , optPrint :: Bool
+  , optConnection :: String
+  , optPermitDataDeletion :: Bool
+  , optSqlLog :: Maybe FilePath
   , optSqlLogHideRollbacks :: Bool
   } deriving (Show)
 
@@ -123,7 +126,7 @@ parserOptCommonDb =
 -- Command Install
 data OptInstall = OptInstall
   { optDeleteExistingDatabase :: Bool
-  , optDeleteResidualRoles    :: Bool
+  , optDeleteResidualRoles :: Bool
   } deriving (Show)
 
 parserOptInstall :: Parser OptInstall
@@ -147,7 +150,7 @@ parserOptNoCommand =
 -- Command Doc
 data OptDoc = OptDoc
   { optOutputDir :: FilePath
-  , optTemplate  :: FilePath
+  , optTemplate :: FilePath
   } deriving (Show)
 
 parserOptDoc :: Parser OptDoc

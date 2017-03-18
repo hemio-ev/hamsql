@@ -97,7 +97,8 @@ instance ToSqlStmts (SqlContext (Schema, Table, Column)) where
       -- SET DEFAULT
       stmtAddColumnDefault = columnDefault c >>= sqlDefault
         where
-          sqlDefault d = stmtAlterColumn SqlColumnSetDefault $ "SET DEFAULT " <> d
+          sqlDefault d =
+            stmtAlterColumn SqlColumnSetDefault $ "SET DEFAULT " <> d
       -- [CHECK]
       stmtsAddColumnCheck = maybeMap (stmtCheck tbl) (columnChecks c)
       -- FOREIGN KEY
@@ -137,8 +138,8 @@ instance ToSqlStmts (SqlContext (Schema, Table, Column)) where
           rawColumn
           { columnType = SqlType "integer"
           , columnDefault =
-            Just $
-            "nextval('" <> toSqlCode (sqlId serialSequenceContext) <> "')"
+              Just $
+              "nextval('" <> toSqlCode (sqlId serialSequenceContext) <> "')"
           }
         | otherwise = rawColumn
       tblId = sqlIdCode tbl
@@ -189,7 +190,8 @@ instance ToSqlStmts (SqlContext (Schema, Table)) where
       sqlAddPrimaryKey ks =
         let constr = tableName t <> SqlName "pkey"
         in newSqlStmt SqlCreatePrimaryKeyConstr (constrId s t constr) $
-           "ALTER TABLE " <> sqlIdCode obj <> " ADD CONSTRAINT " <> toSqlCode constr <>
+           "ALTER TABLE " <> sqlIdCode obj <> " ADD CONSTRAINT " <>
+           toSqlCode constr <>
            " PRIMARY KEY (" <>
            T.intercalate ", " (map toSqlCode ks) <>
            ")"
@@ -198,7 +200,8 @@ instance ToSqlStmts (SqlContext (Schema, Table)) where
       sqlUniqueConstr ks =
         let constr = tableName t <> uniquekeyName ks
         in newSqlStmt SqlCreateUniqueConstr (constrId s t constr) $
-           "ALTER TABLE " <> sqlIdCode obj <> " ADD CONSTRAINT " <> toSqlCode constr <>
+           "ALTER TABLE " <> sqlIdCode obj <> " ADD CONSTRAINT " <>
+           toSqlCode constr <>
            " UNIQUE (" <>
            T.intercalate ", " (map toSqlCode (uniquekeyColumns ks)) <>
            ")"
@@ -206,7 +209,8 @@ instance ToSqlStmts (SqlContext (Schema, Table)) where
       sqlAddForeignKey' fk =
         let constr = tableName t <> foreignkeyName fk
         in newSqlStmt SqlCreateForeignKeyConstr (constrId s t constr) $
-           "ALTER TABLE " <> sqlIdCode obj <> " ADD CONSTRAINT " <> toSqlCode constr <>
+           "ALTER TABLE " <> sqlIdCode obj <> " ADD CONSTRAINT " <>
+           toSqlCode constr <>
            " FOREIGN KEY (" <>
            T.intercalate ", " (map toSqlCode (foreignkeyColumns fk)) <>
            ")" <>

@@ -15,19 +15,20 @@ stmtsDropSequence x =
 
 instance ToSqlStmts (SqlContext (Schema, Sequence)) where
   toSqlStmts _ obj@(SqlContext (_, Sequence {..})) =
-    [ newSqlStmt SqlCreateSequence obj $ "CREATE SEQUENCE" <-> sqlIdCode obj <-> startValue sequenceStartValue <-> conf
+    [ newSqlStmt SqlCreateSequence obj $
+      "CREATE SEQUENCE" <-> sqlIdCode obj <-> startValue sequenceStartValue <->
+      conf
     , newSqlStmt SqlAlterSequence obj $
       "ALTER SEQUENCE" <-> sqlIdCode obj <-> conf
-          , stmtCommentOn obj sequenceDescription
+    , stmtCommentOn obj sequenceDescription
     ]
     where
-      conf = incrementBy sequenceIncrement <->
-              minValue sequenceMinValue <->
-              maxValue sequenceMaxValue <->
-              cache sequenceCache <->
-              cycled sequenceCycle <->
-              ownedByColumn sequenceOwnedByColumn
-
+      conf =
+        incrementBy sequenceIncrement <-> minValue sequenceMinValue <->
+        maxValue sequenceMaxValue <->
+        cache sequenceCache <->
+        cycled sequenceCycle <->
+        ownedByColumn sequenceOwnedByColumn
       startValue Nothing = ""
       startValue (Just i) = "START WITH " <> tshow i
       incrementBy Nothing = "INCREMENT BY 1"

@@ -22,8 +22,7 @@ instance ToSqlStmts (SqlContext (Schema, Domain)) where
   toSqlStmts _ obj@(SqlContext (_, d)) =
     stmtCreateDomain :
     sqlDefault (domainDefault d) :
-    stmtCommentOn obj (domainDescription d) :
-    maybeMap sqlCheck (domainChecks d)
+    stmtCommentOn obj (domainDescription d) : maybeMap sqlCheck (domainChecks d)
     where
       stmtCreateDomain =
         newSqlStmt SqlCreateDomain obj $

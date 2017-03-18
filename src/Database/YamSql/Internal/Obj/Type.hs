@@ -3,16 +3,16 @@
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Database.YamSql.Internal.Obj.Type where
 
 import Database.YamSql.Internal.Basic
 
 data Type = Type
-  { typeName        :: SqlName
+  { typeName :: SqlName
   , typeDescription :: Text
-  , typeElements    :: [TypeElement]
+  , typeElements :: [TypeElement]
   } deriving (Generic, Show, Data)
 
 instance FromJSON Type where

@@ -2,7 +2,7 @@
 --
 -- Copyright 2014-2016 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
-{-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Database.HamSql.Internal.DbUtils where
@@ -14,7 +14,7 @@ import qualified Data.Text as T
 import Data.Text.Encoding (decodeUtf8)
 import qualified Data.Text.IO as TIO
 import Database.PostgreSQL.Simple
-import Network.URI (URI (..), parseAbsoluteURI, uriToString)
+import Network.URI (URI(..), parseAbsoluteURI, uriToString)
 
 import Database.HamSql.Internal.Option
 import Database.HamSql.Internal.Stmt
@@ -41,11 +41,11 @@ getConUrl optDb = appendQuery "application_name=hamsql" uri
     appendQuery v u =
       u
       { uriQuery =
-        (case maybeHead $ uriQuery u of
-           Just '?' -> "&"
-           Just _ -> err $ "invalid URI" <-> tshow u
-           Nothing -> "?") <>
-        v
+          (case maybeHead $ uriQuery u of
+             Just '?' -> "&"
+             Just _ -> err $ "invalid URI" <-> tshow u
+             Nothing -> "?") <>
+          v
       }
 
 pgsqlExecStmt :: Connection -> SqlStmt -> IO ()

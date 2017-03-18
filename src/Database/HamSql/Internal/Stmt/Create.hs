@@ -30,8 +30,9 @@ allSchemaElements schema =
   toElemList schemaTypes schema ++
   concat
     [ map (SetupElement . (\x -> SqlContext (schema, table, x))) $
-     tableColumns table
-    | table <- fromMaybe [] $ schemaTables schema ]
+    tableColumns table
+    | table <- fromMaybe [] $ schemaTables schema
+    ]
   where
     toElemList y = maybeMap (SetupElement . (\x -> SqlContext (schema, x))) . y
     toElemList' y = maybeMap (SetupElement . SqlContext) . y

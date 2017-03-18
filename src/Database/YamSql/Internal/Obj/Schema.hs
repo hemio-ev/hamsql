@@ -28,26 +28,26 @@ import Database.YamSql.Internal.Obj.Type
 
 -- Schema --
 data Schema = Schema
-  { schemaName                      :: SqlName
-  , schemaDescription               :: Text
-  , schemaDependencies              :: Maybe [SqlName]
-  , schemaFunctions                 :: Maybe [Function]
-  , schemaFunctionTemplates         :: Maybe [FunctionTpl]
-  , schemaTables                    :: Maybe [Table]
-  , schemaTableTemplates            :: Maybe [TableTpl]
-  , schemaRoles                     :: Maybe [Role]
-  , schemaSequences                 :: Maybe [Sequence]
-  , schemaPrivUsage                 :: Maybe [SqlName]
-  , schemaPrivSelectAll             :: Maybe [SqlName]
-  , schemaPrivInsertAll             :: Maybe [SqlName]
-  , schemaPrivUpdateAll             :: Maybe [SqlName]
-  , schemaPrivDeleteAll             :: Maybe [SqlName]
-  , schemaPrivSequenceAll           :: Maybe [SqlName]
-  , schemaPrivExecuteAll            :: Maybe [SqlName]
-  , schemaPrivAllAll                :: Maybe [SqlName]
-  , schemaDomains                   :: Maybe [Domain]
-  , schemaTypes                     :: Maybe [Type]
-  , schemaExecPostInstall           :: Maybe Text
+  { schemaName :: SqlName
+  , schemaDescription :: Text
+  , schemaDependencies :: Maybe [SqlName]
+  , schemaFunctions :: Maybe [Function]
+  , schemaFunctionTemplates :: Maybe [FunctionTpl]
+  , schemaTables :: Maybe [Table]
+  , schemaTableTemplates :: Maybe [TableTpl]
+  , schemaRoles :: Maybe [Role]
+  , schemaSequences :: Maybe [Sequence]
+  , schemaPrivUsage :: Maybe [SqlName]
+  , schemaPrivSelectAll :: Maybe [SqlName]
+  , schemaPrivInsertAll :: Maybe [SqlName]
+  , schemaPrivUpdateAll :: Maybe [SqlName]
+  , schemaPrivDeleteAll :: Maybe [SqlName]
+  , schemaPrivSequenceAll :: Maybe [SqlName]
+  , schemaPrivExecuteAll :: Maybe [SqlName]
+  , schemaPrivAllAll :: Maybe [SqlName]
+  , schemaDomains :: Maybe [Domain]
+  , schemaTypes :: Maybe [Type]
+  , schemaExecPostInstall :: Maybe Text
     -- TODO: rename to execPostAll
   , schemaExecPostInstallAndUpgrade :: Maybe Text
   } deriving (Generic, Show, Data)

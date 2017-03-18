@@ -15,8 +15,9 @@ instance ToSqlStmts (SqlContextSqo Trigger) where
   toSqlStmts = stmtsDeployTrigger
 
 stmtsDeployTrigger :: SetupContext -> SqlContextSqo Trigger -> [Maybe SqlStmt]
-stmtsDeployTrigger context obj@SqlContextSqo {sqlSqoSchema = s
-                                             ,sqlSqoObject = t} =
+stmtsDeployTrigger context obj@SqlContextSqo { sqlSqoSchema = s
+                                             , sqlSqoObject = t
+                                             } =
   stmtsDeployFunction context (SqlContextSqoArgtypes s triggerFunction) ++
   map triggerStmt (triggerTables t)
   where
