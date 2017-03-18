@@ -13,12 +13,15 @@ copyright:           (c) 2014-2016 Michael Herold et al.
 stability:           experimental
 build-type:          Simple
 cabal-version:       >=1.20
-
 extra-source-files:
   AUTHORS,
   CHANGELOG,
   README.md,
   data/doc-template.rst
+
+source-repository head
+  type:     git
+  location: git@git.hemio.de:hemio/hamsql.git
 
 library
   hs-source-dirs: src
@@ -96,6 +99,12 @@ library
     unordered-containers >=0.2 && <0.3,
     yaml >=0.8 && <0.9
 
+  ghc-options:
+    -Wall
+    -Wcompat
+    -Wincomplete-record-updates
+    -Wno-orphans
+
 executable hamsql
   main-is: app/hamsql.hs
   default-language: Haskell2010
@@ -104,15 +113,27 @@ executable hamsql
     base >=4.8 && <5.0,
     hamsql
 
+  ghc-options:
+    -Wall
+    -Wcompat
+    -Wincomplete-record-updates
+
 test-suite hamsql-tests
   default-language:    Haskell2010
   type:       exitcode-stdio-1.0
   main-is:    test/hamsql-tests.hs
+  hs-source-dirs: . test
   build-depends:
     base >=4.8 && <5.0,
-    hamsql
-
-source-repository head
-  type:     git
-  location: git@git.hemio.de:hemio/hamsql.git
+    hamsql,
+    directory,
+    -- test
+    tasty,
+    tasty-hunit,
+    -- dev
+    hindent
+  ghc-options:
+    -Wall
+    -Wcompat
+    -Wincomplete-record-updates
 

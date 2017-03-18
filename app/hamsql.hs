@@ -8,4 +8,3 @@ import Database.HamSql.Cli
 
 main :: IO ()
 main = parseArgv >>= run
-

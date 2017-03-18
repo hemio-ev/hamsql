@@ -1,9 +1,10 @@
 v0.10.0.0 (WIP)
   - Adds support for reading setup.yml from STDIN
+  - Changes to better support SEQUENCEs
 v0.9.0.0
   - Fixes DELETE BASE before schema definitions are read (#64)
   - Fixes bugs in table constraint statements (#59)
-  - Fixes coded that needed O(n^2) in number of SQL objects (#62)
+  - Fixes code that needed O(n^2) in number of SQL objects (#62)
   - Fixes incorrect naming of sequences for SERIAL emulation
   - Adds bash completion install (closes #63)
   - Adds link to example project to README
