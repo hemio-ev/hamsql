@@ -13,25 +13,26 @@ module Database.HamSql.Setup where
 import Data.Typeable
 import Data.Yaml
 
+import Database.HamSql.Internal.Stmt
 import Database.HamSql.Internal.Utils
 import Database.YamSql
 import Database.YamSql.Parser
-import Database.HamSql.Internal.Stmt
 
 data SetupContext = SetupContext
   { setupContextSetup :: Setup
   }
 
 data SetupElement where
-  SetupElement :: (ToSqlStmts a)
-               => { setupElement :: a }
-               -> SetupElement
+  SetupElement
+    :: (ToSqlStmts a)
+    => a -> SetupElement
 
 instance ToSqlStmts SetupElement where
-    toSqlStmts x SetupElement{setupElement=y} = toSqlStmts x y
+  toSqlStmts x (SetupElement y) = toSqlStmts x y
 
-class (Typeable a) => ToSqlStmts a where
-    toSqlStmts :: SetupContext -> a -> [Maybe SqlStmt]
+class Typeable a =>
+      ToSqlStmts a where
+  toSqlStmts :: SetupContext -> a -> [Maybe SqlStmt]
 
 -- | Setup
 data Setup = Setup
@@ -58,7 +59,7 @@ data WithSchema a =
              a
   deriving (Show)
 
-class WithName a  where
+class WithName a where
   name :: a -> Text
 
 instance WithName (WithSchema TableTpl) where
@@ -70,18 +71,21 @@ instance WithName (WithSchema FunctionTpl) where
 withoutSchema :: WithSchema a -> a
 withoutSchema (WithSchema _ t) = t
 
-selectTemplates :: (ToSqlCode a, WithName (WithSchema t)) =>
-                         Maybe [a] -> [WithSchema t] -> [t]
+selectTemplates
+  :: (ToSqlCode a, WithName (WithSchema t))
+  => Maybe [a] -> [WithSchema t] -> [t]
 selectTemplates ns ts
                    -- TODO: error handling here should be done using exceptions
  =
   [ withoutSchema $
-   selectUniqueReason ("table or function tpl " <> n) $
-   filter (\t -> n == name t) ts
-  | n <- maybeMap toSqlCode ns ]
+  selectUniqueReason ("table or function tpl " <> n) $
+  filter (\t -> n == name t) ts
+  | n <- maybeMap toSqlCode ns
+  ]
 
-selectTemplate :: (ToSqlCode a1, WithName (WithSchema a)) =>
-                        a1 -> [WithSchema a] -> a
+selectTemplate
+  :: (ToSqlCode a1, WithName (WithSchema a))
+  => a1 -> [WithSchema a] -> a
 selectTemplate x ts =
   head' $ map withoutSchema $ filter (\y -> name y == toSqlCode x) ts
   where
@@ -95,30 +99,25 @@ setupAllFunctionTemplates :: Setup -> [WithSchema FunctionTpl]
 setupAllFunctionTemplates s =
   concat
     [ maybeMap (WithSchema m) (schemaFunctionTemplates m)
-    | m <- setupAllSchemas s ]
+    | m <- setupAllSchemas s
+    ]
 
 setupAllTableTemplates :: Setup -> [WithSchema TableTpl]
 setupAllTableTemplates s =
   concat
-    [ maybeMap (WithSchema m) (schemaTableTemplates m)
-    | m <- setupAllSchemas s ]
-
-
+    [maybeMap (WithSchema m) (schemaTableTemplates m) | m <- setupAllSchemas s]
 
 applyTpl :: Setup -> Setup
 applyTpl s =
   s
   -- TODO: possible overwrite here!
-  { setupSchemaData = Just $ maybeMap applySchema (setupSchemaData s)
-  }
+  {setupSchemaData = Just $ maybeMap applySchema (setupSchemaData s)}
   where
     applySchema m =
       m
-      { schemaTables =
-        Just $
-        maybeMap applyTableTemplates (schemaTables m)
+      { schemaTables = Just $ maybeMap applyTableTemplates (schemaTables m)
       , schemaFunctions =
-        Just $ maybeMap applyFunctionTemplates (schemaFunctions m)
+          Just $ maybeMap applyFunctionTemplates (schemaFunctions m)
       }
     applyTableTemplates :: Table -> Table
     applyTableTemplates t = foldr applyTableTpl t (tableTpls t)
@@ -129,4 +128,3 @@ applyTpl s =
     functionTpls :: Function -> [FunctionTpl]
     functionTpls f =
       selectTemplates (functionTemplates f) (setupAllFunctionTemplates s)
-

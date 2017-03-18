@@ -11,7 +11,7 @@ module Database.HamSql.Internal.Utils
 
 import Data.List (group, intercalate, sort)
 import Data.Maybe
-import Data.Monoid ((<>))
+import Data.Semigroup ((<>))
 import Data.Text (Text, pack)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO

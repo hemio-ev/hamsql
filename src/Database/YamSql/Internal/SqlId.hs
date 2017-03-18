@@ -5,30 +5,33 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GADTs #-}
-
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE FlexibleInstances #-}
 
 module Database.YamSql.Internal.SqlId where
 
-import Data.Typeable
+import Data.Semigroup
 import qualified Data.Text as T
+import Data.Typeable
 
 import Database.HamSql.Internal.Utils
 import Database.YamSql.Parser
 
 -- | Idable
 class Show a =>
-      ToSqlId a  where
+      ToSqlId a where
   sqlId :: a -> SqlId
   sqlIdCode :: a -> Text
   sqlIdCode = toSqlCode . sqlId
 
-class (Typeable a, ToSqlCode a, Eq a, Show a) => SqlIdContent a
+class (Typeable a, ToSqlCode a, Eq a, Show a) =>
+      SqlIdContent a
 
 -- | SqlId
 data SqlId where
-  SqlId :: (SqlObjType a, SqlIdContent b) => SqlObj a b -> SqlId
+  SqlId
+    :: (SqlObjType a, SqlIdContent b)
+    => SqlObj a b -> SqlId
 
 sqlIdShowType :: SqlId -> Text
 sqlIdShowType (SqlId x) = tshow $ sqlObjType x
@@ -53,20 +56,32 @@ instance ToSqlId SqlId where
 instance ToSqlCode SqlId where
   toSqlCode (SqlId x) = toSqlCode $ sqlObjId x
 
-data SqlContext a = SqlContext a
+data SqlContext a =
+  SqlContext a
 
 -- FIXME
-instance Show (SqlContext a) where show= const ""
+instance Show (SqlContext a) where
+  show = const ""
 
-instance (SqlObjType a, SqlIdContent b) => ToSqlId (SqlObj a b) where
+instance (SqlObjType a, SqlIdContent b) =>
+         ToSqlId (SqlObj a b) where
   sqlId = SqlId
 
-class (Typeable a, ToSqlCode a, Show a) => SqlObjType a
+class (Typeable a, ToSqlCode a, Show a) =>
+      SqlObjType a
 
 data SqlObj a b where
-  SqlObj :: (SqlObjType a, SqlIdContent b)
-         => { sqlObjType :: a , sqlObjId :: b }
-         -> SqlObj a b
+  SqlObj
+    :: (SqlObjType a, SqlIdContent b)
+    => a -- ^ sqlObjType
+    -> b -- ^ sqlObjId
+    -> SqlObj a b
+
+sqlObjType :: SqlObj a b -> a
+sqlObjType (SqlObj x _) = x
+
+sqlObjId :: SqlObj a b -> b
+sqlObjId (SqlObj _ y) = y
 
 deriving instance Show (SqlObj a b)
 
@@ -79,15 +94,18 @@ instance ToSqlCode (SqlObj a b) where
 instance SqlIdContent SqlName
 
 instance SqlIdContent (SqlName, SqlName)
+
 instance ToSqlCode (SqlName, SqlName) where
   toSqlCode (x, y) = toSqlCode (x <.> y)
 
 instance SqlIdContent (SqlName, [SqlType])
+
 instance ToSqlCode (SqlName, [SqlType]) where
   toSqlCode (x, ys) =
     toSqlCode x <> "(" <> T.intercalate ", " (map toSqlCode ys) <> ")"
 
 instance SqlIdContent (SqlName, SqlName, SqlName)
+
 instance ToSqlCode (SqlName, SqlName, SqlName) where
   toSqlCode (x, _, y) = toSqlCode (x <.> y)
 
@@ -117,21 +135,21 @@ expSqlName n = map SqlName (T.splitOn "." (getStr n))
 
 instance ToSqlCode SqlType where
   toSqlCode (SqlType n)
-            -- if quotes are contained
-            -- assume that user cares for correct enquoting
-   =
-    if '"' `isIn` n ||
-       -- if at least a pair of brakets is found
-       -- assume that a type like varchar(20) is meant
-       ('(' `isIn` n && ')' `isIn` n) ||
-       -- if no dot is present, assume that buildin type
-       -- like integer is meant
-       not ('.' `isIn` n) ||
-       -- if % is present, assume that something like
-       -- table%ROWTYPE could be meant
-       '%' `isIn` n
-      then n
-      else toSqlCode' $ expSqlName $ SqlName n
+    | hasSquotes n || hasParenthesesPair n || hasNoDot n || hasPercent n = n
+    | otherwise = toSqlCode' $ expSqlName $ SqlName n
+      -- if quotes are contained
+      -- assume that user cares for correct enquoting  
+    where
+      hasSquotes = isIn '"'
+      -- if at least a pair of brakets is found
+      -- assume that a type like varchar(20) is meant
+      hasParenthesesPair x = '(' `isIn` x && ')' `isIn` x
+      -- if no dot is present, assume that buildin type
+      -- like integer is meant
+      hasNoDot x = not ('.' `isIn` x)
+      -- if % is present, assume that something like
+      -- table%ROWTYPE could be meant
+      hasPercent = isIn '%'
 
 instance SqlIdentifierConcat SqlType where
   (//) (SqlType s) (SqlType t) = SqlType (s <> t)
@@ -152,18 +170,20 @@ class ToSqlCode a where
 class ToSqlName a where
   toSqlName :: a -> SqlName
 
-class SqlIdentifierConcat a  where
+class SqlIdentifierConcat a where
   (//) :: a -> a -> a
+
+instance Semigroup SqlName where
+  x@(SqlName x') <> y@(SqlName y')
+    | x == mempty = y
+    | y == mempty = x
+    | otherwise = SqlName (x' <> "_" <> y')
 
 instance Monoid SqlName where
   mempty = SqlName ""
-  mappend x@(SqlName x') y@(SqlName y')
-   | x == mempty = y
-   | y == mempty = x
-   | otherwise = SqlName (x' <> "_" <> y')
+  mappend = (<>)
 
-
--- SqlName
+-- | SqlName
 newtype SqlName =
   SqlName Text
   deriving (Generic, Ord, Show, Data)
@@ -183,4 +203,3 @@ instance FromJSON SqlType where
 
 instance ToJSON SqlType where
   toJSON = toYamSqlJson
-

@@ -83,7 +83,7 @@ findSchemaPath schema search = findDir search
         else findDir ds
 
 catchErrors
-  :: (FromJSON a, ToJSON a)
+  :: ToJSON a
   => FilePath -> a -> IO a
 catchErrors filePath x = do
   y <- try (forceToJson x)
