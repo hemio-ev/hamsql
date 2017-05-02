@@ -97,7 +97,8 @@ library
     text >=1.2 && <1.3,
     transformers >=0.5 && <0.6,
     unordered-containers >=0.2 && <0.3,
-    yaml >=0.8 && <0.9
+    yaml >=0.8 && <0.9,
+    edit-distance
 
   ghc-options:
     -Wall

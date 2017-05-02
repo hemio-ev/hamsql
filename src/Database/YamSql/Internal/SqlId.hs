@@ -73,8 +73,8 @@ class (Typeable a, ToSqlCode a, Show a) =>
 data SqlObj a b where
   SqlObj
     :: (SqlObjType a, SqlIdContent b)
-    => a -- ^ sqlObjType
-    -> b -- ^ sqlObjId
+    => a -- sqlObjType
+    -> b -- sqlObjId
     -> SqlObj a b
 
 sqlObjType :: SqlObj a b -> a

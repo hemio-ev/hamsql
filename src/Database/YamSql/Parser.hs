@@ -23,11 +23,12 @@ import Data.Aeson.Types
 import Data.Char
 import Data.Data
 import Data.HashMap.Strict (keys)
-import Data.List
+import Data.List ((\\), minimumBy)
 import qualified Data.Text as T
 import Data.Yaml
 import GHC.Generics
 import System.IO
+import Text.EditDistance (defaultEditCosts, levenshteinDistance)
 
 import Database.HamSql.Internal.Utils
 
@@ -74,13 +75,25 @@ parseYamSql xs = do
   return $
     if null diff
       then parsed
-      else throw $ YamsqlException $ "Found unknown keys: " <> tshow diff
+      else throw $
+           YamsqlException $
+           "Found unknown YamSql fields: " <>
+           T.concat (map (explain (keysOfData parsed)) diff)
   where
     keysOfData u =
       "tag" : map (snakeify . removeFirstPart) (constrFields (toConstr u))
     keysOfValue :: Value -> [String]
     keysOfValue (Object ys) = map T.unpack $ keys ys
     keysOfValue _ = err "HAMSQL-UNEXPECTED 3"
+    explainMissing :: [String] -> String -> Text
+    explainMissing ys x =
+      "\n - " <> tshow x <> " (did you mean " <> tshow (closestString x ys) <>
+      "?)"
+
+closestString :: String -> [String] -> String
+closestString x = minimumBy (\y y' -> compare (dist y) (dist y'))
+  where
+    dist = levenshteinDistance defaultEditCosts x
 
 toYamSqlJson
   :: (Generic a, GToJSON Zero (Rep a))
