@@ -78,7 +78,7 @@ parseYamSql xs = do
       else throw $
            YamsqlException $
            "Found unknown YamSql fields: " <>
-           T.concat (map (explain (keysOfData parsed)) diff)
+           T.concat (map (explainMissing (keysOfData parsed)) diff)
   where
     keysOfData u =
       "tag" : map (snakeify . removeFirstPart) (constrFields (toConstr u))

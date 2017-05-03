@@ -208,6 +208,8 @@ instance ToSqlStmts (SqlContext (Schema, Table)) where
       sqlAddForeignKey' :: ForeignKey -> Maybe SqlStmt
       sqlAddForeignKey' fk =
         let constr = tableName t <> foreignkeyName fk
+            refColumns =
+              fromMaybe (foreignkeyColumns fk) (foreignkeyRefColumns fk)
         in newSqlStmt SqlCreateForeignKeyConstr (constrId s t constr) $
            "ALTER TABLE " <> sqlIdCode obj <> " ADD CONSTRAINT " <>
            toSqlCode constr <>
@@ -217,7 +219,7 @@ instance ToSqlStmts (SqlContext (Schema, Table)) where
            " REFERENCES " <>
            toSqlCode (foreignkeyRefTable fk) <>
            " (" <>
-           T.intercalate ", " (map toSqlCode $ foreignkeyRefColumns fk) <>
+           T.intercalate ", " (map toSqlCode refColumns) <>
            ")" <>
            maybePrefix " ON UPDATE " (foreignkeyOnUpdate fk) <>
            maybePrefix " ON DELETE " (foreignkeyOnDelete fk)

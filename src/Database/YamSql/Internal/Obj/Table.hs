@@ -106,7 +106,7 @@ data ForeignKey = ForeignKey
   { foreignkeyName :: SqlName
   , foreignkeyColumns :: [SqlName]
   , foreignkeyRefTable :: SqlName
-  , foreignkeyRefColumns :: [SqlName]
+  , foreignkeyRefColumns :: Maybe [SqlName]
   , foreignkeyOnDelete :: Maybe Text
   , foreignkeyOnUpdate :: Maybe Text
   } deriving (Generic, Show, Data)
