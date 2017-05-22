@@ -1,6 +1,7 @@
-v0.10.0.0 (WIP)
+v0.10.0.0
   - Adds support for reading setup.yml from STDIN
   - Adds "did you mean" for YamSql fields
+  - Adds support for empty "ref_columns" in FKs
   - Changes to better support SEQUENCEs
 v0.9.0.0
   - Fixes DELETE BASE before schema definitions are read (#64)
