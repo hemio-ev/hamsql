@@ -28,7 +28,9 @@ import qualified Data.Text as T
 import Data.Yaml
 import GHC.Generics
 import System.IO
-import Text.EditDistance (defaultEditCosts, levenshteinDistance)
+import Text.EditDistance
+       (defaultEditCosts, levenshteinDistance, substitutionCosts,
+        Costs(ConstantCost))
 
 import Database.HamSql.Internal.Utils
 
@@ -71,29 +73,36 @@ parseYamSql
   => Value -> Parser r
 parseYamSql xs = do
   parsed <- genericParseJSON myOpt xs
-  let diff = keysOfValue xs \\ keysOfData parsed
+  let known = keysOfData parsed
+  let used = keysOfValue xs
+  let diff = used \\ known
   return $
     if null diff
       then parsed
       else throw $
            YamsqlException $
            "Found unknown YamSql fields: " <>
-           T.concat (map (explainMissing (keysOfData parsed)) diff)
+           T.concat (map (explainMissing known used) diff)
   where
     keysOfData u =
       "tag" : map (snakeify . removeFirstPart) (constrFields (toConstr u))
     keysOfValue :: Value -> [String]
     keysOfValue (Object ys) = map T.unpack $ keys ys
     keysOfValue _ = err "HAMSQL-UNEXPECTED 3"
-    explainMissing :: [String] -> String -> Text
-    explainMissing ys x =
-      "\n - " <> tshow x <> " (did you mean " <> tshow (closestString x ys) <>
+    explainMissing :: [String] -> [String] -> String -> Text
+    explainMissing known used x =
+      "\n - " <> tshow x <> " (did you mean " <> tshow (closestString x ls) <>
       "?)"
+      where
+        ls = filter (/= "tag") (known \\ used)
 
 closestString :: String -> [String] -> String
 closestString x = minimumBy (\y y' -> compare (dist y) (dist y'))
   where
-    dist = levenshteinDistance defaultEditCosts x
+    dist =
+      levenshteinDistance
+        defaultEditCosts {substitutionCosts = ConstantCost 2}
+        x
 
 toYamSqlJson
   :: (Generic a, GToJSON Zero (Rep a))
