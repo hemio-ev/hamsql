@@ -125,6 +125,7 @@ readSchema opts md = do
     errorCheck ("module dir does not exist: " <> tshow md)
   schemaData <- readObjectFromFile opts schemaConfig
   domains <- confDirFiles "domains.d" >>= mapM (readObjectFromFile opts)
+  types <- confDirFiles "types.d" >>= mapM (readObjectFromFile opts)
   sequences <- confDirFiles "sequences.d" >>= mapM (readObjectFromFile opts)
   tables <- confDirFiles "tables.d" >>= mapM (readObjectFromFile opts)
   functions <-
@@ -133,6 +134,7 @@ readSchema opts md = do
   let schemaData' =
         schemaData
         { schemaDomains = schemaDomains schemaData <> Just domains
+        , schemaTypes = schemaTypes schemaData <> Just types
         , schemaSequences = schemaSequences schemaData <> Just sequences
         , schemaTables = schemaTables schemaData <> Just tables
         , schemaFunctions = schemaFunctions schemaData <> Just functions

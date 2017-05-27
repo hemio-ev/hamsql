@@ -70,11 +70,11 @@ module Database.HamSql.Internal.PostgresCon where
 import Control.Exception
 import Control.Monad
 import qualified Data.ByteString.Char8 as B
+import Data.Function
 import Data.Maybe
 import Data.Set (fromList, notMember)
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.Transaction
-
 import Network.URI (URI)
 
 import Database.HamSql.Internal.DbUtils
@@ -87,6 +87,7 @@ import Database.HamSql.Internal.Stmt.Function
 import Database.HamSql.Internal.Stmt.Role
 import Database.HamSql.Internal.Stmt.Sequence
 import Database.HamSql.Internal.Stmt.Table
+import Database.HamSql.Internal.Stmt.Type
 import Database.HamSql.Internal.Utils
 import Database.HamSql.Setup
 import Database.YamSql
@@ -109,11 +110,12 @@ pgsqlDeleteAllStmt conn = do
 
 pgsqlUpdateFragile :: Setup -> Connection -> [SqlStmt] -> IO [SqlStmt]
 pgsqlUpdateFragile setup conn stmts =
-  correctStmts SqlCreateDomain deployedDomainIds stmtsDropDomain stmts >>=
-  correctStmts SqlCreateTable deployedTableIds stmtsDropTable >>=
-  correctStmts SqlAddColumn deployedTableColumnIds stmtsDropTableColumn >>=
-  correctStmts SqlCreateSequence deployedSequenceIds stmtsDropSequence >>=
+  stmts & correctStmts SqlAddColumn deployedTableColumnIds stmtsDropTableColumn >>=
+  correctStmts SqlCreateDomain deployedDomainIds stmtsDropDomain >>=
   correctStmts SqlCreateRole (deployedRoleIds setup) (stmtsDropRole setup) >>=
+  correctStmts SqlCreateSequence deployedSequenceIds stmtsDropSequence >>=
+  correctStmts SqlCreateTable deployedTableIds stmtsDropTable >>=
+  correctStmts SqlCreateType deployedTypeIds stmtsDropType >>=
   correctStmts
     SqlGrantMembership
     (deployedRoleMemberIds setup)
