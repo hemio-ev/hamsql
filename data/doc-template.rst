@@ -17,51 +17,38 @@ $for(tables)$
 
 .. _TABLE-$name$.$tables.name$:
 
-``$name$.$tables.name$``
+$name$.$tables.name$
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 $tables.description$
 
 Primary key
++++++++++++
+
 $for(tables.primary_key)$
- - $tables.primary_key$
+- $tables.primary_key$
 $endfor$
 
-
-.. BEGIN FKs
-
-$if(tables.foreign_keys)$
-Foreign keys
-$for(tables.foreign_keys)$
- - $tables.foreign_keys.name$
-
-   Local Columns
-$for(tables.foreign_keys.columns)$
-    - $tables.foreign_keys.columns$
-$endfor$
-
-   Referenced Columns
-$for(tables.foreign_keys.ref_columns)$
-    - :ref:`$tables.foreign_keys.ref_table$.$tables.foreign_keys.ref_columns$ <COLUMN-$tables.foreign_keys.ref_table$.$tables.foreign_keys.ref_columns$>`
-$endfor$
-
-$endfor$
-$endif$
-
-.. END FKs
 
 $if(tables.inherits)$
-Inherits
+
+Inherits 
+++++++++
+
 $for(tables.inherits)$
- - $tables.inherits$
+- $tables.inherits$
 $endfor$
 $endif$
 
 Columns
++++++++
+
 $for(tables.columns)$
- - .. _COLUMN-$name$.$tables.name$.$tables.columns.name$:
+.. _COLUMN-$name$.$tables.name$.$tables.columns.name$:
    
-   ``$tables.columns.name$`` $if(tables.columns.null)$*NULL* | $endif$:ref:`$tables.columns.type$ <DOMAIN-$tables.columns.type$>`
+``$tables.columns.name$``
+     $if(tables.columns.null)$*NULL* | $endif$:ref:`$tables.columns.type$ <DOMAIN-$tables.columns.type$>`
+
      $tables.columns.description$
 
 $if(tables.columns.default)$
@@ -85,6 +72,37 @@ $endif$
 
 $endfor$
 
+.. BEGIN FKs
+
+$if(tables.foreign_keys)$
+Foreign keys
+++++++++++++
+$for(tables.foreign_keys)$
+
+$tables.foreign_keys.name$
+   *Local Columns*
+
+$for(tables.foreign_keys.columns)$
+   - $tables.foreign_keys.columns$
+$endfor$
+
+   *Referenced Columns*
+
+$if(tables.foreign_keys.ref_columns)$
+$for(tables.foreign_keys.ref_columns)$
+   - :ref:`$tables.foreign_keys.ref_table$.$tables.foreign_keys.ref_columns$ <COLUMN-$tables.foreign_keys.ref_table$.$tables.foreign_keys.ref_columns$>`
+$endfor$
+$else$
+$for(tables.foreign_keys.columns)$
+   - :ref:`$tables.foreign_keys.ref_table$.$tables.foreign_keys.columns$ <COLUMN-$tables.foreign_keys.ref_table$.$tables.foreign_keys.columns$>`
+$endfor$
+$endif$
+
+$endfor$
+$endif$
+
+.. END FKs
+
 $endfor$
 
 $endif$
@@ -100,13 +118,30 @@ $for(functions)$
 
 .. _FUNCTION-$name$.$functions.name$:
 
-``$name$.$functions.name$``
+$name$.$functions.name$
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 $functions.description$
 
-Parameters
+Returns
+ :ref:`$functions.returns$ <DOMAIN-$functions.returns$>`
+
+$if(functions.returns_columns)$
+Returned Columns
+$for(functions.returns_columns)$
+ - ``$functions.returns_columns.name$`` :ref:`$functions.returns_columns.type$ <DOMAIN-$functions.returns_columns.type$>`
+    $functions.returns_columns.description$
+$endfor$
+$endif$
+
+$if(functions.language)$
+Language
+ $functions.language$
+$endif$
+
 $if(functions.parameters)$
+Parameters 
+++++++++++
 $for(functions.parameters)$
  - ``$functions.parameters.name$`` :ref:`$functions.parameters.type$ <DOMAIN-$functions.parameters.type$>`
    $if(functions.variables.default)$(default: ``$functions.parameters.default$``)$endif$
@@ -116,13 +151,9 @@ $else$
  *None*
 $endif$
 
-$if(functions.language)$
-Language
- $functions.language$
-$endif$
-
 $if(functions.variables)$
-Variables defined for body
+Variables
++++++++++
 $for(functions.variables)$
  - ``$functions.variables.name$`` :ref:`$functions.variables.type$ <DOMAIN-$functions.variables.type$>`
    $if(functions.variables.default)$(default: ``$functions.variables.default$``)$endif$
@@ -130,23 +161,16 @@ $for(functions.variables)$
 $endfor$
 $endif$
 
-Returns
- $functions.returns$
-
-$if(functions.returns_columns)$
-Returned columns
-$for(functions.returns_columns)$
- - ``$functions.returns_columns.name$`` :ref:`$functions.returns_columns.type$ <DOMAIN-$functions.returns_columns.type$>`
-    $functions.returns_columns.description$
-$endfor$
-$endif$
-
 $if(functions.priv_execute)$
-Execute privilege
+Execute Privilege
++++++++++++++++++
 $for(functions.priv_execute)$
  - :ref:`$functions.priv_execute$ <ROLE-$functions.priv_execute$>`
 $endfor$
 $endif$
+
+Code
+++++
 
 .. code-block:: $if(functions.language)$guess$else$plpgsql$endif$
 
@@ -164,19 +188,19 @@ Domains
 
 $for(domains)$
 
-
 .. _DOMAIN-$name$.$domains.name$:
 
-``$name$.$domains.name$``
+$name$.$domains.name$
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 $domains.description$
 
 $if(domains.checks)$
 Checks
+++++++
 $for(domains.checks)$
- - ``$domains.checks.name$``
-    $domains.checks.description$
+$domains.checks.name$
+   $domains.checks.description$
 
    .. code-block:: sql
 
@@ -184,6 +208,24 @@ $for(domains.checks)$
 
 $endfor$
 $endif$
+
+$endfor$
+$endif$
+
+
+$if(types)$
+
+Types
+-----
+
+$for(types)$
+
+.. _DOMAIN-$name$.$types.name$:
+
+$name$.$types.name$
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+$types.description$
 
 $endfor$
 $endif$
@@ -198,7 +240,7 @@ $for(roles)$
 
 .. _ROLE-$roles.name$:
 
-``$roles.name$``
+$roles.name$
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 $roles.description$
@@ -219,7 +261,7 @@ $for(sequences)$
 
 .. _SEQUENCE-$name$.$sequences.name$:
 
-``$name$.$sequences.name$``
+$name$.$sequences.name$
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 $sequences.description$
