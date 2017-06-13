@@ -80,7 +80,7 @@ Those are the YamSql files for the project:
 schemas:
  - math
 schema_dirs:
- - schemas
+ - ./schemas
 ```
 
 ```yaml

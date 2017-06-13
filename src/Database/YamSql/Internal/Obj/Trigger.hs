@@ -13,7 +13,6 @@ import Database.YamSql.Internal.Commons
 data Trigger = Trigger
   { triggerName :: SqlName
   , triggerDescription :: Text
-  , triggerTables :: [SqlName]
   , triggerMoment :: Text
   , triggerEvents :: [Text]
   , triggerForEach :: Text
@@ -29,6 +28,11 @@ instance FromJSON Trigger where
 instance ToJSON Trigger where
   toJSON = toYamSqlJson
 
-instance ToSqlIdPart Trigger where
-  sqlIdPart = triggerName
-  sqlIdPartType = const "TRIGGER"
+data SQL_TRIGGER =
+  SQL_TRIGGER
+  deriving (SqlObjType, Show)
+
+instance ToSqlCode SQL_TRIGGER where
+  toSqlCode = const "TRIGGER"
+
+type TriggerTemplate = Trigger

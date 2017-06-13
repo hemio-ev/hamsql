@@ -69,6 +69,7 @@ library
     Database.HamSql.Internal.Stmt.Schema
     Database.HamSql.Internal.Stmt.Sequence
     Database.HamSql.Internal.Stmt.Table
+    Database.HamSql.Internal.Stmt.Trigger
     Database.HamSql.Internal.Stmt.Type
     Database.YamSql.Internal.Obj.Check
     Database.YamSql.Internal.Obj.Domain
@@ -77,6 +78,7 @@ library
     Database.YamSql.Internal.Obj.Schema
     Database.YamSql.Internal.Obj.Sequence
     Database.YamSql.Internal.Obj.Table
+    Database.YamSql.Internal.Obj.Trigger
     Database.YamSql.Internal.Obj.Type
     Paths_hamsql
 
