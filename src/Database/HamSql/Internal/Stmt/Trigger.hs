@@ -14,7 +14,7 @@ import Database.HamSql.Internal.Stmt.Function ()
 instance ToSqlStmts (SqlContext (Schema, Table, Trigger)) where
   toSqlStmts context obj@(SqlContext (s, tabl, t)) =
     toSqlStmts context (SqlContext (s, triggerFunction)) ++
-    map triggerStmt [tableName tabl]
+    [ triggerStmt ]
     where
       triggerFunction =
         Function
@@ -34,18 +34,17 @@ instance ToSqlStmts (SqlContext (Schema, Table, Trigger)) where
         , functionLanguage = triggerLanguage t
         , functionBody = triggerBody t
         }
-      triggerStmt tbl =
+      triggerStmt =
         newSqlStmt SqlCreateTrigger obj $
         "CREATE TRIGGER " <> toSqlCode (triggerName t) <> " " <> triggerMoment t <>
         " " <>
         T.intercalate " OR " (triggerEvents t) <>
         " ON " <>
-        toSqlCode tbl <>
+        sqlIdCode (SqlContext (s, tabl)) <>
         " FOR EACH " <>
         triggerForEach t <>
         condition (triggerCondition t) <>
         " EXECUTE PROCEDURE " <>
-        sqlIdCode obj <>
-        "()"
+        sqlIdCode (SqlContext (s, triggerFunction))
       condition Nothing = ""
       condition (Just x) = " WHEN " <> x <> " "

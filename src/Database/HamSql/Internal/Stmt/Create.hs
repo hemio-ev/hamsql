@@ -18,6 +18,7 @@ import Database.HamSql.Internal.Stmt.Schema ()
 import Database.HamSql.Internal.Stmt.Sequence ()
 import Database.HamSql.Internal.Stmt.Table ()
 import Database.HamSql.Internal.Stmt.Type ()
+import Database.HamSql.Internal.Stmt.Trigger ()
 
 allSchemaElements :: Schema -> [SetupElement]
 allSchemaElements schema =
@@ -29,8 +30,10 @@ allSchemaElements schema =
   toElemList schemaTables schema ++
   toElemList schemaTypes schema ++
   concat
-    [ map (SetupElement . (\x -> SqlContext (schema, table, x))) $
-    tableColumns table
+    [ (map (SetupElement . (\x -> SqlContext (schema, table, x))) $
+    tableColumns table) ++
+     (map (SetupElement . (\x -> SqlContext (schema, table, x))) $
+    fromMaybe [] $ tableTriggers table)
     | table <- fromMaybe [] $ schemaTables schema
     ]
   where
