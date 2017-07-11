@@ -10,7 +10,7 @@ update-and-build: update build
 update:
 	cabal sandbox init
 	cabal update
-	cabal install -ffast --force-reinstalls --only-dependencies --disable-optimization
+	cabal install -ffast --only-dependencies --disable-optimization
 
 test:
 	cabal configure --disable-optimization --enable-coverage --enable-tests
