@@ -13,8 +13,7 @@ import Database.HamSql.Internal.Stmt.Function ()
 
 instance ToSqlStmts (SqlContext (Schema, Table, Trigger)) where
   toSqlStmts context obj@(SqlContext (s, tabl, t)) =
-    toSqlStmts context (SqlContext (s, triggerFunction)) ++
-    [ triggerStmt ]
+    toSqlStmts context (SqlContext (s, triggerFunction)) ++ [triggerStmt]
     where
       triggerFunction =
         Function
