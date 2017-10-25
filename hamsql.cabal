@@ -32,7 +32,8 @@ library
     DeriveGeneric,
     FlexibleContexts,
     FlexibleInstances,
-    OverloadedStrings
+    OverloadedStrings,
+    QuasiQuotes
     
   other-extensions: 
     GADTs,
@@ -124,10 +125,15 @@ test-suite hamsql-tests
   type:       exitcode-stdio-1.0
   main-is:    test/hamsql-tests.hs
   hs-source-dirs: . test
+  default-extensions:
+    OverloadedStrings
   build-depends:
     base >=4.8 && <5.0,
     hamsql,
     directory,
+    safe-exceptions,
+    postgresql-simple,
+    transformers,
     -- test
     tasty,
     tasty-hunit,

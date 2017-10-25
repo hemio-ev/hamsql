@@ -8,6 +8,8 @@
 module Database.HamSql.Internal.DbUtils where
 
 import Control.Exception
+import Control.Monad.Trans.Class (lift)
+import Control.Monad.Trans.Reader
 import qualified Data.ByteString.Char8 as B
 import Data.String
 import qualified Data.Text as T
@@ -20,6 +22,22 @@ import Database.HamSql.Internal.Option
 import Database.HamSql.Internal.Stmt
 import Database.HamSql.Internal.Utils
 import Database.YamSql
+
+type SqlT = ReaderT Connection IO
+
+psqlQry
+  :: (ToRow q, FromRow r)
+  => Query -> q -> SqlT [r]
+psqlQry template qs = do
+  conn <- ask
+  lift $ query conn template qs
+
+psqlQry_
+  :: (FromRow r)
+  => Query -> SqlT [r]
+psqlQry_ que = do
+  conn <- ask
+  lift $ query_ conn que
 
 sqlErrObjectInUse :: B.ByteString
 sqlErrObjectInUse = "55006"
@@ -34,10 +52,12 @@ logStmt opt x =
     Just filename -> TIO.appendFile filename (x <> "\n")
 
 getConUrl :: OptCommonDb -> URI
-getConUrl optDb = appendQuery "application_name=hamsql" uri
+getConUrl = getConUrlApp "hamsql" . optConnection
+
+getConUrlApp :: String -> String -> URI
+getConUrlApp app str = appendQuery ("application_name=" <> app) uri
   where
-    uri =
-      fromJustReason "Not a valid URI" (parseAbsoluteURI $ optConnection optDb)
+    uri = fromJustReason "Not a valid URI" (parseAbsoluteURI $ str)
     appendQuery v u =
       u
       { uriQuery =

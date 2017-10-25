@@ -117,10 +117,10 @@ instance Eq SqlName where
   (==) x y = toSqlCode x == toSqlCode y
 
 instance ToSqlCode SqlName where
-  toSqlCode (SqlName n) =
+  toSqlCode n'@(SqlName n) =
     if '"' `isIn` n
       then n
-      else toSqlCode' $ expSqlName $ SqlName n
+      else toSqlCode' $ expSqlName n'
 
 instance SqlIdentifierConcat SqlName where
   (//) (SqlName s) (SqlName t) = SqlName (s <> t)
@@ -187,6 +187,9 @@ instance Monoid SqlName where
 newtype SqlName =
   SqlName Text
   deriving (Generic, Ord, Show, Data)
+
+unsafeInternalName :: SqlName -> Text
+unsafeInternalName (SqlName x) = x
 
 instance FromJSON SqlName where
   parseJSON = genericParseJSON myOpt

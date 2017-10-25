@@ -6,12 +6,69 @@ module Database.HamSql.Internal.InquireDeployed where
 
 import Data.Text (stripPrefix)
 import Database.PostgreSQL.Simple
+import Database.PostgreSQL.Simple.SqlQQ
 import Database.PostgreSQL.Simple.Types (PGArray(..), fromPGArray)
 
 import Database.HamSql.Internal.DbUtils
 import Database.HamSql.Internal.Utils
 import Database.HamSql.Setup
 import Database.YamSql
+
+deployedTables :: SqlName -> SqlT [Table]
+deployedTables schema = do
+  tbls <- psqlQry qry (Only $ toSqlCode schema)
+  sequence $ map toTable tbls
+  where
+    toTable (table, pname) = do
+      columns <- deployedColumns (schema, table)
+      return $
+        Table
+        { tableName = table
+        , tableDescription = "x"
+        , tableColumns = columns
+        , tablePrimaryKey = [pname]
+        , tableUnique = Nothing
+        , tableForeignKeys = Nothing
+        , tableChecks = Nothing
+        , tableInherits = Nothing
+        , tablePrivSelect = Nothing
+        , tablePrivInsert = Nothing
+        , tablePrivUpdate = Nothing
+        , tablePrivDelete = Nothing
+        , tableTemplates = Nothing
+        }
+    qry =
+      [sql|
+        SELECT table_name, table_name
+        FROM information_schema.tables
+          WHERE table_schema::regnamespace = ?::regnamespace
+      |]
+
+deployedColumns :: (SqlName, SqlName) -> SqlT [Column]
+deployedColumns tbl = map toColumn <$> psqlQry qry (Only $ toSqlCode tbl)
+  where
+    toColumn (sname, dataType, columnDefault') =
+      Column
+      { columnName = sname
+      , columnType = dataType
+      , columnDescription = "x"
+      , columnDefault = columnDefault'
+      , columnNull = Nothing
+      , columnReferences = Nothing
+      , columnOnRefDelete = Nothing
+      , columnOnRefUpdate = Nothing
+      , columnUnique = Nothing
+      , columnChecks = Nothing
+      }
+    qry =
+      [sql|
+        SELECT
+          column_name,
+          COALESCE(domain_schema || '.' || domain_name, data_type),
+          column_default
+        FROM information_schema.columns
+          WHERE (table_schema || '.' || table_name)::regclass = ?::regclass
+      |]
 
 sqlManageSchemaJoin :: Text -> Text
 sqlManageSchemaJoin schemaid =

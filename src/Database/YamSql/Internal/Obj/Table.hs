@@ -17,7 +17,6 @@ data Table = Table
   , tablePrivUpdate :: Maybe [SqlName]
   , tablePrivDelete :: Maybe [SqlName]
   , tableTemplates :: Maybe [SqlName]
-  , tableTemplateData :: Maybe [TableTpl]
   } deriving (Data, Generic, Show)
 
 instance FromJSON Table where
