@@ -8,7 +8,7 @@ module Database.HamSql.Cli
   , parseThisArgv
   ) where
 
-import Control.Monad (void, when)
+import Control.Monad (when)
 import Data.List
 import Data.Maybe
 import qualified Data.Text as T
@@ -17,6 +17,7 @@ import Data.Version (showVersion)
 import Network.URI
 import Options.Applicative hiding (info)
 import System.Environment (getArgs)
+import Database.PostgreSQL.Simple (close)
 
 import Paths_hamsql (version)
 
@@ -46,7 +47,7 @@ run (Install optCommon optDb optInstall)
     stmts <- pgsqlGetFullStatements optCommon setup
     let dbname = SqlName $ T.pack $ tail $ uriPath $ getConUrl optDb
     if not (optEmulate optDb || optPrint optDb)
-      then void $
+      then close =<<
            pgsqlExecWithoutTransact
              optDb
              ((getConUrl optDb) {uriPath = "/postgres"})
@@ -82,8 +83,8 @@ run (NoCommand opt)
 useSqlStmts :: OptCommon -> OptCommonDb -> [SqlStmt] -> IO ()
 useSqlStmts optCommon optDb unfilteredStmts
   | optPrint optDb = T.IO.putStrLn $ sqlPrinter $ sqlAddTransact stmts
-  | optEmulate optDb = void $ pgsqlExec optDb (getConUrl optDb) stmts
-  | otherwise = void $ pgsqlExec optDb (getConUrl optDb) stmts
+  | optEmulate optDb = close =<< pgsqlExec optDb (getConUrl optDb) stmts
+  | otherwise = close =<< pgsqlExec optDb (getConUrl optDb) stmts
   where
     warnOnDiff xs =
       case unfilteredStmts \\ xs of
