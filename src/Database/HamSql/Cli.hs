@@ -14,10 +14,10 @@ import Data.Maybe
 import qualified Data.Text as T
 import qualified Data.Text.IO as T.IO
 import Data.Version (showVersion)
+import Database.PostgreSQL.Simple (close)
 import Network.URI
 import Options.Applicative hiding (info)
 import System.Environment (getArgs)
-import Database.PostgreSQL.Simple (close)
 
 import Paths_hamsql (version)
 
@@ -43,8 +43,8 @@ run (Install optCommon optDb optInstall)
     "For installs either both --permit-data-deletion and --delete-existing-database" <->
     "must be supplied or non of them."
   | otherwise = do
-    setup <- loadSetup optCommon (optSetup optCommon)
-    stmts <- pgsqlGetFullStatements optCommon setup
+    setup <- loadSetup (optSetup optCommon)
+    stmts <- pgsqlGetFullStatements setup
     let dbname = SqlName $ T.pack $ tail $ uriPath $ getConUrl optDb
     if not (optEmulate optDb || optPrint optDb)
       then close =<<
@@ -65,16 +65,16 @@ run (Install optCommon optDb optInstall)
     useSqlStmts optCommon optDb $ sort $ stmts ++ dropRoleStmts
 -- Upgrade
 run (Upgrade optCommon optDb) = do
-  setup <- loadSetup optCommon (optSetup optCommon)
+  setup <- loadSetup (optSetup optCommon)
   conn <- pgsqlConnectUrl (getConUrl optDb)
   deleteStmts <- pgsqlDeleteAllStmt conn
-  createStmts <- pgsqlGetFullStatements optCommon setup
+  createStmts <- pgsqlGetFullStatements setup
   fragile <- pgsqlUpdateFragile setup conn createStmts
   let stmts = sort deleteStmts ++ Data.List.filter allowInUpgrade (sort fragile)
   useSqlStmts optCommon optDb stmts
 -- Doc
 run (Doc optCommon optDoc) = do
-  setup <- loadSetup optCommon (optSetup optCommon)
+  setup <- loadSetup (optSetup optCommon)
   docWrite optDoc setup
 run (NoCommand opt)
   | optVersion opt = putStrLn $ "hamsql " ++ showVersion version

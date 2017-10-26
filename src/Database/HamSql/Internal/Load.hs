@@ -19,17 +19,15 @@ import System.Directory
 import System.FilePath.Posix (combine, dropFileName, takeFileName)
 import System.IO (stdin)
 
-import Database.HamSql.Internal.Option
 import Database.HamSql.Internal.Utils
 import Database.HamSql.Setup
 import Database.YamSql
 import Database.YamSql.Parser
 
-loadSetup :: OptCommon -> FilePath -> IO Setup
-loadSetup opts filePath = do
-  setup <- readObjectFromFile opts filePath
-  setup' <-
-    loadSetupSchemas opts (dropFileName filePath) (initSetupInternal setup)
+loadSetup :: FilePath -> IO Setup
+loadSetup filePath = do
+  setup <- readObjectFromFile filePath
+  setup' <- loadSetupSchemas (dropFileName filePath) (initSetupInternal setup)
   return $ applyTpl setup'
   where
     initSetupInternal s' =
@@ -39,19 +37,14 @@ loadSetup opts filePath = do
       }
 
 -- Tries to loads all defined modules from defined module dirs
-loadSetupSchemas :: OptCommon -> FilePath -> Setup -> IO Setup
-loadSetupSchemas opts path s = do
-  schemaData <- loadSchemas opts path s [] (setupSchemas s)
+loadSetupSchemas :: FilePath -> Setup -> IO Setup
+loadSetupSchemas path s = do
+  schemaData <- loadSchemas path s [] (setupSchemas s)
   return s {setupSchemaData = Just schemaData}
 
-loadSchemas :: OptCommon
-            -> FilePath
-            -> Setup
-            -> [Schema]
-            -> [SqlName]
-            -> IO [Schema]
-loadSchemas _ _ _ allLoaded [] = return allLoaded
-loadSchemas optCom path setup loadedSchemas missingSchemas = do
+loadSchemas :: FilePath -> Setup -> [Schema] -> [SqlName] -> IO [Schema]
+loadSchemas _ _ allLoaded [] = return allLoaded
+loadSchemas path setup loadedSchemas missingSchemas = do
   schemas <-
     sequence
       [ loadSchema (T.unpack $ unsafePlainName schema)
@@ -62,12 +55,12 @@ loadSchemas optCom path setup loadedSchemas missingSchemas = do
   let allLoadedSchemas = schemas ++ loadedSchemas
   let newMissingDepencenyNames =
         newDependencyNames \\ map schemaName allLoadedSchemas
-  loadSchemas optCom path setup allLoadedSchemas newMissingDepencenyNames
+  loadSchemas path setup allLoadedSchemas newMissingDepencenyNames
   where
     loadSchema :: FilePath -> IO Schema
     loadSchema schema = do
       schemaPath <- findSchemaPath schema schemaDirs
-      readSchema optCom schemaPath
+      readSchema schemaPath
     schemaDirs = map (combine path) (fromMaybe [""] $ setupSchemaDirs setup)
 
 findSchemaPath :: FilePath -> [FilePath] -> IO FilePath
@@ -119,18 +112,18 @@ errorCheck :: Text -> Bool -> IO ()
 errorCheck errMsg False = err errMsg
 errorCheck _ True = return ()
 
-readSchema :: OptCommon -> FilePath -> IO Schema
-readSchema opts md = do
+readSchema :: FilePath -> IO Schema
+readSchema md = do
   doesDirectoryExist md >>=
     errorCheck ("module dir does not exist: " <> tshow md)
-  schemaData <- readObjectFromFile opts schemaConfig
-  domains <- confDirFiles "domains.d" >>= mapM (readObjectFromFile opts)
-  types <- confDirFiles "types.d" >>= mapM (readObjectFromFile opts)
-  sequences <- confDirFiles "sequences.d" >>= mapM (readObjectFromFile opts)
-  tables <- confDirFiles "tables.d" >>= mapM (readObjectFromFile opts)
+  schemaData <- readObjectFromFile schemaConfig
+  domains <- confDirFiles "domains.d" >>= mapM (readObjectFromFile)
+  types <- confDirFiles "types.d" >>= mapM (readObjectFromFile)
+  sequences <- confDirFiles "sequences.d" >>= mapM (readObjectFromFile)
+  tables <- confDirFiles "tables.d" >>= mapM (readObjectFromFile)
   functions <-
     let ins x s = x {functionBody = Just s}
-    in confDirFiles "functions.d" >>= mapM (readFunctionFromFile ins opts)
+    in confDirFiles "functions.d" >>= mapM (readFunctionFromFile ins)
   let schemaData' =
         schemaData
         { schemaDomains = schemaDomains schemaData <> Just domains
@@ -146,9 +139,9 @@ readSchema opts md = do
 
 readObjectFromFile
   :: (FromJSON a, ToJSON a)
-  => OptCommon -> FilePath -> IO a
-readObjectFromFile opts file = do
-  b <- readYamSqlFile opts file
+  => FilePath -> IO a
+readObjectFromFile file = do
+  b <- readYamSqlFile file
   readObject file b
 
 readObject
@@ -162,19 +155,19 @@ readObject file b =
 
 readFunctionFromFile
   :: (FromJSON a, ToJSON a)
-  => (a -> Text -> a) -> OptCommon -> FilePath -> IO a
-readFunctionFromFile rpl opts file = do
-  b <- readYamSqlFile opts file
+  => (a -> Text -> a) -> FilePath -> IO a
+readFunctionFromFile rpl file = do
+  b <- readYamSqlFile file
   case parseFrontmatter b of
     Done body yaml -> do
       f <- readObject file yaml
       return $ rpl f (decodeUtf8 body)
     _ -> readObject file b
 
-readYamSqlFile :: OptCommon -> FilePath -> IO B.ByteString
-readYamSqlFile opts "-" = do
-  debug opts "Reading file from STDIN" $ B.hGetContents stdin
-readYamSqlFile opts file = do
+readYamSqlFile :: FilePath -> IO B.ByteString
+readYamSqlFile "-" = do
+  B.hGetContents stdin
+readYamSqlFile file = do
   fileExists <- doesFileExist file
   unless fileExists $ err $ "Expected file existance: '" <> tshow file <> "'"
-  debug opts ("Reading file " <> tshow file) $ B.readFile file
+  B.readFile file
