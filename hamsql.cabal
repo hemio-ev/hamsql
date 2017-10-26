@@ -134,6 +134,8 @@ test-suite hamsql-tests
     safe-exceptions,
     postgresql-simple,
     transformers,
+    yaml,
+    bytestring,
     -- test
     tasty,
     tasty-hunit,

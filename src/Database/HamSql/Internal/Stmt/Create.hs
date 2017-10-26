@@ -56,16 +56,15 @@ sqlAddTransact xs =
   xs ++ catMaybes [newSqlStmt SqlUnclassified emptyName "COMMIT"]
 
 -- | Setup
-getSetupStatements :: OptCommon -> Setup -> [Maybe SqlStmt]
-getSetupStatements opts s =
-  debug opts "stmtInstallSetup" $
+getSetupStatements :: Setup -> [Maybe SqlStmt]
+getSetupStatements s =
   [getStmt $ setupPreCode s] ++ schemaStatements ++ [getStmt $ setupPostCode s]
   where
     schemaStatements =
-      concat $ maybeMap (getSchemaStatements opts s) (setupSchemaData s)
+      concat $ maybeMap (getSchemaStatements s) (setupSchemaData s)
     getStmt (Just code) = newSqlStmt SqlPre emptyName code
     getStmt Nothing = Nothing
 
-getSchemaStatements :: OptCommon -> Setup -> Schema -> [Maybe SqlStmt]
-getSchemaStatements _ setup s =
+getSchemaStatements :: Setup -> Schema -> [Maybe SqlStmt]
+getSchemaStatements setup s =
   elementsToStmts (SetupContext setup) $ allSchemaElements s

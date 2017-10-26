@@ -1,0 +1,4 @@
+schemas: 
+ - self-test
+
+role_prefix: hamsql-test_

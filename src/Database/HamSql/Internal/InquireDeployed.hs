@@ -14,19 +14,62 @@ import Database.HamSql.Internal.Utils
 import Database.HamSql.Setup
 import Database.YamSql
 
+deployedSchemas :: SqlT [Schema]
+deployedSchemas = do
+  schemas <- psqlQry_ qry
+  sequence $ map toSchema schemas
+  where
+    toSchema (schema, description) = do
+      tables <- deployedTables schema
+      return $
+        Schema
+        { schemaName = schema
+        , schemaDescription = description
+        , schemaDependencies = Nothing
+        , schemaFunctions = Nothing
+        , schemaFunctionTemplates = Nothing
+        , schemaTables = Just tables
+        , schemaTableTemplates = Nothing
+        , schemaRoles = Nothing
+        , schemaSequences = Nothing
+        , schemaPrivUsage = Nothing
+        , schemaPrivSelectAll = Nothing
+        , schemaPrivInsertAll = Nothing
+        , schemaPrivUpdateAll = Nothing
+        , schemaPrivDeleteAll = Nothing
+        , schemaPrivSequenceAll = Nothing
+        , schemaPrivExecuteAll = Nothing
+        , schemaPrivAllAll = Nothing
+        , schemaDomains = Nothing
+        , schemaTypes = Nothing
+        , schemaExecPostInstall = Nothing
+        , schemaExecPostInstallAndUpgrade = Nothing
+        }
+    qry =
+      [sql|
+      SELECT
+        nspname,
+        COALESCE(pg_catalog.obj_description(oid, 'pg_namespace'), '')
+      FROM pg_catalog.pg_namespace
+      WHERE nspname <> 'information_schema' AND nspname NOT LIKE 'pg\_%'
+      -- TODO: do public right
+      AND nspname <> 'public'
+    |]
+
 deployedTables :: SqlName -> SqlT [Table]
 deployedTables schema = do
   tbls <- psqlQry qry (Only $ toSqlCode schema)
   sequence $ map toTable tbls
   where
-    toTable (table, pname) = do
+    toTable (table, description) = do
       columns <- deployedColumns (schema, table)
+      pk <- deployedPrimaryKey (schema, table)
       return $
         Table
         { tableName = table
-        , tableDescription = "x"
+        , tableDescription = description
         , tableColumns = columns
-        , tablePrimaryKey = [pname]
+        , tablePrimaryKey = pk
         , tableUnique = Nothing
         , tableForeignKeys = Nothing
         , tableChecks = Nothing
@@ -39,21 +82,24 @@ deployedTables schema = do
         }
     qry =
       [sql|
-        SELECT table_name, table_name
+        SELECT
+          table_name,
+          COALESCE(pg_catalog.obj_description(
+            (table_schema || '.' || table_name)::regclass, 'pg_class'), '')
         FROM information_schema.tables
-          WHERE table_schema::regnamespace = ?::regnamespace
+        WHERE table_schema::regnamespace = ?::regnamespace
       |]
 
 deployedColumns :: (SqlName, SqlName) -> SqlT [Column]
 deployedColumns tbl = map toColumn <$> psqlQry qry (Only $ toSqlCode tbl)
   where
-    toColumn (sname, dataType, columnDefault') =
+    toColumn (sname, dataType, columnDefault', isNullable, description) =
       Column
       { columnName = sname
       , columnType = dataType
-      , columnDescription = "x"
+      , columnDescription = description
       , columnDefault = columnDefault'
-      , columnNull = Nothing
+      , columnNull = isNullable
       , columnReferences = Nothing
       , columnOnRefDelete = Nothing
       , columnOnRefUpdate = Nothing
@@ -65,10 +111,47 @@ deployedColumns tbl = map toColumn <$> psqlQry qry (Only $ toSqlCode tbl)
         SELECT
           column_name,
           COALESCE(domain_schema || '.' || domain_name, data_type),
-          column_default
+          column_default,
+          is_nullable::bool,
+          COALESCE(pg_catalog.col_description(a.attrelid, a.attnum), '')
         FROM information_schema.columns
-          WHERE (table_schema || '.' || table_name)::regclass = ?::regclass
+        JOIN pg_catalog.pg_attribute AS a
+          ON a.attrelid = (table_schema || '.' || table_name)::regclass
+          AND a.attname = column_name 
+        WHERE (table_schema || '.' || table_name)::regclass = ?::regclass
       |]
+
+deployedPrimaryKey :: (SqlName, SqlName) -> SqlT [SqlName]
+deployedPrimaryKey tbl = do
+  res <- psqlQry keyQuery (Only $ toSqlCode tbl)
+  return $
+    case res of
+      [] -> []
+      (x:_) -> toPrimaryKey x
+  where
+    toPrimaryKey :: (SqlName, PGArray SqlName) -> [SqlName]
+  -- TODO: do not ignore name
+    toPrimaryKey (_, keys) = fromPGArray keys
+
+-- (tbl)
+keyQuery :: Query
+keyQuery =
+  [sql|
+          SELECT
+            irel.relname AS index_name,
+            array_agg (a.attname ORDER BY c.ordinality) AS columns
+          FROM pg_index AS i
+          JOIN pg_class AS trel ON trel.oid = i.indrelid
+          JOIN pg_namespace AS tnsp ON trel.relnamespace = tnsp.oid
+          JOIN pg_class AS irel ON irel.oid = i.indexrelid
+          CROSS JOIN LATERAL unnest (i.indkey) WITH ORDINALITY AS c (colnum, ordinality)
+          JOIN pg_attribute AS a
+            ON trel.oid = a.attrelid AND a.attnum = c.colnum
+          WHERE
+             (tnsp.nspname || '.' || trel.relname)::regclass = ?::regclass
+             AND i.indisprimary
+          GROUP BY tnsp.nspname, trel.relname, irel.relname;      
+    |]
 
 sqlManageSchemaJoin :: Text -> Text
 sqlManageSchemaJoin schemaid =
