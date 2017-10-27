@@ -14,6 +14,13 @@ import Database.HamSql.Internal.Utils
 import Database.HamSql.Setup
 import Database.YamSql
 
+preset
+  :: Eq a
+  => a -> a -> Maybe a
+preset d x
+  | d == x = Nothing
+  | otherwise = Just x
+
 deployedSchemas :: SqlT [Schema]
 deployedSchemas = do
   schemas <- psqlQry_ qry
@@ -26,12 +33,12 @@ deployedSchemas = do
         { schemaName = schema
         , schemaDescription = description
         , schemaDependencies = Nothing
-        , schemaFunctions = Nothing
+        , schemaFunctions = Just []
         , schemaFunctionTemplates = Nothing
         , schemaTables = Just tables
         , schemaTableTemplates = Nothing
         , schemaRoles = Nothing
-        , schemaSequences = Nothing
+        , schemaSequences = Just []
         , schemaPrivUsage = Nothing
         , schemaPrivSelectAll = Nothing
         , schemaPrivInsertAll = Nothing
@@ -40,8 +47,8 @@ deployedSchemas = do
         , schemaPrivSequenceAll = Nothing
         , schemaPrivExecuteAll = Nothing
         , schemaPrivAllAll = Nothing
-        , schemaDomains = Nothing
-        , schemaTypes = Nothing
+        , schemaDomains = Just []
+        , schemaTypes = Just []
         , schemaExecPostInstall = Nothing
         , schemaExecPostInstallAndUpgrade = Nothing
         }
@@ -99,7 +106,7 @@ deployedColumns tbl = map toColumn <$> psqlQry qry (Only $ toSqlCode tbl)
       , columnType = dataType
       , columnDescription = description
       , columnDefault = columnDefault'
-      , columnNull = isNullable
+      , columnNull = preset False isNullable
       , columnReferences = Nothing
       , columnOnRefDelete = Nothing
       , columnOnRefUpdate = Nothing
@@ -121,9 +128,10 @@ deployedColumns tbl = map toColumn <$> psqlQry qry (Only $ toSqlCode tbl)
         WHERE (table_schema || '.' || table_name)::regclass = ?::regclass
       |]
 
+--deployedKeys :: 
 deployedPrimaryKey :: (SqlName, SqlName) -> SqlT [SqlName]
 deployedPrimaryKey tbl = do
-  res <- psqlQry keyQuery (Only $ toSqlCode tbl)
+  res <- psqlQry keyQuery (toSqlCode tbl, True, True)
   return $
     case res of
       [] -> []
@@ -133,7 +141,7 @@ deployedPrimaryKey tbl = do
   -- TODO: do not ignore name
     toPrimaryKey (_, keys) = fromPGArray keys
 
--- (tbl)
+-- (tbl, unique, primary)
 keyQuery :: Query
 keyQuery =
   [sql|
@@ -149,7 +157,8 @@ keyQuery =
             ON trel.oid = a.attrelid AND a.attnum = c.colnum
           WHERE
              (tnsp.nspname || '.' || trel.relname)::regclass = ?::regclass
-             AND i.indisprimary
+             AND i.indisunique = ?
+             AND i.indisprimary = ?
           GROUP BY tnsp.nspname, trel.relname, irel.relname;      
     |]
 

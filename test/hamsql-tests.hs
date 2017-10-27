@@ -3,9 +3,12 @@ module Main where
 import Control.Exception.Safe
 import Control.Monad.Trans.Reader (runReaderT)
 import qualified Data.ByteString as B
+import Data.Monoid ((<>))
+import qualified Data.Text.Lazy as T
 import Data.Yaml.Pretty
 import Database.PostgreSQL.Simple (Connection)
 import System.Exit
+import Text.Pretty.Simple
 
 --import System.Directory
 import Test.Tasty
@@ -34,18 +37,34 @@ deploySetup s =
     , "postgresql://postgres@/test1"
     ]
 
+--B.putStrLn $ encodePretty defConfig (newSetup schemas)
 xx :: TestTree
 xx =
   testCase "tables" $ do
     deploySetup "self-test.yml"
-    schemas <- conn >>= runReaderT deployedSchemas
-    --B.putStrLn $ encodePretty defConfig (newSetup schemas)
-    stmtsYamSql <-
-      pgsqlGetFullStatements =<< (loadSetup "test/setups/self-test.yml")
-    stmtsDb <- pgsqlGetFullStatements (newSetup schemas)
-    print (show stmtsYamSql)
-    print (show stmtsDb)
-    firstListDiff stmtsDb stmtsYamSql @?= Nothing
+    setupLocal <- (loadSetup "test/setups/self-test.yml")
+    stmtsLocal <- pgsqlGetFullStatements setupLocal
+    schemasDb <- conn >>= runReaderT deployedSchemas
+    stmtsDb <- pgsqlGetFullStatements (newSetup schemasDb)
+    assertNoShowDiff (Just schemasDb) (setupSchemaData setupLocal)
+    assertNoDiff stmtsDb stmtsLocal
+
+assertNoShowDiff
+  :: (Show a0, Show a1)
+  => a0 -> a1 -> Assertion
+assertNoShowDiff x y =
+  assertNoDiff (T.lines $ pShowNoColor x) (T.lines $ pShowNoColor y)
+
+assertNoDiff
+  :: (Show a, Eq a)
+  => [a] -> [a] -> Assertion
+assertNoDiff xs ys =
+  case firstListDiff xs ys of
+    Nothing -> return ()
+    Just (x, y) ->
+      assertFailure $
+      T.unpack
+        ("version 1: " <> pShowNoColor x <> "\nversion 2: " <> pShowNoColor y)
 
 firstListDiff
   :: Eq a

@@ -136,6 +136,8 @@ test-suite hamsql-tests
     transformers,
     yaml,
     bytestring,
+    pretty-simple,
+    text,
     -- test
     tasty,
     tasty-hunit,
