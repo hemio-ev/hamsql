@@ -10,6 +10,13 @@ tables:
       type: integer
       description: A
 #      unique: true
+   unique:
+     - columns: [a]
+     - name: test1
+       columns: [a]
+     - name:
+        prefixed: x_test1
+       columns: [a]
  - name: t2
    description: Table 2
    primary_key: [b]
@@ -24,3 +31,5 @@ tables:
 #       columns: [b]
 #       ref_table: self-test.t1
 #       ref_columns: [a]
+
+

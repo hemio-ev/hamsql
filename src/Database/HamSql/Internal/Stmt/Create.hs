@@ -6,7 +6,6 @@ module Database.HamSql.Internal.Stmt.Create where
 
 import Data.Maybe
 
-import Database.HamSql.Internal.Option
 import Database.HamSql.Internal.Stmt
 import Database.HamSql.Internal.Stmt.Basic
 import Database.HamSql.Internal.Stmt.Commons ()

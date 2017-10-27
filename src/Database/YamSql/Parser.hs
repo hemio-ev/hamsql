@@ -18,7 +18,7 @@ module Database.YamSql.Parser
 import Control.Exception
 import Data.Aeson.Types
        (GFromJSON, GToJSON, Options(..), defaultOptions, genericParseJSON,
-        genericToJSON, Zero)
+        genericToJSON, Zero, SumEncoding(UntaggedValue))
 
 import Data.Char
 import Data.Data
@@ -55,6 +55,7 @@ myOpt =
   defaultOptions
   { fieldLabelModifier = snakeify . removeFirstPart
   , constructorTagModifier = drop 1 . snakeify
+  , sumEncoding = UntaggedValue
   }
 
 outJson
@@ -88,7 +89,7 @@ parseYamSql xs = do
       "tag" : map (snakeify . removeFirstPart) (constrFields (toConstr u))
     keysOfValue :: Value -> [String]
     keysOfValue (Object ys) = map T.unpack $ keys ys
-    keysOfValue _ = err "HAMSQL-UNEXPECTED 3"
+    keysOfValue _ = []
     explainMissing :: [String] -> [String] -> String -> Text
     explainMissing known used x =
       "\n - " <> tshow x <> " (did you mean " <> tshow (closestString x ls) <>

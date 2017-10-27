@@ -160,6 +160,13 @@ instance ToSqlStmts (SqlContext (Schema, Table, Column)) where
             , sequenceOwnedByColumn = Just $ SqlName $ sqlIdCode obj
             })
 
+indexName :: SqlName -> [SqlName] -> SqlName -> Maybe IndexName -> SqlName
+indexName t keys s Nothing = mconcat ([t] ++ keys ++ [s])
+indexName t _ s (Just k) =
+  case k of
+    (IndexNameUnprefixed n) -> t <> n <> s
+    (IndexNamePrefixed {indexnamePrefixed = n}) -> n
+
 instance ToSqlStmts (SqlContext (Schema, Table)) where
   toSqlStmts SetupContext {setupContextSetup = setup} obj@(SqlContext (s, t)) =
     [ stmtCreateTable
@@ -196,14 +203,19 @@ instance ToSqlStmts (SqlContext (Schema, Table)) where
            T.intercalate ", " (map toSqlCode ks) <>
            ")"
       -- TODO: allow empty name with "mconcat (uniquekeyColumns ks)"
-      sqlUniqueConstr :: UniqueKey -> Maybe SqlStmt
+      sqlUniqueConstr :: UniqueConstraint -> Maybe SqlStmt
       sqlUniqueConstr ks =
-        let constr = tableName t <> uniquekeyName ks
+        let constr =
+              indexName
+                (tableName t)
+                (uniqueconstraintColumns ks)
+                (SqlName "key")
+                (uniqueconstraintName ks)
         in newSqlStmt SqlCreateUniqueConstr (constrId s t constr) $
            "ALTER TABLE " <> sqlIdCode obj <> " ADD CONSTRAINT " <>
            toSqlCode constr <>
            " UNIQUE (" <>
-           T.intercalate ", " (map toSqlCode (uniquekeyColumns ks)) <>
+           T.intercalate ", " (map toSqlCode (uniqueconstraintColumns ks)) <>
            ")"
       sqlAddForeignKey' :: ForeignKey -> Maybe SqlStmt
       sqlAddForeignKey' fk =

@@ -8,7 +8,7 @@ data Table = Table
   , tableDescription :: Text
   , tableColumns :: [Column]
   , tablePrimaryKey :: [SqlName]
-  , tableUnique :: Maybe [UniqueKey]
+  , tableUnique :: Maybe [UniqueConstraint]
   , tableForeignKeys :: Maybe [ForeignKey]
   , tableChecks :: Maybe [Check]
   , tableInherits :: Maybe [SqlName]
@@ -90,15 +90,26 @@ applyTableTpl tpl t =
   , tablePrivDelete = maybeJoin (tabletplPrivDelete tpl) (tablePrivDelete t)
   }
 
-data UniqueKey = UniqueKey
-  { uniquekeyName :: SqlName
-  , uniquekeyColumns :: [SqlName]
-  } deriving (Generic, Show, Data)
+data IndexName
+  = IndexNameUnprefixed SqlName
+  | IndexNamePrefixed { indexnamePrefixed :: SqlName }
+  deriving (Generic, Show, Data)
 
-instance FromJSON UniqueKey where
+instance FromJSON IndexName where
   parseJSON = parseYamSql
 
-instance ToJSON UniqueKey where
+instance ToJSON IndexName where
+  toJSON = toYamSqlJson
+
+data UniqueConstraint = UniqueConstraint
+  { uniqueconstraintName :: Maybe IndexName
+  , uniqueconstraintColumns :: [SqlName]
+  } deriving (Generic, Show, Data)
+
+instance FromJSON UniqueConstraint where
+  parseJSON = parseYamSql
+
+instance ToJSON UniqueConstraint where
   toJSON = toYamSqlJson
 
 data ForeignKey = ForeignKey

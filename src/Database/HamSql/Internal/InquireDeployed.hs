@@ -4,7 +4,7 @@
 -- Some rights reserved. See COPYING, AUTHORS.
 module Database.HamSql.Internal.InquireDeployed where
 
-import Data.Text (stripPrefix)
+import Data.Text (stripPrefix, stripSuffix, intercalate)
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.SqlQQ
 import Database.PostgreSQL.Simple.Types (PGArray(..), fromPGArray)
@@ -20,6 +20,18 @@ preset
 preset d x
   | d == x = Nothing
   | otherwise = Just x
+
+presetEmpty :: [a] -> Maybe [a]
+presetEmpty [] = Nothing
+presetEmpty xs = Just xs
+
+recoverIndexName :: Text -> [Text] -> Text -> Maybe IndexName
+recoverIndexName tbl keys n =
+  case stripPrefix (tbl <> "_") n >>= stripSuffix "_key" of
+    Nothing -> Just $ IndexNamePrefixed {indexnamePrefixed = SqlName n}
+    Just unprefixed
+      | unprefixed == intercalate "_" keys -> Nothing
+      | otherwise -> Just $ IndexNameUnprefixed (SqlName unprefixed)
 
 deployedSchemas :: SqlT [Schema]
 deployedSchemas = do
@@ -71,13 +83,14 @@ deployedTables schema = do
     toTable (table, description) = do
       columns <- deployedColumns (schema, table)
       pk <- deployedPrimaryKey (schema, table)
+      uniques <- deployedUniqueConstraints (schema, table)
       return $
         Table
         { tableName = table
         , tableDescription = description
         , tableColumns = columns
         , tablePrimaryKey = pk
-        , tableUnique = Nothing
+        , tableUnique = presetEmpty uniques
         , tableForeignKeys = Nothing
         , tableChecks = Nothing
         , tableInherits = Nothing
@@ -140,6 +153,19 @@ deployedPrimaryKey tbl = do
     toPrimaryKey :: (SqlName, PGArray SqlName) -> [SqlName]
   -- TODO: do not ignore name
     toPrimaryKey (_, keys) = fromPGArray keys
+
+deployedUniqueConstraints :: (SqlName, SqlName) -> SqlT [UniqueConstraint]
+deployedUniqueConstraints tbl@(_, table) = do
+  res <- psqlQry keyQuery (toSqlCode tbl, True, False)
+  return $ map toUniqueConstraint res
+  where
+    toUniqueConstraint (keyName, keys') =
+      let keys = fromPGArray keys'
+      in UniqueConstraint
+         { uniqueconstraintName =
+             recoverIndexName (unsafeInternalName table) keys keyName
+         , uniqueconstraintColumns = map SqlName keys
+         }
 
 -- (tbl, unique, primary)
 keyQuery :: Query

@@ -2,10 +2,12 @@ module Main where
 
 import Control.Exception.Safe
 import Control.Monad.Trans.Reader (runReaderT)
-import qualified Data.ByteString as B
+
+--import qualified Data.ByteString as B
 import Data.Monoid ((<>))
 import qualified Data.Text.Lazy as T
-import Data.Yaml.Pretty
+
+--import Data.Yaml.Pretty
 import Database.PostgreSQL.Simple (Connection)
 import System.Exit
 import Text.Pretty.Simple
@@ -21,12 +23,13 @@ import Database.HamSql.Internal.Load (loadSetup)
 import Database.HamSql.Internal.PostgresCon
 import Database.HamSql.Setup
 import Database.YamSql
-import Database.YamSql.Internal.SqlId (SqlName(..))
 
+--import Database.YamSql.Internal.SqlId (SqlName(..))
 conn :: IO Connection
 conn =
   pgsqlConnectUrl $ getConUrlApp "hamsql-test" "postgresql://postgres@/test1"
 
+deploySetup :: String -> Assertion
 deploySetup s =
   exec'
     [ "install"
@@ -63,8 +66,10 @@ assertNoDiff xs ys =
     Nothing -> return ()
     Just (x, y) ->
       assertFailure $
-      T.unpack
-        ("version 1: " <> pShowNoColor x <> "\nversion 2: " <> pShowNoColor y)
+      T.unpack ("version 1: " <> pForm x <> "\nversion 2: " <> pForm y)
+  where
+    pForm Nothing = "*Nothing*"
+    pForm (Just x) = pShowNoColor x
 
 firstListDiff
   :: Eq a
