@@ -25,9 +25,9 @@ presetEmpty :: [a] -> Maybe [a]
 presetEmpty [] = Nothing
 presetEmpty xs = Just xs
 
-recoverIndexName :: Text -> [Text] -> Text -> Maybe IndexName
-recoverIndexName tbl keys n =
-  case stripPrefix (tbl <> "_") n >>= stripSuffix "_key" of
+recoverIndexName :: Text -> [Text] -> Text -> Text -> Maybe IndexName
+recoverIndexName tbl keys n s =
+  case stripPrefix (tbl <> "_") n >>= stripSuffix ("_" <> s) of
     Nothing -> Just $ IndexNamePrefixed {indexnamePrefixed = SqlName n}
     Just unprefixed
       | unprefixed == intercalate "_" keys -> Nothing
@@ -83,6 +83,7 @@ deployedTables schema = do
     toTable (table, description) = do
       columns <- deployedColumns (schema, table)
       pk <- deployedPrimaryKey (schema, table)
+      fks <- deployedForeignKeys (schema, table)
       uniques <- deployedUniqueConstraints (schema, table)
       return $
         Table
@@ -91,7 +92,7 @@ deployedTables schema = do
         , tableColumns = columns
         , tablePrimaryKey = pk
         , tableUnique = presetEmpty uniques
-        , tableForeignKeys = Nothing
+        , tableForeignKeys = presetEmpty fks
         , tableChecks = Nothing
         , tableInherits = Nothing
         , tablePrivSelect = Nothing
@@ -154,18 +155,56 @@ deployedPrimaryKey tbl = do
   -- TODO: do not ignore name
     toPrimaryKey (_, keys) = fromPGArray keys
 
-deployedUniqueConstraints :: (SqlName, SqlName) -> SqlT [UniqueConstraint]
+deployedUniqueConstraints :: (SqlName, SqlName)
+                          -> SqlT [Abbr [SqlName] UniqueConstraint]
 deployedUniqueConstraints tbl@(_, table) = do
   res <- psqlQry keyQuery (toSqlCode tbl, True, False)
   return $ map toUniqueConstraint res
   where
     toUniqueConstraint (keyName, keys') =
       let keys = fromPGArray keys'
-      in UniqueConstraint
-         { uniqueconstraintName =
-             recoverIndexName (unsafeInternalName table) keys keyName
-         , uniqueconstraintColumns = map SqlName keys
+          idx = recoverIndexName (unsafeInternalName table) keys keyName "key"
+      in case idx of
+           Nothing -> ShortForm $ map SqlName keys
+           index ->
+             LongForm $
+             UniqueConstraint
+             { uniqueconstraintName = index
+             , uniqueconstraintColumns = map SqlName keys
+             }
+
+deployedForeignKeys :: (SqlName, SqlName) -> SqlT [ForeignKey]
+deployedForeignKeys tbl@(_, table) = do
+  res <- psqlQry qry (Only $ toSqlCode tbl)
+  return $ map toForeignKey res
+  where
+    toForeignKey (keyName, cols', fTbl, fCols') =
+      let cols = fromPGArray cols'
+          fCols = fromPGArray fCols'
+      in ForeignKey
+         { foreignkeyName =
+             recoverIndexName (unsafeInternalName table) cols keyName "fkey"
+         , foreignkeyColumns = map SqlName cols
+         , foreignkeyRefTable = SqlName fTbl
+         , foreignkeyRefColumns =
+             if (map SqlName cols) == fCols
+               then Nothing
+               else Just fCols
+         , foreignkeyOnDelete = Nothing
+         , foreignkeyOnUpdate = Nothing
          }
+    qry =
+      [sql|
+        SELECT
+          conname,
+          (SELECT array_agg(attname) FROM unnest(conkey) AS id
+           JOIN pg_attribute ON attnum=id AND attrelid=conrelid),
+          confrelid::regclass::text,
+          (SELECT array_agg(attname) FROM unnest(confkey) AS id
+           JOIN pg_attribute ON attnum=id AND attrelid=confrelid)
+        FROM pg_catalog.pg_constraint
+        WHERE contype='f' AND conrelid::regclass = ?::regclass
+      |]
 
 -- (tbl, unique, primary)
 keyQuery :: Query

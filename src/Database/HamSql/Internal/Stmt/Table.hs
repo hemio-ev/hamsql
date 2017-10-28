@@ -203,9 +203,15 @@ instance ToSqlStmts (SqlContext (Schema, Table)) where
            T.intercalate ", " (map toSqlCode ks) <>
            ")"
       -- TODO: allow empty name with "mconcat (uniquekeyColumns ks)"
-      sqlUniqueConstr :: UniqueConstraint -> Maybe SqlStmt
-      sqlUniqueConstr ks =
-        let constr =
+      sqlUniqueConstr :: Abbr [SqlName] UniqueConstraint -> Maybe SqlStmt
+      sqlUniqueConstr ks' =
+        let ks =
+              case ks' of
+                LongForm ko -> ko
+                ShortForm xs ->
+                  UniqueConstraint
+                  {uniqueconstraintName = Nothing, uniqueconstraintColumns = xs}
+            constr =
               indexName
                 (tableName t)
                 (uniqueconstraintColumns ks)
@@ -219,7 +225,12 @@ instance ToSqlStmts (SqlContext (Schema, Table)) where
            ")"
       sqlAddForeignKey' :: ForeignKey -> Maybe SqlStmt
       sqlAddForeignKey' fk =
-        let constr = tableName t <> foreignkeyName fk
+        let constr =
+              indexName
+                (tableName t)
+                (foreignkeyColumns fk)
+                (SqlName "fkey")
+                (foreignkeyName fk)
             refColumns =
               fromMaybe (foreignkeyColumns fk) (foreignkeyRefColumns fk)
         in newSqlStmt SqlCreateForeignKeyConstr (constrId s t constr) $

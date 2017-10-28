@@ -2,34 +2,43 @@ name: self-test
 description: Table Install
 
 tables:
- - name: t1
-   description: Table with no primary_key
+ - name: "x"
+   description: Table ``x`` without primary_key
    primary_key: []
    columns:
-    - name: a
+    - name: x1
       type: integer
-      description: A
-#      unique: true
+      description: Column x1
+    - name: x2
+      type: integer
+      description: Column x2
+    - name: x3
+      type: integer
+      description: Column x3
    unique:
-     - columns: [a]
-     - name: test1
-       columns: [a]
      - name:
-        prefixed: x_test1
-       columns: [a]
- - name: t2
-   description: Table 2
-   primary_key: [b]
+        # TODO: customPrefix_u2 fails
+        prefixed: customprefix_u2
+       columns: [x1]
+     - name: u1
+       columns: [x1]
+     - [x1]
+     - [x1, x3]
+ - name: "y"
+   description: Table ``y``
+   primary_key: [y1]
    columns:
-    - name: b
+    - name: y1
       type: integer
-      description: B
-#      references: self-test.t1.a
-
-#   foreign_keys:
-#     - name: manualfk
-#       columns: [b]
-#       ref_table: self-test.t1
-#       ref_columns: [a]
+      description: Column y1
+    - name: y2
+      type: integer
+      description: Column y2
+            
+   foreign_keys:
+     - name: manualfk
+       columns: [y1, y2]
+       ref_table: '"self-test".x'
+       ref_columns: [x1, x3]
 
 

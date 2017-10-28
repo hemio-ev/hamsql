@@ -72,10 +72,10 @@ forceToJson s =
 parseYamSql
   :: (Generic r, GFromJSON Zero (Rep r), Data r)
   => Value -> Parser r
-parseYamSql xs = do
-  parsed <- genericParseJSON myOpt xs
-  let known = keysOfData parsed
-  let used = keysOfValue xs
+parseYamSql v = do
+  let used = keysOfValue v
+  parsed <- genericParseJSON myOpt v
+  let known = keysOfData $ parsed
   let diff = used \\ known
   return $
     if null diff
@@ -98,7 +98,8 @@ parseYamSql xs = do
         ls = filter (/= "tag") (known \\ used)
 
 closestString :: String -> [String] -> String
-closestString x = minimumBy (\y y' -> compare (dist y) (dist y'))
+closestString _ [] = "*no additional parameter at all*"
+closestString x ys = minimumBy (\y y' -> compare (dist y) (dist y')) ys
   where
     dist =
       levenshteinDistance

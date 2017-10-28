@@ -44,7 +44,7 @@ run (Install optCommon optDb optInstall)
     "must be supplied or non of them."
   | otherwise = do
     setup <- loadSetup (optSetup optCommon)
-    stmts <- pgsqlGetFullStatements setup
+    let stmts = pgsqlGetFullStatements setup
     let dbname = SqlName $ T.pack $ tail $ uriPath $ getConUrl optDb
     if not (optEmulate optDb || optPrint optDb)
       then close =<<
@@ -68,7 +68,7 @@ run (Upgrade optCommon optDb) = do
   setup <- loadSetup (optSetup optCommon)
   conn <- pgsqlConnectUrl (getConUrl optDb)
   deleteStmts <- pgsqlDeleteAllStmt conn
-  createStmts <- pgsqlGetFullStatements setup
+  let createStmts = pgsqlGetFullStatements setup
   fragile <- pgsqlUpdateFragile setup conn createStmts
   let stmts = sort deleteStmts ++ Data.List.filter allowInUpgrade (sort fragile)
   useSqlStmts optCommon optDb stmts

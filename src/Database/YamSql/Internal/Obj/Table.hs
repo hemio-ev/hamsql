@@ -1,6 +1,7 @@
 module Database.YamSql.Internal.Obj.Table where
 
 import Database.YamSql.Internal.Basic
+import Database.YamSql.Internal.Commons
 import Database.YamSql.Internal.Obj.Check
 
 data Table = Table
@@ -8,7 +9,7 @@ data Table = Table
   , tableDescription :: Text
   , tableColumns :: [Column]
   , tablePrimaryKey :: [SqlName]
-  , tableUnique :: Maybe [UniqueConstraint]
+  , tableUnique :: Maybe [Abbr [SqlName] UniqueConstraint]
   , tableForeignKeys :: Maybe [ForeignKey]
   , tableChecks :: Maybe [Check]
   , tableInherits :: Maybe [SqlName]
@@ -31,6 +32,10 @@ data SQL_TABLE =
 
 instance ToSqlCode SQL_TABLE where
   toSqlCode = const "TABLE"
+
+instance (ToJSON a, ToJSON b) =>
+         ToJSON (Abbr a b) where
+  toJSON = toYamSqlJson
 
 data TableTpl = TableTpl
   { tabletplTemplate :: SqlName
@@ -113,7 +118,7 @@ instance ToJSON UniqueConstraint where
   toJSON = toYamSqlJson
 
 data ForeignKey = ForeignKey
-  { foreignkeyName :: SqlName
+  { foreignkeyName :: Maybe IndexName
   , foreignkeyColumns :: [SqlName]
   , foreignkeyRefTable :: SqlName
   , foreignkeyRefColumns :: Maybe [SqlName]

@@ -7,6 +7,8 @@
 
 module Database.YamSql.Internal.Commons where
 
+import Data.Aeson.Types (Value(Object))
+
 import Database.YamSql.Internal.Basic
 
 data Variable = Variable
@@ -33,3 +35,13 @@ instance FromJSON Parameter where
 
 instance ToJSON Parameter where
   toJSON = toYamSqlJson
+
+data Abbr a b
+  = ShortForm a
+  | LongForm b
+  deriving (Data, Generic, Show)
+
+instance (FromJSON a, FromJSON b) =>
+         FromJSON (Abbr a b) where
+  parseJSON x@(Object _) = LongForm <$> parseJSON x
+  parseJSON x = ShortForm <$> parseJSON x

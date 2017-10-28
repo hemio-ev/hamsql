@@ -95,8 +95,8 @@ import Database.YamSql
 sqlErrInvalidFunctionDefinition :: B.ByteString
 sqlErrInvalidFunctionDefinition = "42P13"
 
-pgsqlGetFullStatements :: Setup -> IO [SqlStmt]
-pgsqlGetFullStatements setup = return $ catMaybes $ getSetupStatements setup
+pgsqlGetFullStatements :: Setup -> [SqlStmt]
+pgsqlGetFullStatements setup = catMaybes $ getSetupStatements setup
 
 pgsqlDeleteAllStmt :: Connection -> IO [SqlStmt]
 pgsqlDeleteAllStmt conn = do
