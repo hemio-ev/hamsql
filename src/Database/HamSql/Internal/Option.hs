@@ -107,7 +107,9 @@ parserOptCommonDb =
   boolFlag (long "emulate" <> short 'e' <> help "Perform changes but rollback") <*>
   boolFlag
     (long "print" <> short 'p' <> help "Print SQL code instead of executing") <*>
-  strOption (long "connection" <> short 'c' <> val "postgresql://") <*>
+  strOption
+    (long "connection" <> short 'c' <> help "Database connection URI" <>
+     val "postgresql://") <*>
   boolFlag
     (long "permit-data-deletion" <> help "Permit deletion of columns and tables") <*>
   option
@@ -157,9 +159,12 @@ parserOptDoc :: Parser OptDoc
 parserOptDoc =
   OptDoc <$>
   strOption
-    (long "output-dir" <> short 'o' <> val "docs/" <> action "directory") <*>
+    (long "output-dir" <> short 'o' <> help "Output directory" <> val "docs/" <>
+     action "directory") <*>
   strOption
-    (long "template" <> short 't' <> val "DEFAULT.rst" <>
+    (long "template" <> short 't' <>
+     help "Template file (DEFAULT.rst is loading a building template.)" <>
+     val "DEFAULT.rst" <>
      action "file -X '!*.html'" <>
      action "file -X '!*.md'" <>
      action "file -X '!*.rst'" <>
