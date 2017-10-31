@@ -87,7 +87,7 @@ instance ToSqlId (SqlContext (Schema, Function)) where
     SqlObj
       SQL_FUNCTION
       ( schemaName s <.> functionName x
-      , maybeMap variableType $ functionParameters x)
+      , map variableType $ fromMaybe [] $ functionParameters x)
 
 instance ToSqlId (SqlContext (Schema, Sequence)) where
   sqlId (SqlContext (s, x)) =

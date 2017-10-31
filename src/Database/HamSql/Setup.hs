@@ -23,9 +23,7 @@ data SetupContext = SetupContext
   }
 
 data SetupElement where
-  SetupElement
-    :: (ToSqlStmts a)
-    => a -> SetupElement
+        SetupElement :: (ToSqlStmts a) => a -> SetupElement
 
 instance ToSqlStmts SetupElement where
   toSqlStmts x (SetupElement y) = toSqlStmts x y

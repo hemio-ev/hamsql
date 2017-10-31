@@ -85,19 +85,19 @@ instance ToSqlCode SQL_COLUMN where
 applyTableTpl :: TableTpl -> Table -> Table
 applyTableTpl tpl t =
   t
-  { tableColumns = fromMaybe [] (tabletplColumns tpl) ++ tableColumns t
-  , tableForeignKeys = maybeJoin (tabletplForeignKeys tpl) (tableForeignKeys t)
-  , tableInherits = maybeJoin (tabletplInherits tpl) (tableInherits t)
-  , tableChecks = maybeJoin (tabletplChecks tpl) (tableChecks t)
-  , tablePrivSelect = maybeJoin (tabletplPrivSelect tpl) (tablePrivSelect t)
-  , tablePrivInsert = maybeJoin (tabletplPrivInsert tpl) (tablePrivInsert t)
-  , tablePrivUpdate = maybeJoin (tabletplPrivUpdate tpl) (tablePrivUpdate t)
-  , tablePrivDelete = maybeJoin (tabletplPrivDelete tpl) (tablePrivDelete t)
+  { tableColumns = fromMaybe [] (tabletplColumns tpl) <> tableColumns t
+  , tableForeignKeys = tabletplForeignKeys tpl <> tableForeignKeys t
+  , tableInherits = tabletplInherits tpl <> tableInherits t
+  , tableChecks = tabletplChecks tpl <> tableChecks t
+  , tablePrivSelect = tabletplPrivSelect tpl <> tablePrivSelect t
+  , tablePrivInsert = tabletplPrivInsert tpl <> tablePrivInsert t
+  , tablePrivUpdate = tabletplPrivUpdate tpl <> tablePrivUpdate t
+  , tablePrivDelete = tabletplPrivDelete tpl <> tablePrivDelete t
   }
 
 data IndexName
   = IndexNameUnprefixed SqlName
-  | IndexNamePrefixed { indexnamePrefixed :: SqlName }
+  | IndexNamePrefixed { indexnamePrefixed :: SqlName}
   deriving (Generic, Show, Data)
 
 instance FromJSON IndexName where

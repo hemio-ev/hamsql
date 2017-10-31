@@ -4,7 +4,7 @@
 -- Some rights reserved. See COPYING, AUTHORS.
 module Database.HamSql.Internal.InquireDeployed where
 
-import Data.Text (stripPrefix, stripSuffix, intercalate)
+import Data.Text (intercalate, stripPrefix, stripSuffix)
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.SqlQQ
 import Database.PostgreSQL.Simple.Types (PGArray(..), fromPGArray)

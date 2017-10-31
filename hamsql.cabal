@@ -57,6 +57,7 @@ library
     Database.YamSql.Internal.Basic
     Database.YamSql.Internal.Commons
     Database.YamSql.Internal.SqlId
+    Database.YamSql.Internal.Utils
     Database.YamSql.Parser
 
   other-modules:
@@ -82,7 +83,7 @@ library
     Paths_hamsql
 
   build-depends:
-    aeson >=1.1 && <1.2,
+    aeson >=1.2 && <1.3,
     base >=4.8 && <5.0,
     bytestring >=0.10 && <0.11,
     containers >=0.5 && <0.6,
@@ -91,7 +92,6 @@ library
     file-embed >=0.0 && <0.1,
     filepath >=1.4 && <1.5,
     frontmatter >=0.1 && <0.2,
-    groom >=0.1 && < 0.2,
     network-uri >=2.6 && <2.7,
     optparse-applicative >=0.13 && <0.14,
     postgresql-simple >=0.4 && <0.6,
@@ -99,6 +99,7 @@ library
     transformers >=0.5 && <0.6,
     unordered-containers >=0.2 && <0.3,
     yaml >=0.8 && <0.9,
+    pretty-simple,
     edit-distance
 
   ghc-options:
@@ -142,7 +143,7 @@ test-suite hamsql-tests
     tasty,
     tasty-hunit,
     -- dev
-    hindent
+    hindent == 5.2.3
   ghc-options:
     -Wall
     -Wcompat

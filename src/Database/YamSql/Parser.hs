@@ -17,22 +17,23 @@ module Database.YamSql.Parser
 
 import Control.Exception
 import Data.Aeson.Types
-       (GFromJSON, GToJSON, Options(..), defaultOptions, genericParseJSON,
-        genericToJSON, Zero, SumEncoding(UntaggedValue))
+       (GFromJSON, GToJSON, Options(..), SumEncoding(UntaggedValue), Zero,
+        defaultOptions, genericParseJSON, genericToJSON)
 
 import Data.Char
 import Data.Data
 import Data.HashMap.Strict (keys)
 import Data.List ((\\), minimumBy)
+import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Yaml
 import GHC.Generics
 import System.IO
 import Text.EditDistance
-       (defaultEditCosts, levenshteinDistance, substitutionCosts,
-        Costs(ConstantCost))
+       (Costs(ConstantCost), defaultEditCosts, levenshteinDistance,
+        substitutionCosts)
 
-import Database.HamSql.Internal.Utils
+import Database.YamSql.Internal.Utils
 
 -- removes first part of camel case. e.g.:
 -- columnDescriptionField |-> descriptionField

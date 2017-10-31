@@ -87,14 +87,12 @@ instance ToJSON FunctionTpl where
 applyFunctionTpl :: FunctionTpl -> Function -> Function
 applyFunctionTpl t f =
   f
-  { functionPrivExecute =
-      maybeRight (functiontplPrivExecute t) (functionPrivExecute f)
+  { functionPrivExecute = asum [functionPrivExecute f, functiontplPrivExecute t]
   , functionSecurityDefiner =
-      maybeRight (functiontplSecurityDefiner t) (functionSecurityDefiner f)
-  , functionOwner = maybeRight (functiontplOwner t) (functionOwner f)
-  , functionParameters =
-      maybeJoin (functionParameters f) (functiontplParameters t)
-  , functionVariables = maybeJoin (functionVariables f) (functiontplVariables t)
+      asum [functionSecurityDefiner f, functiontplSecurityDefiner t]
+  , functionOwner = asum [functionOwner f, functiontplOwner t]
+  , functionParameters = functionParameters f <> functiontplParameters t
+  , functionVariables = functionVariables f <> functiontplVariables t
   , functionBody =
       Just $
       maybeStringL (functiontplBodyPrelude t) <> fromMaybe "" (functionBody f) <>

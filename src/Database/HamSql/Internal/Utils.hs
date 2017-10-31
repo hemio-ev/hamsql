@@ -5,23 +5,20 @@
 module Database.HamSql.Internal.Utils
   ( module Data.Maybe
   , module Database.HamSql.Internal.Utils
-  , Text
-  , (<>)
+  , module Database.YamSql.Internal.Utils
   ) where
 
 import Data.List (group, intercalate, sort)
 import Data.Maybe
-import Data.Semigroup ((<>))
-import Data.Text (Text, pack)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import Debug.Trace
 import System.Exit
 import System.IO (stderr)
 import System.IO.Unsafe
-import Text.Groom
 
 import Database.HamSql.Internal.Option
+import Database.YamSql.Internal.Utils
 
 join :: [a] -> [[a]] -> [a]
 join = intercalate
@@ -75,11 +72,6 @@ maybeJoin :: Maybe [a] -> Maybe [a] -> Maybe [a]
 maybeJoin Nothing Nothing = Nothing
 maybeJoin xs ys = Just (fromMaybe [] xs ++ fromMaybe [] ys)
 
--- | Takes the right value, if Just there
-maybeRight :: Maybe a -> Maybe a -> Maybe a
-maybeRight _ (Just r) = Just r
-maybeRight l _ = l
-
 fromJustReason :: Text -> Maybe a -> a
 fromJustReason _ (Just x) = x
 fromJustReason reason Nothing = err $ "fromJust failed: " <> reason
@@ -94,11 +86,6 @@ selectUniqueReason msgt xs =
   ") found while trying to extrac one: " <>
   msgt
 
-tshow
-  :: (Show a)
-  => a -> Text
-tshow = T.replace "\\\"" "“" . pack . groom
-
 showCode :: Text -> Text
 showCode = T.replace "\n" "\n  " . T.cons '\n'
 
@@ -110,9 +97,6 @@ tr
   :: Show a
   => a -> a
 tr x = trace (show x <> "\n") x
-
-isIn :: Char -> Text -> Bool
-isIn c t = T.singleton c `T.isInfixOf` t
 
 (<->) :: Text -> Text -> Text
 (<->) a b = a <> " " <> b

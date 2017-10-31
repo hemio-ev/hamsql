@@ -10,11 +10,11 @@
 
 module Database.YamSql.Internal.SqlId where
 
-import Data.Semigroup
+import Data.Semigroup (Semigroup)
 import qualified Data.Text as T
 import Data.Typeable
 
-import Database.HamSql.Internal.Utils
+import Database.YamSql.Internal.Utils
 import Database.YamSql.Parser
 
 -- | Idable
@@ -29,9 +29,7 @@ class (Typeable a, ToSqlCode a, Eq a, Show a) =>
 
 -- | SqlId
 data SqlId where
-  SqlId
-    :: (SqlObjType a, SqlIdContent b)
-    => SqlObj a b -> SqlId
+        SqlId :: (SqlObjType a, SqlIdContent b) => SqlObj a b -> SqlId
 
 sqlIdShowType :: SqlId -> Text
 sqlIdShowType (SqlId x) = tshow $ sqlObjType x
@@ -71,11 +69,7 @@ class (Typeable a, ToSqlCode a, Show a) =>
       SqlObjType a
 
 data SqlObj a b where
-  SqlObj
-    :: (SqlObjType a, SqlIdContent b)
-    => a -- sqlObjType
-    -> b -- sqlObjId
-    -> SqlObj a b
+        SqlObj :: (SqlObjType a, SqlIdContent b) => a -> b -> SqlObj a b
 
 sqlObjType :: SqlObj a b -> a
 sqlObjType (SqlObj x _) = x

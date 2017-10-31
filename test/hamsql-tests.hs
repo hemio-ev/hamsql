@@ -61,6 +61,7 @@ selfTestStmt :: TestTree
 selfTestStmt =
   testCaseSteps "stmt" $ \step -> do
     (schemasDb, setupLocal) <- deploy step "test/setups/self-test.yml"
+    --B.putStrLn $ encodePretty (setConfDropNull True defConfig) (setupLocal)
     step "check statement diff"
     assertNoDiff
       (pgsqlGetFullStatements (newSetup schemasDb))
