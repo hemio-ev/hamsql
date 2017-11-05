@@ -19,7 +19,8 @@ import Database.YamSql.Parser
 
 -- | Idable
 class Show a =>
-      ToSqlId a where
+      ToSqlId a
+  where
   sqlId :: a -> SqlId
   sqlIdCode :: a -> Text
   sqlIdCode = toSqlCode . sqlId
@@ -27,9 +28,10 @@ class Show a =>
 class (Typeable a, ToSqlCode a, Eq a, Show a) =>
       SqlIdContent a
 
+
 -- | SqlId
 data SqlId where
-        SqlId :: (SqlObjType a, SqlIdContent b) => SqlObj a b -> SqlId
+  SqlId :: (SqlObjType a, SqlIdContent b) => SqlObj a b -> SqlId
 
 sqlIdShowType :: SqlId -> Text
 sqlIdShowType (SqlId x) = tshow $ sqlObjType x
@@ -61,15 +63,15 @@ data SqlContext a =
 instance Show (SqlContext a) where
   show = const ""
 
-instance (SqlObjType a, SqlIdContent b) =>
-         ToSqlId (SqlObj a b) where
+instance (SqlObjType a, SqlIdContent b) => ToSqlId (SqlObj a b) where
   sqlId = SqlId
 
 class (Typeable a, ToSqlCode a, Show a) =>
       SqlObjType a
 
+
 data SqlObj a b where
-        SqlObj :: (SqlObjType a, SqlIdContent b) => a -> b -> SqlObj a b
+  SqlObj :: (SqlObjType a, SqlIdContent b) => a -> b -> SqlObj a b
 
 sqlObjType :: SqlObj a b -> a
 sqlObjType (SqlObj x _) = x

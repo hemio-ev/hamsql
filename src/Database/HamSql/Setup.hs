@@ -23,13 +23,14 @@ data SetupContext = SetupContext
   }
 
 data SetupElement where
-        SetupElement :: (ToSqlStmts a) => a -> SetupElement
+  SetupElement :: (ToSqlStmts a) => a -> SetupElement
 
 instance ToSqlStmts SetupElement where
   toSqlStmts x (SetupElement y) = toSqlStmts x y
 
 class Typeable a =>
-      ToSqlStmts a where
+      ToSqlStmts a
+  where
   toSqlStmts :: SetupContext -> a -> [Maybe SqlStmt]
 
 -- | Setup
@@ -69,9 +70,11 @@ instance WithName (WithSchema FunctionTpl) where
 withoutSchema :: WithSchema a -> a
 withoutSchema (WithSchema _ t) = t
 
-selectTemplates
-  :: (ToSqlCode a, WithName (WithSchema t))
-  => Maybe [a] -> [WithSchema t] -> [t]
+selectTemplates ::
+     (ToSqlCode a, WithName (WithSchema t))
+  => Maybe [a]
+  -> [WithSchema t]
+  -> [t]
 selectTemplates ns ts
                    -- TODO: error handling here should be done using exceptions
  =
@@ -81,9 +84,8 @@ selectTemplates ns ts
   | n <- maybeMap toSqlCode ns
   ]
 
-selectTemplate
-  :: (ToSqlCode a1, WithName (WithSchema a))
-  => a1 -> [WithSchema a] -> a
+selectTemplate ::
+     (ToSqlCode a1, WithName (WithSchema a)) => a1 -> [WithSchema a] -> a
 selectTemplate x ts =
   head' $ map withoutSchema $ filter (\y -> name y == toSqlCode x) ts
   where

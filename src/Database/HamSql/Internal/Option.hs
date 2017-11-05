@@ -14,9 +14,7 @@ import Options.Applicative.Types
 boolFlag :: Mod FlagFields Bool -> Parser Bool
 boolFlag = flag False True
 
-val
-  :: (HasMetavar f, HasValue f)
-  => String -> Mod f String
+val :: (HasMetavar f, HasValue f) => String -> Mod f String
 val xs = value xs <> metavar ("\"" ++ xs ++ "\"")
 
 -- Global

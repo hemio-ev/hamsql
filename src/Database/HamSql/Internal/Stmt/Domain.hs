@@ -11,8 +11,8 @@ import Database.HamSql.Internal.Stmt.Basic
 stmtsDropDomain :: SqlObj SQL_DOMAIN SqlName -> [Maybe SqlStmt]
 stmtsDropDomain x = [newSqlStmt SqlDropDomain x $ "DROP DOMAIN" <-> toSqlCode x]
 
-stmtsDropDomainConstr :: SqlObj SQL_DOMAIN_CONSTRAINT (SqlName, SqlName)
-                      -> [Maybe SqlStmt]
+stmtsDropDomainConstr ::
+     SqlObj SQL_DOMAIN_CONSTRAINT (SqlName, SqlName) -> [Maybe SqlStmt]
 stmtsDropDomainConstr obj@(SqlObj _ (d, c)) =
   [ newSqlStmt SqlDropDomainConstr obj $
     "ALTER DOMAIN" <-> toSqlCode d <-> "DROP CONSTRAINT" <-> toSqlCode c

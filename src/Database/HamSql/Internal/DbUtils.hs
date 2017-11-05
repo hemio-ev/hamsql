@@ -25,16 +25,12 @@ import Database.YamSql
 
 type SqlT = ReaderT Connection IO
 
-psqlQry
-  :: (ToRow q, FromRow r)
-  => Query -> q -> SqlT [r]
+psqlQry :: (ToRow q, FromRow r) => Query -> q -> SqlT [r]
 psqlQry template qs = do
   conn <- ask
   lift $ query conn template qs
 
-psqlQry_
-  :: (FromRow r)
-  => Query -> SqlT [r]
+psqlQry_ :: (FromRow r) => Query -> SqlT [r]
 psqlQry_ que = do
   conn <- ask
   lift $ query_ conn que

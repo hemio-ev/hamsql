@@ -111,9 +111,7 @@ newSetup s =
   , setupSchemaData = Just s
   }
 
-exec
-  :: (Eq e, Exception e)
-  => e -> [String] -> IO Bool
+exec :: (Eq e, Exception e) => e -> [String] -> IO Bool
 exec y xs =
   handle (\x -> return $ x == y) (parseThisArgv xs >>= run >> return True)
 
@@ -122,15 +120,11 @@ exec' xs = do
   r <- exec ExitSuccess xs
   r @? "Exec should not fail"
 
-assertNoShowDiff
-  :: (Show a0, Show a1)
-  => a0 -> a1 -> Assertion
+assertNoShowDiff :: (Show a0, Show a1) => a0 -> a1 -> Assertion
 assertNoShowDiff x y =
   assertNoDiff (T.lines $ pShowNoColor x) (T.lines $ pShowNoColor y)
 
-assertNoDiff
-  :: (Show a, Eq a)
-  => [a] -> [a] -> Assertion
+assertNoDiff :: (Show a, Eq a) => [a] -> [a] -> Assertion
 assertNoDiff xs ys =
   case firstDiff xs ys of
     Nothing -> return ()
@@ -150,9 +144,7 @@ assertNoDiff xs ys =
       in catMaybes [get zs j | j <- [i - d .. i + d]]
     showContext zs i = T.intercalate "\n" $ map pShowNoColor $ getContext zs i
 
-firstDiff
-  :: Eq a
-  => [a] -> [a] -> Maybe Int
+firstDiff :: Eq a => [a] -> [a] -> Maybe Int
 firstDiff xs ys = findDiff 0
   where
     findDiff i

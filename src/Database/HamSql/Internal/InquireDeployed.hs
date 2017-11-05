@@ -14,9 +14,7 @@ import Database.HamSql.Internal.Utils
 import Database.HamSql.Setup
 import Database.YamSql
 
-preset
-  :: Eq a
-  => a -> a -> Maybe a
+preset :: Eq a => a -> a -> Maybe a
 preset d x
   | d == x = Nothing
   | otherwise = Just x
@@ -155,8 +153,8 @@ deployedPrimaryKey tbl = do
   -- TODO: do not ignore name
     toPrimaryKey (_, keys) = fromPGArray keys
 
-deployedUniqueConstraints :: (SqlName, SqlName)
-                          -> SqlT [Abbr [SqlName] UniqueConstraint]
+deployedUniqueConstraints ::
+     (SqlName, SqlName) -> SqlT [Abbr [SqlName] UniqueConstraint]
 deployedUniqueConstraints tbl@(_, table) = do
   res <- psqlQry keyQuery (toSqlCode tbl, True, False)
   return $ map toUniqueConstraint res
@@ -233,8 +231,8 @@ sqlManageSchemaJoin schemaid =
   "  NOT n.nspname LIKE 'pg_%' AND " <\>
   "  n.nspname NOT IN ('information_schema') "
 
-deployedTableConstrIds :: Connection
-                       -> IO [SqlObj SQL_TABLE_CONSTRAINT (SqlName, SqlName, SqlName)]
+deployedTableConstrIds ::
+     Connection -> IO [SqlObj SQL_TABLE_CONSTRAINT (SqlName, SqlName, SqlName)]
 deployedTableConstrIds conn = map toSqlCodeId <$> query_ conn qry
   where
     toSqlCodeId (schema, table, constraint) =
@@ -246,8 +244,8 @@ deployedTableConstrIds conn = map toSqlCodeId <$> query_ conn qry
       " ON c.conrelid = t.oid" <->
       sqlManageSchemaJoin "c.connamespace"
 
-deployedDomainConstrIds :: Connection
-                        -> IO [SqlObj SQL_DOMAIN_CONSTRAINT (SqlName, SqlName)]
+deployedDomainConstrIds ::
+     Connection -> IO [SqlObj SQL_DOMAIN_CONSTRAINT (SqlName, SqlName)]
 deployedDomainConstrIds conn = map toSqlCodeId <$> query_ conn qry
   where
     toSqlCodeId (schema, table, constraint) =
@@ -292,8 +290,8 @@ deployedTableIds conn = do
     toSqlCodeId (s, t) = SqlObj SQL_TABLE (s <.> t)
 
 -- | List TABLE COLUMN
-deployedTableColumnIds :: Connection
-                       -> IO [SqlObj SQL_COLUMN (SqlName, SqlName)]
+deployedTableColumnIds ::
+     Connection -> IO [SqlObj SQL_COLUMN (SqlName, SqlName)]
 deployedTableColumnIds conn = map toSqlCodeId <$> query_ conn qry
   where
     toSqlCodeId (s, t, u) = SqlObj SQL_COLUMN (s <.> t, u)
@@ -327,9 +325,8 @@ deployedRoleIds setup conn =
       stripPrefix prefix
     toSqlCodeId (Only role) = SqlObj SQL_ROLE (SqlName $ unprefixed role)
 
-deployedRoleMemberIds :: Setup
-                      -> Connection
-                      -> IO [SqlObj SQL_ROLE_MEMBERSHIP (SqlName, SqlName)]
+deployedRoleMemberIds ::
+     Setup -> Connection -> IO [SqlObj SQL_ROLE_MEMBERSHIP (SqlName, SqlName)]
 deployedRoleMemberIds setup conn =
   map toSqlCodeId <$> query conn qry (prefix <> "%", prefix <> "%")
   where
@@ -358,8 +355,8 @@ deployedDomainIds conn = map toSqlCodeId <$> query_ conn qry
       "SELECT domain_schema, domain_name" <\> " FROM information_schema.domains" <\>
       " WHERE domain_schema NOT IN ('information_schema', 'pg_catalog')"
 
-deployedFunctionIds :: Connection
-                    -> IO [SqlObj SQL_FUNCTION (SqlName, [SqlType])]
+deployedFunctionIds ::
+     Connection -> IO [SqlObj SQL_FUNCTION (SqlName, [SqlType])]
 deployedFunctionIds conn = map toSqlCodeId <$> query_ conn qry
   where
     toSqlCodeId (schema, function, args) =

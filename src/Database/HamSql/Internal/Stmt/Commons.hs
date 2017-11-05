@@ -9,9 +9,7 @@ import Database.HamSql.Internal.Utils
 import Database.HamSql.Setup
 import Database.YamSql
 
-stmtCommentOn
-  :: (ToSqlId a)
-  => a -> Text -> Maybe SqlStmt
+stmtCommentOn :: (ToSqlId a) => a -> Text -> Maybe SqlStmt
 stmtCommentOn obj comment =
   newSqlStmt SqlComment obj $
   "COMMENT ON " <> sqlIdTypeCode (sqlId obj) <> " " <> sqlIdCode obj <> " IS " <>

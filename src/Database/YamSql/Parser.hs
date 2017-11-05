@@ -17,8 +17,15 @@ module Database.YamSql.Parser
 
 import Control.Exception
 import Data.Aeson.Types
-       (GFromJSON, GToJSON, Options(..), SumEncoding(UntaggedValue), Zero,
-        defaultOptions, genericParseJSON, genericToJSON)
+  ( GFromJSON
+  , GToJSON
+  , Options(..)
+  , SumEncoding(UntaggedValue)
+  , Zero
+  , defaultOptions
+  , genericParseJSON
+  , genericToJSON
+  )
 
 import Data.Char
 import Data.Data
@@ -30,8 +37,11 @@ import Data.Yaml
 import GHC.Generics
 import System.IO
 import Text.EditDistance
-       (Costs(ConstantCost), defaultEditCosts, levenshteinDistance,
-        substitutionCosts)
+  ( Costs(ConstantCost)
+  , defaultEditCosts
+  , levenshteinDistance
+  , substitutionCosts
+  )
 
 import Database.YamSql.Internal.Utils
 
@@ -59,20 +69,14 @@ myOpt =
   , sumEncoding = UntaggedValue
   }
 
-outJson
-  :: ToJSON a
-  => a -> String
+outJson :: ToJSON a => a -> String
 outJson s = show $ toJSON s
 
-forceToJson
-  :: ToJSON a
-  => a -> IO ()
+forceToJson :: ToJSON a => a -> IO ()
 forceToJson s =
   withFile "/dev/null" WriteMode (\handl -> hPrint handl (toJSON s))
 
-parseYamSql
-  :: (Generic r, GFromJSON Zero (Rep r), Data r)
-  => Value -> Parser r
+parseYamSql :: (Generic r, GFromJSON Zero (Rep r), Data r) => Value -> Parser r
 parseYamSql v = do
   let used = keysOfValue v
   parsed <- genericParseJSON myOpt v
@@ -107,9 +111,7 @@ closestString x ys = minimumBy (\y y' -> compare (dist y) (dist y')) ys
         defaultEditCosts {substitutionCosts = ConstantCost 2}
         x
 
-toYamSqlJson
-  :: (Generic a, GToJSON Zero (Rep a))
-  => a -> Value
+toYamSqlJson :: (Generic a, GToJSON Zero (Rep a)) => a -> Value
 toYamSqlJson = genericToJSON myOpt
 
 data YamsqlException =

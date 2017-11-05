@@ -54,9 +54,7 @@ debug opts xs
   | optDebug opts = msg "debug" xs
   | otherwise = id
 
-removeDuplicates
-  :: (Ord a)
-  => [a] -> [a]
+removeDuplicates :: (Ord a) => [a] -> [a]
 removeDuplicates = map head . group . sort
 
 --- Maybe Utils
@@ -93,9 +91,7 @@ maybeHead :: [a] -> Maybe a
 maybeHead [] = Nothing
 maybeHead (x:_) = Just x
 
-tr
-  :: Show a
-  => a -> a
+tr :: Show a => a -> a
 tr x = trace (show x <> "\n") x
 
 (<->) :: Text -> Text -> Text

@@ -33,8 +33,7 @@ data SQL_TABLE =
 instance ToSqlCode SQL_TABLE where
   toSqlCode = const "TABLE"
 
-instance (ToJSON a, ToJSON b) =>
-         ToJSON (Abbr a b) where
+instance (ToJSON a, ToJSON b) => ToJSON (Abbr a b) where
   toJSON = toYamSqlJson
 
 data TableTpl = TableTpl
@@ -97,7 +96,7 @@ applyTableTpl tpl t =
 
 data IndexName
   = IndexNameUnprefixed SqlName
-  | IndexNamePrefixed { indexnamePrefixed :: SqlName}
+  | IndexNamePrefixed { indexnamePrefixed :: SqlName }
   deriving (Generic, Show, Data)
 
 instance FromJSON IndexName where

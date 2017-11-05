@@ -19,9 +19,7 @@ import Data.Text (Text)
 import Data.Text.Lazy (toStrict)
 import Text.Pretty.Simple (pShow)
 
-tshow
-  :: (Show a)
-  => a -> Text
+tshow :: (Show a) => a -> Text
 tshow = T.replace "\\\"" "“" . toStrict . pShow
 
 isIn :: Char -> Text -> Bool

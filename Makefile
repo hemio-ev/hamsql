@@ -30,7 +30,7 @@ install:
 dev-format-code: $(HS)
 
 $(HS):
-	-@./.cabal-sandbox/bin/hindent $@
+	-@../hindent/.cabal-sandbox/bin/hindent $@
 
 # ununsual options
 

@@ -15,7 +15,10 @@ import qualified Data.Text as T
 import Data.Text.Encoding (decodeUtf8)
 import Data.Yaml
 import System.Directory
-       (doesDirectoryExist, doesFileExist, getDirectoryContents)
+  ( doesDirectoryExist
+  , doesFileExist
+  , getDirectoryContents
+  )
 import System.FilePath.Posix (combine, dropFileName, takeFileName)
 import System.IO (stdin)
 
@@ -75,9 +78,7 @@ findSchemaPath schema search = findDir search
         then return dir
         else findDir ds
 
-catchErrors
-  :: ToJSON a
-  => FilePath -> a -> IO a
+catchErrors :: ToJSON a => FilePath -> a -> IO a
 catchErrors filePath x = do
   y <- try (forceToJson x)
   return $
@@ -137,25 +138,20 @@ readSchema md = do
     schemaConfig = combine md "schema.yml"
     confDirFiles confDir = selectFilesInDir isConfigDirFile (combine md confDir)
 
-readObjectFromFile
-  :: (FromJSON a, ToJSON a)
-  => FilePath -> IO a
+readObjectFromFile :: (FromJSON a, ToJSON a) => FilePath -> IO a
 readObjectFromFile file = do
   b <- readYamSqlFile file
   readObject file b
 
-readObject
-  :: (FromJSON a, ToJSON a)
-  => FilePath -> B.ByteString -> IO a
+readObject :: (FromJSON a, ToJSON a) => FilePath -> B.ByteString -> IO a
 readObject file b =
   catchErrors file $
   case decodeEither' b of
     Left errMsg -> err $ "in yaml-file: " <> tshow file <> ": " <> tshow errMsg
     Right obj -> obj
 
-readFunctionFromFile
-  :: (FromJSON a, ToJSON a)
-  => (a -> Text -> a) -> FilePath -> IO a
+readFunctionFromFile ::
+     (FromJSON a, ToJSON a) => (a -> Text -> a) -> FilePath -> IO a
 readFunctionFromFile rpl file = do
   b <- readYamSqlFile file
   case parseFrontmatter b of

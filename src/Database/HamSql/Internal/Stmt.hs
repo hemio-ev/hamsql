@@ -46,14 +46,10 @@ instance Ord SqlStmt where
 instance ToSqlId SqlStmt where
   sqlId = stmtSqlId . stmtId
 
-newSqlStmtId
-  :: (ToSqlId a)
-  => SqlStmtType -> a -> SqlStmtId
+newSqlStmtId :: (ToSqlId a) => SqlStmtType -> a -> SqlStmtId
 newSqlStmtId x y = SqlStmtId x (sqlId y)
 
-newSqlStmt
-  :: (ToSqlId a)
-  => SqlStmtType -> a -> Text -> Maybe SqlStmt
+newSqlStmt :: (ToSqlId a) => SqlStmtType -> a -> Text -> Maybe SqlStmt
 newSqlStmt t o b = Just $ SqlStmt (newSqlStmtId t o) b
 
 sqlPrinter :: [SqlStmt] -> Text

@@ -14,10 +14,8 @@ stmtsDropRole :: Setup -> SqlObj SQL_ROLE SqlName -> [Maybe SqlStmt]
 stmtsDropRole setup role@(SqlObj _ roleSqlName) =
   [newSqlStmt SqlDropRole role $ "DROP ROLE " <> prefixedRole setup roleSqlName]
 
-stmtsDropAllPrivileges :: Setup
-                       -> [SqlName]
-                       -> SqlObj SQL_ROLE SqlName
-                       -> [Maybe SqlStmt]
+stmtsDropAllPrivileges ::
+     Setup -> [SqlName] -> SqlObj SQL_ROLE SqlName -> [Maybe SqlStmt]
 stmtsDropAllPrivileges setup schemas x@(SqlObj _ n)
   | null schemas = [Nothing]
   | otherwise =
@@ -29,9 +27,8 @@ stmtsDropAllPrivileges setup schemas x@(SqlObj _ n)
     | objType <- ["TABLES", "SEQUENCES", "FUNCTIONS"]
     ]
 
-stmtRevokeMembership :: Setup
-                     -> SqlObj SQL_ROLE_MEMBERSHIP (SqlName, SqlName)
-                     -> [Maybe SqlStmt]
+stmtRevokeMembership ::
+     Setup -> SqlObj SQL_ROLE_MEMBERSHIP (SqlName, SqlName) -> [Maybe SqlStmt]
 stmtRevokeMembership setup x@(SqlObj _ (role, member)) =
   [ newSqlStmt SqlRevokeMembership x $
     "REVOKE" <-> prefixedRole setup role <-> "FROM" <->

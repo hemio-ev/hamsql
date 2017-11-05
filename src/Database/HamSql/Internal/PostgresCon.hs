@@ -122,8 +122,8 @@ pgsqlUpdateFragile setup conn stmts =
   dropResidual SqlCreateFunction deployedFunctionIds stmtsDropFunction >>=
   revokeAllPrivileges conn setup (deployedRoleIds setup conn)
   where
-    correctStmts
-      :: ToSqlId a
+    correctStmts ::
+         ToSqlId a
       => SqlStmtType
       -> (Connection -> IO [a])
       -> (a -> [Maybe SqlStmt])
@@ -131,8 +131,8 @@ pgsqlUpdateFragile setup conn stmts =
       -> IO [SqlStmt]
     correctStmts createType existingInquire dropStmtGenerator =
       correctStatements createType (existingInquire conn) dropStmtGenerator
-    dropResidual
-      :: ToSqlId a
+    dropResidual ::
+         ToSqlId a
       => SqlStmtType
       -> (Connection -> IO [a])
       -> (a -> [Maybe SqlStmt])
@@ -140,11 +140,12 @@ pgsqlUpdateFragile setup conn stmts =
       -> IO [SqlStmt]
     dropResidual t isf f xs = addDropResidual t (isf conn) f xs
 
-revokeAllPrivileges :: Connection
-                    -> Setup
-                    -> IO [SqlObj SQL_ROLE SqlName]
-                    -> [SqlStmt]
-                    -> IO [SqlStmt]
+revokeAllPrivileges ::
+     Connection
+  -> Setup
+  -> IO [SqlObj SQL_ROLE SqlName]
+  -> [SqlStmt]
+  -> IO [SqlStmt]
 revokeAllPrivileges conn setup roles stmts = do
   schemas <- map (\(SqlObj SQL_SCHEMA x) -> x) <$> deployedSchemaIds conn
   ((++ stmts) <$> catMaybes) . concatMap (stmtsDropAllPrivileges setup schemas) <$>
@@ -171,8 +172,8 @@ pgsqlExecAndRollback opt url stmts = do
   conn <- pgsqlExecIntern opt PgSqlWithTransaction url stmts
   rollback conn
 
-pgsqlExecStmtList
-  :: OptCommonDb
+pgsqlExecStmtList ::
+     OptCommonDb
   -> Status
   -> [SqlStmt] -- ^ Statements that still need to be executed
   -> [SqlStmt] -- ^ Statements that have failed during execution
@@ -230,8 +231,8 @@ pgsqlExecIntern opt mode connUrl xs = do
   when (mode == PgSqlWithoutTransaction) $ mapM_ (pgsqlExecStmtHandled conn) xs
   return conn
 
-addSqlStmtType
-  :: ToSqlId a
+addSqlStmtType ::
+     ToSqlId a
   => SqlStmtType -- ^ statment
   -> [a] -- ^ SQL ids that should become a "SqlStmtId" type to use
   -> [SqlStmtId]
@@ -240,16 +241,16 @@ addSqlStmtType t = map (SqlStmtId t . sqlId)
 filterSqlStmtType :: SqlStmtType -> [SqlStmt] -> [SqlStmt]
 filterSqlStmtType t xs = [x | x <- xs, stmtIdType x == t]
 
-filterStmtsMatchingIds
-  :: [SqlStmtId] -- ^ Statement ids to remove
+filterStmtsMatchingIds ::
+     [SqlStmtId] -- ^ Statement ids to remove
   -> [SqlStmt]
   -> [SqlStmt]
 filterStmtsMatchingIds ids = filter (\x -> stmtId x `notMember` ids')
   where
     ids' = fromList ids
 
-filterSqlIdBySqlStmts
-  :: ToSqlId a
+filterSqlIdBySqlStmts ::
+     ToSqlId a
   => SqlStmtType -- ^ stmts to be considered by stmt type
   -> [SqlStmt] -- ^ stmts that have the forbidden ids
   -> [a] -- elements that get filtered
@@ -259,8 +260,8 @@ filterSqlIdBySqlStmts t xs = filter (\x -> sqlId x `notMember` ids)
     ids = fromList . map sqlId $ filterSqlStmtType t xs
 
 -- target set of sql ids
-correctStatements
-  :: ToSqlId a
+correctStatements ::
+     ToSqlId a
   => SqlStmtType -- ^ install statements and the stmt type of interest
   -> IO [a] -- ^ deployed (existing) elements
   -> (a -> [Maybe SqlStmt]) -- ^ drop statment generator
@@ -271,8 +272,8 @@ correctStatements t iois f xs = do
   xs' <- addDropResidual t iois f xs
   return $ filterStmtsMatchingIds (addSqlStmtType t is) xs'
 
-addDropResidual
-  :: ToSqlId a
+addDropResidual ::
+     ToSqlId a
   => SqlStmtType
   -> IO [a]
   -> (a -> [Maybe SqlStmt])

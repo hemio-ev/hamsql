@@ -41,7 +41,6 @@ data Abbr a b
   | LongForm b
   deriving (Data, Generic, Show)
 
-instance (FromJSON a, FromJSON b) =>
-         FromJSON (Abbr a b) where
+instance (FromJSON a, FromJSON b) => FromJSON (Abbr a b) where
   parseJSON x@(Object _) = LongForm <$> parseJSON x
   parseJSON x = ShortForm <$> parseJSON x
