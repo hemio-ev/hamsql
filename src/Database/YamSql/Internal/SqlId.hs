@@ -82,7 +82,7 @@ sqlObjId (SqlObj _ y) = y
 deriving instance Show (SqlObj a b)
 
 instance Eq (SqlObj a b) where
-  SqlObj x1 y1 == SqlObj x2 y2 = (typeOf x1) == (typeOf x2) && y1 == y2
+  SqlObj x1 y1 == SqlObj x2 y2 = typeOf x1 == typeOf x2 && y1 == y2
 
 instance ToSqlCode (SqlObj a b) where
   toSqlCode (SqlObj _ x) = toSqlCode x

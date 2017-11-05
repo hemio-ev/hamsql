@@ -126,11 +126,11 @@ pgsqlUpdateFragile setup conn stmts =
          ToSqlId a
       => SqlStmtType
       -> (Connection -> IO [a])
-      -> (a -> [Maybe SqlStmt])
+      -> (a -> [Maybe SqlStmt]) -- ^ drop statement generator
       -> [SqlStmt]
       -> IO [SqlStmt]
-    correctStmts createType existingInquire dropStmtGenerator =
-      correctStatements createType (existingInquire conn) dropStmtGenerator
+    correctStmts createType existingInquire =
+      correctStatements createType (existingInquire conn)
     dropResidual ::
          ToSqlId a
       => SqlStmtType
@@ -138,7 +138,7 @@ pgsqlUpdateFragile setup conn stmts =
       -> (a -> [Maybe SqlStmt])
       -> [SqlStmt]
       -> IO [SqlStmt]
-    dropResidual t isf f xs = addDropResidual t (isf conn) f xs
+    dropResidual t isf = addDropResidual t (isf conn)
 
 revokeAllPrivileges ::
      Connection

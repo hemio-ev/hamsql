@@ -80,7 +80,7 @@ parseYamSql :: (Generic r, GFromJSON Zero (Rep r), Data r) => Value -> Parser r
 parseYamSql v = do
   let used = keysOfValue v
   parsed <- genericParseJSON myOpt v
-  let known = keysOfData $ parsed
+  let known = keysOfData parsed
   let diff = used \\ known
   return $
     if null diff

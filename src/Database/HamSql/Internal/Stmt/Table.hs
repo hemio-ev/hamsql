@@ -163,7 +163,7 @@ indexName t keys s Nothing = mconcat ([t] ++ keys ++ [s])
 indexName t _ s (Just k) =
   case k of
     (IndexNameUnprefixed n) -> t <> n <> s
-    (IndexNamePrefixed {indexnamePrefixed = n}) -> n
+    IndexNamePrefixed {indexnamePrefixed = n} -> n
 
 instance ToSqlStmts (SqlContext (Schema, Table)) where
   toSqlStmts SetupContext {setupContextSetup = setup} obj@(SqlContext (s, t)) =

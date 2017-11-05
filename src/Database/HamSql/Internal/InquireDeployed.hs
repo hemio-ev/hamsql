@@ -26,7 +26,7 @@ presetEmpty xs = Just xs
 recoverIndexName :: Text -> [Text] -> Text -> Text -> Maybe IndexName
 recoverIndexName tbl keys n s =
   case stripPrefix (tbl <> "_") n >>= stripSuffix ("_" <> s) of
-    Nothing -> Just $ IndexNamePrefixed {indexnamePrefixed = SqlName n}
+    Nothing -> Just IndexNamePrefixed {indexnamePrefixed = SqlName n}
     Just unprefixed
       | unprefixed == intercalate "_" keys -> Nothing
       | otherwise -> Just $ IndexNameUnprefixed (SqlName unprefixed)
@@ -34,11 +34,11 @@ recoverIndexName tbl keys n s =
 deployedSchemas :: SqlT [Schema]
 deployedSchemas = do
   schemas <- psqlQry_ qry
-  sequence $ map toSchema schemas
+  mapM toSchema schemas
   where
     toSchema (schema, description) = do
       tables <- deployedTables schema
-      return $
+      return
         Schema
         { schemaName = schema
         , schemaDescription = description
@@ -76,14 +76,14 @@ deployedSchemas = do
 deployedTables :: SqlName -> SqlT [Table]
 deployedTables schema = do
   tbls <- psqlQry qry (Only $ toSqlCode schema)
-  sequence $ map toTable tbls
+  mapM toTable tbls
   where
     toTable (table, description) = do
       columns <- deployedColumns (schema, table)
       pk <- deployedPrimaryKey (schema, table)
       fks <- deployedForeignKeys (schema, table)
       uniques <- deployedUniqueConstraints (schema, table)
-      return $
+      return
         Table
         { tableName = table
         , tableDescription = description
@@ -165,11 +165,11 @@ deployedUniqueConstraints tbl@(_, table) = do
       in case idx of
            Nothing -> ShortForm $ map SqlName keys
            index ->
-             LongForm $
-             UniqueConstraint
-             { uniqueconstraintName = index
-             , uniqueconstraintColumns = map SqlName keys
-             }
+             LongForm
+               UniqueConstraint
+               { uniqueconstraintName = index
+               , uniqueconstraintColumns = map SqlName keys
+               }
 
 deployedForeignKeys :: (SqlName, SqlName) -> SqlT [ForeignKey]
 deployedForeignKeys tbl@(_, table) = do
@@ -185,7 +185,7 @@ deployedForeignKeys tbl@(_, table) = do
          , foreignkeyColumns = map SqlName cols
          , foreignkeyRefTable = SqlName fTbl
          , foreignkeyRefColumns =
-             if (map SqlName cols) == fCols
+             if map SqlName cols == fCols
                then Nothing
                else Just fCols
          , foreignkeyOnDelete = Nothing

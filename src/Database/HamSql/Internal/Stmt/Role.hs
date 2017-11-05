@@ -58,4 +58,4 @@ instance ToSqlStmts (SqlContext Role) where
       sqlLogin _ = "NOLOGIN"
       sqlPassword Nothing = "PASSWORD NULL"
       sqlPassword (Just p) = "ENCRYPTED PASSWORD '" <> p <> "' "
-      prefix role = prefixedRole setup role
+      prefix = prefixedRole setup

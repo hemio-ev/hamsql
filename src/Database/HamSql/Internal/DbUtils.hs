@@ -53,7 +53,7 @@ getConUrl = getConUrlApp "hamsql" . optConnection
 getConUrlApp :: String -> String -> URI
 getConUrlApp app str = appendQuery ("application_name=" <> app) uri
   where
-    uri = fromJustReason "Not a valid URI" (parseAbsoluteURI $ str)
+    uri = fromJustReason "Not a valid URI" (parseAbsoluteURI str)
     appendQuery v u =
       u
       { uriQuery =

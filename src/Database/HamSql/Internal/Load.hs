@@ -118,10 +118,10 @@ readSchema md = do
   doesDirectoryExist md >>=
     errorCheck ("module dir does not exist: " <> tshow md)
   schemaData <- readObjectFromFile schemaConfig
-  domains <- confDirFiles "domains.d" >>= mapM (readObjectFromFile)
-  types <- confDirFiles "types.d" >>= mapM (readObjectFromFile)
-  sequences <- confDirFiles "sequences.d" >>= mapM (readObjectFromFile)
-  tables <- confDirFiles "tables.d" >>= mapM (readObjectFromFile)
+  domains <- confDirFiles "domains.d" >>= mapM readObjectFromFile
+  types <- confDirFiles "types.d" >>= mapM readObjectFromFile
+  sequences <- confDirFiles "sequences.d" >>= mapM readObjectFromFile
+  tables <- confDirFiles "tables.d" >>= mapM readObjectFromFile
   functions <-
     let ins x s = x {functionBody = Just s}
     in confDirFiles "functions.d" >>= mapM (readFunctionFromFile ins)
@@ -161,8 +161,7 @@ readFunctionFromFile rpl file = do
     _ -> readObject file b
 
 readYamSqlFile :: FilePath -> IO B.ByteString
-readYamSqlFile "-" = do
-  B.hGetContents stdin
+readYamSqlFile "-" = B.hGetContents stdin
 readYamSqlFile file = do
   fileExists <- doesFileExist file
   unless fileExists $ err $ "Expected file existance: '" <> tshow file <> "'"
