@@ -127,11 +127,11 @@ readSchema md = do
     in confDirFiles "functions.d" >>= mapM (readFunctionFromFile ins)
   let schemaData' =
         schemaData
-        { schemaDomains = schemaDomains schemaData <> Just domains
-        , schemaTypes = schemaTypes schemaData <> Just types
-        , schemaSequences = schemaSequences schemaData <> Just sequences
-        , schemaTables = schemaTables schemaData <> Just tables
-        , schemaFunctions = schemaFunctions schemaData <> Just functions
+        { schemaDomains = schemaDomains schemaData <> presetEmpty domains
+        , schemaTypes = schemaTypes schemaData <> presetEmpty types
+        , schemaSequences = schemaSequences schemaData <> presetEmpty sequences
+        , schemaTables = schemaTables schemaData <> presetEmpty tables
+        , schemaFunctions = schemaFunctions schemaData <> presetEmpty functions
         }
   return schemaData'
   where

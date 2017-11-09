@@ -111,13 +111,12 @@ applyTpl :: Setup -> Setup
 applyTpl s =
   s
   -- TODO: possible overwrite here!
-  {setupSchemaData = Just $ maybeMap applySchema (setupSchemaData s)}
+  {setupSchemaData = map applySchema <$> setupSchemaData s}
   where
     applySchema m =
       m
-      { schemaTables = Just $ maybeMap applyTableTemplates (schemaTables m)
-      , schemaFunctions =
-          Just $ maybeMap applyFunctionTemplates (schemaFunctions m)
+      { schemaTables = map applyTableTemplates <$> schemaTables m
+      , schemaFunctions = map applyFunctionTemplates <$> schemaFunctions m
       }
     applyTableTemplates :: Table -> Table
     applyTableTemplates t = foldr applyTableTpl t (tableTpls t)

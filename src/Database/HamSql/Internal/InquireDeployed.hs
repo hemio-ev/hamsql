@@ -14,10 +14,6 @@ import Database.HamSql.Internal.Utils
 import Database.HamSql.Setup
 import Database.YamSql
 
-presetEmpty :: [a] -> Maybe [a]
-presetEmpty [] = Nothing
-presetEmpty xs = Just xs
-
 recoverIndexName :: Text -> [Text] -> Text -> Text -> Maybe IndexName
 recoverIndexName tbl keys n s =
   case stripPrefix (tbl <> "_") n >>= stripSuffix ("_" <> s) of
@@ -38,12 +34,12 @@ deployedSchemas = do
         { schemaName = schema
         , schemaDescription = description
         , schemaDependencies = Nothing
-        , schemaFunctions = Just []
+        , schemaFunctions = Nothing
         , schemaFunctionTemplates = Nothing
         , schemaTables = Just tables
         , schemaTableTemplates = Nothing
         , schemaRoles = Nothing
-        , schemaSequences = Just []
+        , schemaSequences = Nothing
         , schemaPrivUsage = Nothing
         , schemaPrivSelectAll = Nothing
         , schemaPrivInsertAll = Nothing
@@ -52,8 +48,8 @@ deployedSchemas = do
         , schemaPrivSequenceAll = Nothing
         , schemaPrivExecuteAll = Nothing
         , schemaPrivAllAll = Nothing
-        , schemaDomains = Just []
-        , schemaTypes = Just []
+        , schemaDomains = Nothing
+        , schemaTypes = Nothing
         , schemaExecPostInstall = Nothing
         , schemaExecPostInstallAndUpgrade = Nothing
         }

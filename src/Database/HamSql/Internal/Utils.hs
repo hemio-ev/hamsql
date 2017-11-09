@@ -28,6 +28,10 @@ preset d x
   | d == x = Nothing
   | otherwise = Just x
 
+presetEmpty :: [a] -> Maybe [a]
+presetEmpty [] = Nothing
+presetEmpty xs = Just xs
+
 err :: Text -> a
 err xs =
   unsafePerformIO $ do
@@ -69,11 +73,6 @@ maybeMap f = maybe [] (map f)
 maybePrefix :: Text -> Maybe Text -> Text
 maybePrefix _ Nothing = ""
 maybePrefix p (Just x) = p <> x
-
--- | Joins two Maybe lists
-maybeJoin :: Maybe [a] -> Maybe [a] -> Maybe [a]
-maybeJoin Nothing Nothing = Nothing
-maybeJoin xs ys = Just (fromMaybe [] xs ++ fromMaybe [] ys)
 
 fromJustReason :: Text -> Maybe a -> a
 fromJustReason _ (Just x) = x
