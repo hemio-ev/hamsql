@@ -14,11 +14,6 @@ import Database.HamSql.Internal.Utils
 import Database.HamSql.Setup
 import Database.YamSql
 
-preset :: Eq a => a -> a -> Maybe a
-preset d x
-  | d == x = Nothing
-  | otherwise = Just x
-
 presetEmpty :: [a] -> Maybe [a]
 presetEmpty [] = Nothing
 presetEmpty xs = Just xs

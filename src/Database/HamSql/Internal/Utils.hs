@@ -23,6 +23,11 @@ import Database.YamSql.Internal.Utils
 join :: [a] -> [[a]] -> [a]
 join = intercalate
 
+preset :: Eq a => a -> a -> Maybe a
+preset d x
+  | d == x = Nothing
+  | otherwise = Just x
+
 err :: Text -> a
 err xs =
   unsafePerformIO $ do

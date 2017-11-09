@@ -23,6 +23,7 @@ import Database.HamSql.Internal.InquireDeployed
 import Database.HamSql.Internal.Load (loadSetup)
 import Database.HamSql.Internal.PostgresCon
 import Database.HamSql.Setup
+import Database.HamSql.Write
 import Database.YamSql
 
 main :: IO ()
@@ -62,6 +63,7 @@ selfTestStmt =
   testCaseSteps "stmt" $ \step -> do
     (schemasDb, setupLocal) <- deploy step "test/setups/self-test.yml"
     --B.putStrLn $ encodePretty (setConfDropNull True defConfig) (setupLocal)
+    mapM_ (doWrite "/tmp/testout" . schemaToDirTree) schemasDb
     step "check statement diff"
     assertNoDiff
       (pgsqlGetFullStatements (newSetup schemasDb))
