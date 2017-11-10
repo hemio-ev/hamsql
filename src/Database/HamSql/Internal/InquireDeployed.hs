@@ -30,6 +30,7 @@ deployedSchemas = do
     toSchema (schema, description) = do
       tables <- deployedTables schema
       functions <- deployedFunctions schema
+      domains <- deployedDomains schema
       return
         Schema
         { schemaName = schema
@@ -49,7 +50,7 @@ deployedSchemas = do
         , schemaPrivSequenceAll = Nothing
         , schemaPrivExecuteAll = Nothing
         , schemaPrivAllAll = Nothing
-        , schemaDomains = Nothing
+        , schemaDomains = presetEmpty domains
         , schemaTypes = Nothing
         , schemaExecPostInstall = Nothing
         , schemaExecPostInstallAndUpgrade = Nothing
@@ -277,6 +278,32 @@ deployedFunctions schema = do
         JOIN pg_catalog.pg_language AS l
           ON p.prolang = l.oid
         WHERE pronamespace::regnamespace = ?::regnamespace
+      |]
+
+deployedDomains :: SqlName -> SqlT [Domain]
+deployedDomains schema = do
+  doms <- psqlQry qry (Only $ toSqlCode schema)
+  return $ map toDomain doms
+  where
+    toDomain (domname, domdesc, domtype, domdefault) =
+      Domain
+      { domainName = domname
+      , domainDescription = fromMaybe "" domdesc
+      , domainType = domtype
+      , domainDefault = domdefault
+      , domainChecks = Nothing -- Maybe [Check]
+      }
+    qry =
+      [sql|
+        SELECT
+          typname,
+          pg_catalog.obj_description(oid, 'pg_type')::text AS desc,
+          pg_catalog.format_type(typbasetype, typtypmod) AS domtype,
+          typdefault
+        FROM pg_type
+        WHERE
+          typtype = 'd'
+          AND typnamespace = ?::regnamespace::oid
       |]
 
 sqlManageSchemaJoin :: Text -> Text

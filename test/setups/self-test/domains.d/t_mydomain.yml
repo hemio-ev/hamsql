@@ -1,0 +1,4 @@
+name: t_mydomain
+description: My Domain
+type: character varying(30)
+
