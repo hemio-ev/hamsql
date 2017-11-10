@@ -29,14 +29,15 @@ deployedSchemas = do
   where
     toSchema (schema, description) = do
       tables <- deployedTables schema
+      functions <- deployedFunctions schema
       return
         Schema
         { schemaName = schema
         , schemaDescription = description
         , schemaDependencies = Nothing
-        , schemaFunctions = Nothing
+        , schemaFunctions = presetEmpty functions
         , schemaFunctionTemplates = Nothing
-        , schemaTables = Just tables
+        , schemaTables = presetEmpty tables
         , schemaTableTemplates = Nothing
         , schemaRoles = Nothing
         , schemaSequences = Nothing
@@ -215,6 +216,66 @@ keyQuery =
              AND i.indisprimary = ?
           GROUP BY tnsp.nspname, trel.relname, irel.relname;      
     |]
+
+toVariable :: SqlType -> Maybe SqlName -> Maybe Text -> Variable
+toVariable varType varName varDefault =
+  Variable
+  { variableName = fromMaybe undefined varName
+  , variableDescription = Nothing
+  , variableType = varType
+  , variableDefault = varDefault
+  }
+
+deployedFunctions :: SqlName -> SqlT [Function]
+deployedFunctions schema = do
+  funs <- psqlQry qry (Only $ toSqlCode schema)
+  mapM toFunction funs
+  where
+    toFunction (proname, description, prorettype, proargnames, proargtypes, proargdefaults, owner, language, prosecdef, source) = do
+      return
+        Function
+        { functionName = proname
+        , functionDescription = fromMaybe "" description
+        , functionReturns = prorettype
+        , functionParameters =
+            let n = length $ fromPGArray proargtypes
+                def = fromMaybe (replicate n Nothing)
+            in presetEmpty $
+               zipWith3
+                 toVariable
+                 (fromPGArray proargtypes)
+                 (def $ fromPGArray <$> proargnames)
+                 (def $ fromPGArray <$> proargdefaults)
+        , functionTemplates = Nothing
+        , functionTemplateData = Nothing
+        , functionReturnsColumns = Nothing
+        , functionVariables = Nothing
+        , functionPrivExecute = Nothing
+        , functionSecurityDefiner = preset False prosecdef
+        , functionOwner = owner
+        , functionLanguage = Just language
+        , functionBody = source
+        }
+    qry =
+      [sql|
+        SELECT
+          proname,
+          pg_catalog.obj_description(p.oid, 'pg_proc')::text AS description,
+          prorettype::regtype::text,
+          proargnames,
+          ARRAY(SELECT UNNEST(proargtypes::regtype[]::text[])),
+          ARRAY(SELECT pg_get_function_arg_default(p.oid, n)
+            FROM generate_series(1, pronargs) t(n)),
+          CASE WHEN proowner<>current_user::regrole
+           THEN proowner::regrole::text END,
+          lanname,
+          prosecdef,
+          prosrc
+        FROM pg_catalog.pg_proc AS p
+        JOIN pg_catalog.pg_language AS l
+          ON p.prolang = l.oid
+        WHERE pronamespace::regnamespace = ?::regnamespace
+      |]
 
 sqlManageSchemaJoin :: Text -> Text
 sqlManageSchemaJoin schemaid =

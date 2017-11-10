@@ -40,10 +40,10 @@ instance ToSqlStmts (SqlContext (Schema, Function)) where
         sqlLanguage (functionLanguage f) <>
         "\nSECURITY " <>
         sqlSecurity (functionSecurityDefiner f) <>
-        "\nAS\n$BODY$\n" <>
+        "\nAS\n$BODY$" <>
         sqlBody <>
-        "\n$BODY$\n"
-      stmtComment = stmtCommentOn obj $ toSqlCodeString (functionDescription f)
+        "$BODY$\n"
+      stmtComment = stmtCommentOn obj $ functionDescription f
       sqlSetOwner (Just o) =
         newSqlStmt SqlPriv obj $
         "ALTER FUNCTION " <> sqlIdCode obj <> "OWNER TO " <>

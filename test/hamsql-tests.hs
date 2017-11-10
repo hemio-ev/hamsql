@@ -3,17 +3,15 @@ module Main where
 import Control.Exception.Safe
 import Control.Monad.Trans.Reader (runReaderT)
 
-import qualified Data.ByteString as B
+--import qualified Data.ByteString as B
 import Data.Monoid ((<>))
 import qualified Data.Text.Lazy as T
 
 import Data.Maybe (catMaybes, fromMaybe)
-import Data.Yaml.Pretty
 import Database.PostgreSQL.Simple (Connection)
 import System.Exit
 import Text.Pretty.Simple
 
---import System.Directory
 import Test.Tasty
 import Test.Tasty.HUnit
 
@@ -54,15 +52,12 @@ integrationTests =
         , "postgresql://postgres@/test1"
         ]
     r @? "Should fail"
-    --B.putStrLn $ encodePretty defConfig (setupLocal)
     --pPrint schemasDb
 
---B.putStrLn $ encodePretty defConfig (newSetup schemas)
 selfTestStmt :: TestTree
 selfTestStmt =
   testCaseSteps "stmt" $ \step -> do
     (schemasDb, setupLocal) <- deploy step "test/setups/self-test.yml"
-    --B.putStrLn $ encodePretty (setConfDropNull True defConfig) (setupLocal)
     mapM_ (doWrite "/tmp/testout" . schemaToDirTree) schemasDb
     step "check statement diff"
     assertNoDiff
