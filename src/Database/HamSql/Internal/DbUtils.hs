@@ -28,12 +28,12 @@ type SqlT = ReaderT Connection IO
 psqlQry :: (ToRow q, FromRow r) => Query -> q -> SqlT [r]
 psqlQry template qs = do
   conn <- ask
-  lift $ query conn template qs
+  lift (query conn template qs `catch` psqlHandleErr template)
 
 psqlQry_ :: (FromRow r) => Query -> SqlT [r]
 psqlQry_ que = do
   conn <- ask
-  lift $ query_ conn que
+  lift (query_ conn que `catch` psqlHandleErr que)
 
 sqlErrObjectInUse :: B.ByteString
 sqlErrObjectInUse = "55006"
@@ -99,7 +99,30 @@ pgsqlConnectUrl url = do
           showCode (decodeUtf8 (sqlErrorMsg e))
         Right conn -> conn
 
-pgsqlHandleErr :: SqlStmt -> Connection -> SqlError -> IO ()
+psqlHandleErr :: Query -> SqlError -> IO a
+psqlHandleErr stmt e =
+  err $
+  "An SQL error occured while executing the following statement" <>
+  showCode (tshow stmt) <\>
+  "The SQL-Server reported" <\>
+  "Message:" <>
+  showCode (decodeUtf8 (sqlErrorMsg e)) <\>
+  "Code: " <>
+  showCode (decodeUtf8 (sqlState e)) <\>
+  errDetail <\>
+  errHint <\>
+  "\nAll statements have been rolled back if possible."
+  where
+    errDetail =
+      case sqlErrorDetail e of
+        "" -> ""
+        x -> "Detail:" <> showCode (decodeUtf8 x)
+    errHint =
+      case sqlErrorHint e of
+        "" -> ""
+        x -> "Hint:" <> showCode (decodeUtf8 x)
+
+pgsqlHandleErr :: SqlStmt -> Connection -> SqlError -> IO a
 pgsqlHandleErr stmt conn e = do
   extraMsg <-
     if sqlState e == sqlErrObjectInUse && stmtIdType stmt == SqlDropDatabase
@@ -115,8 +138,7 @@ pgsqlHandleErr stmt conn e = do
             (map showConnected $
              filter (\(db, _, _) -> toSqlCode db == sqlIdCode stmt) xs)
       else return ""
-  _ <-
-    err $
+  err $
     "An SQL error occured while executing the following statement" <>
     showCode (toSqlCode stmt) <\>
     "The SQL-Server reported" <\>
@@ -128,7 +150,6 @@ pgsqlHandleErr stmt conn e = do
     errHint <\>
     extraMsg <\>
     "\nAll statements have been rolled back if possible."
-  return ()
   where
     showConnected (_, role, app) = " - role" <-> toSqlCode role <> appOut app
     appOut "" = ""

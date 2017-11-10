@@ -78,7 +78,7 @@ deployedTables schema = do
       return
         Table
         { tableName = table
-        , tableDescription = description
+        , tableDescription = fromMaybe "" description
         , tableColumns = columns
         , tablePrimaryKey = pk
         , tableUnique = presetEmpty uniques
@@ -94,11 +94,12 @@ deployedTables schema = do
     qry =
       [sql|
         SELECT
-          table_name,
-          COALESCE(pg_catalog.obj_description(
-            (table_schema || '.' || table_name)::regclass, 'pg_class'), '')
-        FROM information_schema.tables
-        WHERE table_schema::regnamespace = ?::regnamespace
+          relname,
+          pg_catalog.obj_description(oid, 'pg_class') AS desc
+        FROM pg_catalog.pg_class
+        WHERE
+          relkind = 'r'
+          AND relnamespace = ?::regnamespace::oid
       |]
 
 deployedColumns :: (SqlName, SqlName) -> SqlT [Column]
@@ -108,7 +109,7 @@ deployedColumns tbl = map toColumn <$> psqlQry qry (Only $ toSqlCode tbl)
       Column
       { columnName = sname
       , columnType = dataType
-      , columnDescription = description
+      , columnDescription = fromMaybe "" description
       , columnDefault = columnDefault'
       , columnNull = preset False isNullable
       , columnReferences = Nothing
@@ -120,16 +121,18 @@ deployedColumns tbl = map toColumn <$> psqlQry qry (Only $ toSqlCode tbl)
     qry =
       [sql|
         SELECT
-          column_name,
-          COALESCE(domain_schema || '.' || domain_name, data_type),
-          column_default,
-          is_nullable::bool,
-          COALESCE(pg_catalog.col_description(a.attrelid, a.attnum), '')
-        FROM information_schema.columns
-        JOIN pg_catalog.pg_attribute AS a
-          ON a.attrelid = (table_schema || '.' || table_name)::regclass
-          AND a.attname = column_name 
-        WHERE (table_schema || '.' || table_name)::regclass = ?::regclass
+          attname,
+          atttypid::regtype::text,
+          def.adsrc,
+          NOT attnotnull,
+          pg_catalog.col_description(attrelid, attnum)
+        FROM pg_catalog.pg_attribute
+        LEFT JOIN pg_catalog.pg_attrdef AS def
+          ON attrelid = adrelid AND adnum = attnum
+        WHERE
+          NOT attisdropped
+          AND attnum > 0
+          AND attrelid = ?::regclass::oid
       |]
 
 --deployedKeys :: 
@@ -211,7 +214,7 @@ keyQuery =
           JOIN pg_attribute AS a
             ON trel.oid = a.attrelid AND a.attnum = c.colnum
           WHERE
-             (tnsp.nspname || '.' || trel.relname)::regclass = ?::regclass
+             trel.oid::regclass = ?::regclass
              AND i.indisunique = ?
              AND i.indisprimary = ?
           GROUP BY tnsp.nspname, trel.relname, irel.relname;      
@@ -229,33 +232,32 @@ toVariable varType varName varDefault =
 deployedFunctions :: SqlName -> SqlT [Function]
 deployedFunctions schema = do
   funs <- psqlQry qry (Only $ toSqlCode schema)
-  mapM toFunction funs
+  return $ map toFunction funs
   where
-    toFunction (proname, description, prorettype, proargnames, proargtypes, proargdefaults, owner, language, prosecdef, source) = do
-      return
-        Function
-        { functionName = proname
-        , functionDescription = fromMaybe "" description
-        , functionReturns = prorettype
-        , functionParameters =
-            let n = length $ fromPGArray proargtypes
-                def = fromMaybe (replicate n Nothing)
-            in presetEmpty $
-               zipWith3
-                 toVariable
-                 (fromPGArray proargtypes)
-                 (def $ fromPGArray <$> proargnames)
-                 (def $ fromPGArray <$> proargdefaults)
-        , functionTemplates = Nothing
-        , functionTemplateData = Nothing
-        , functionReturnsColumns = Nothing
-        , functionVariables = Nothing
-        , functionPrivExecute = Nothing
-        , functionSecurityDefiner = preset False prosecdef
-        , functionOwner = owner
-        , functionLanguage = Just language
-        , functionBody = source
-        }
+    toFunction (proname, description, prorettype, proargnames, proargtypes, proargdefaults, owner, language, prosecdef, source) =
+      Function
+      { functionName = proname
+      , functionDescription = fromMaybe "" description
+      , functionReturns = prorettype
+      , functionParameters =
+          let n = length $ fromPGArray proargtypes
+              def = fromMaybe (replicate n Nothing)
+          in presetEmpty $
+             zipWith3
+               toVariable
+               (fromPGArray proargtypes)
+               (def $ fromPGArray <$> proargnames)
+               (def $ fromPGArray <$> proargdefaults)
+      , functionTemplates = Nothing
+      , functionTemplateData = Nothing
+      , functionReturnsColumns = Nothing
+      , functionVariables = Nothing
+      , functionPrivExecute = Nothing
+      , functionSecurityDefiner = preset False prosecdef
+      , functionOwner = owner
+      , functionLanguage = Just language
+      , functionBody = source
+      }
     qry =
       [sql|
         SELECT

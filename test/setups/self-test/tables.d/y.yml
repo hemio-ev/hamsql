@@ -1,0 +1,16 @@
+name: "y"
+description: Table ``y``
+primary_key: [y1]
+columns:
+ - name: y1
+   type: integer
+   description: Column y1
+ - name: y2
+   type: integer
+   description: Column y2
+
+foreign_keys:
+  - name: manualfk
+    columns: [y1, y2]
+    ref_table: '"self-test"."X"'
+    ref_columns: [X3, x1]

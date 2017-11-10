@@ -1,0 +1,21 @@
+name: "X"
+description: Table ``X`` without primary_key
+primary_key: []
+columns:
+ - name: X3
+   type: integer
+   description: Column X3
+ - name: x1
+   type: integer
+   description: Column x1
+ - name: x2
+   type: integer
+   description: Column x2
+unique:
+  - name:
+     prefixed: CustomPrefix_u2
+    columns: [x1]
+  - name: u1
+    columns: [x1]
+  - [x1, X3]
+  - [x1]

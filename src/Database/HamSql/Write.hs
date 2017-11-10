@@ -7,6 +7,7 @@ module Database.HamSql.Write
 import qualified Data.ByteString as B
 import Data.Ord (comparing)
 import qualified Data.Text as T
+import Data.Text.Encoding (encodeUtf8)
 import Data.Yaml
 import Data.Yaml.Pretty
 import System.Directory.Tree
@@ -16,20 +17,41 @@ import Database.YamSql
 
 schemaToDirTree :: Schema -> DirTree B.ByteString
 schemaToDirTree schema =
-  Dir
-    (filePath $ schemaName schema)
-    ([File "schema.yml" (toYml schema {schemaTables = Nothing})] ++
-     catMaybes
-       [Dir "tables.d" . map (toFile tableName) <$> (schemaTables schema)])
+  let schemaFile =
+        File
+          "schema.yml"
+          (toYml schema {schemaTables = Nothing, schemaFunctions = Nothing})
+  in Dir
+       (filePath $ schemaName schema)
+       (schemaFile :
+        catMaybes
+          [ Dir "domains.d" . map (toYamlFile domainName) <$>
+            schemaDomains schema
+          , Dir "sequences.d" . map (toYamlFile sequenceName) <$>
+            schemaSequences schema
+          , Dir "types.d" . map (toYamlFile typeName) <$> schemaTypes schema
+          , Dir "functions.d" .
+            map
+              (\x ->
+                 toFrontmatterFile
+                   functionName
+                   (x {functionBody = Nothing})
+                   (functionBody x)) <$>
+            schemaFunctions schema
+          ])
   where
-    toFile getName obj = File (filePath $ getName obj) (toYml obj)
+    toYamlFile getName obj = File (filePath (getName obj) <> ".yml") (toYml obj)
+    toFrontmatterFile getName obj src =
+      File
+        (filePath (getName obj) <> ".sql")
+        ("---\n" <> toYml obj <> "---\n" <> encodeUtf8 (fromMaybe "" src))
     filePath :: SqlName -> FilePath
     filePath = T.unpack . T.replace "\"" "" . unsafePlainName
 
 toYml :: ToJSON a => a -> B.ByteString
 toYml =
   encodePretty $
-  (setConfCompare $ comparing ymlOrd) $ (setConfDropNull True) defConfig
+  setConfCompare (comparing ymlOrd) $ (setConfDropNull True) defConfig
 
 doWrite :: FilePath -> DirTree B.ByteString -> IO (AnchoredDirTree ())
 doWrite p x = writeDirectoryWith B.writeFile (p :/ x)

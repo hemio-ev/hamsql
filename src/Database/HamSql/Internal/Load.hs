@@ -128,10 +128,10 @@ readSchema md = do
   let schemaData' =
         schemaData
         { schemaDomains = schemaDomains schemaData <> presetEmpty domains
-        , schemaTypes = schemaTypes schemaData <> presetEmpty types
+        , schemaFunctions = schemaFunctions schemaData <> presetEmpty functions
         , schemaSequences = schemaSequences schemaData <> presetEmpty sequences
         , schemaTables = schemaTables schemaData <> presetEmpty tables
-        , schemaFunctions = schemaFunctions schemaData <> presetEmpty functions
+        , schemaTypes = schemaTypes schemaData <> presetEmpty types
         }
   return schemaData'
   where
