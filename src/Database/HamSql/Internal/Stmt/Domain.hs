@@ -22,11 +22,19 @@ instance ToSqlStmts (SqlContext (Schema, Domain)) where
   toSqlStmts _ obj@(SqlContext (_, d)) =
     stmtCreateDomain :
     sqlDefault (domainDefault d) :
-    stmtCommentOn obj (domainDescription d) : maybeMap sqlCheck (domainChecks d)
+    stmtCommentOn obj (domainDescription d) :
+    (maybeMap sqlCheck (domainChecks d) ++
+     maybeMap checkComment (domainChecks d))
     where
       stmtCreateDomain =
         newSqlStmt SqlCreateDomain obj $
         "CREATE DOMAIN" <-> sqlIdCode obj <-> "AS" <-> toSqlCode (domainType d)
+      checkComment c =
+        newSqlStmt SqlComment obj $
+        "COMMENT ON CONSTRAINT" <-> toSqlCode (checkName c) <-> "ON DOMAIN" <->
+        sqlIdCode obj <->
+        "IS" <->
+        toSqlCodeString (checkDescription c)
       sqlCheck :: Check -> Maybe SqlStmt
       sqlCheck c =
         newSqlStmt SqlCreateCheckConstr obj $

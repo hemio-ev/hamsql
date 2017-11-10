@@ -283,16 +283,18 @@ deployedFunctions schema = do
 deployedDomains :: SqlName -> SqlT [Domain]
 deployedDomains schema = do
   doms <- psqlQry qry (Only $ toSqlCode schema)
-  return $ map toDomain doms
+  mapM toDomain doms
   where
-    toDomain (domname, domdesc, domtype, domdefault) =
-      Domain
-      { domainName = domname
-      , domainDescription = fromMaybe "" domdesc
-      , domainType = domtype
-      , domainDefault = domdefault
-      , domainChecks = Nothing -- Maybe [Check]
-      }
+    toDomain (domname, domdesc, domtype, domdefault) = do
+      constraints <- deployedDomainConstraints (schema, domname)
+      return $
+        Domain
+        { domainName = domname
+        , domainDescription = fromMaybe "" domdesc
+        , domainType = domtype
+        , domainDefault = domdefault
+        , domainChecks = presetEmpty constraints
+        }
     qry =
       [sql|
         SELECT
@@ -305,6 +307,29 @@ deployedDomains schema = do
           typtype = 'd'
           AND typnamespace = ?::regnamespace::oid
       |]
+
+deployedDomainConstraints :: (SqlName, SqlName) -> SqlT [Check]
+deployedDomainConstraints dom = do
+  cons <- psqlQry qry (Only $ toSqlCode dom)
+  return $ map toCheck cons
+  where
+    toCheck (coname, codesc, cocheck) =
+      Check
+      { checkName = coname
+      , checkDescription = fromMaybe "" codesc
+      , checkCheck = cocheck
+      }
+    qry =
+      [sql|
+    SELECT
+      conname,
+      pg_catalog.obj_description(c.oid, 'pg_constraint')::text AS condesc,
+      consrc
+    FROM pg_catalog.pg_constraint c
+    JOIN pg_type t ON t.oid = contypid
+    WHERE
+      t.oid = ?::regtype::oid
+  |]
 
 sqlManageSchemaJoin :: Text -> Text
 sqlManageSchemaJoin schemaid =

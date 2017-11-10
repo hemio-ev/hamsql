@@ -1,4 +1,7 @@
 name: t_mydomain
 description: My Domain
 type: character varying(30)
-
+checks:
+ - name: Only one value allowed
+   description: Only the value 'test1' is allowed
+   check: "((VALUE)::text = 'test1'::text)"
