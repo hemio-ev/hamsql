@@ -1,0 +1,10 @@
+name: Seq1
+description: My Sequence
+
+increment: 2
+min_value: -5
+max_value: 10
+start_value: 3
+cache: 4
+cycle: true
+# TODO: owned_by_column

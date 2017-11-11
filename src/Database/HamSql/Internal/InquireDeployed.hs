@@ -29,6 +29,7 @@ deployedSchemas = do
   where
     toSchema (schema, description) = do
       tables <- deployedTables schema
+      sequences <- deployedSequences schema
       functions <- deployedFunctions schema
       domains <- deployedDomains schema
       return
@@ -41,7 +42,7 @@ deployedSchemas = do
         , schemaTables = presetEmpty tables
         , schemaTableTemplates = Nothing
         , schemaRoles = Nothing
-        , schemaSequences = Nothing
+        , schemaSequences = presetEmpty sequences
         , schemaPrivUsage = Nothing
         , schemaPrivSelectAll = Nothing
         , schemaPrivInsertAll = Nothing
@@ -330,6 +331,40 @@ deployedDomainConstraints dom = do
     WHERE
       t.oid = ?::regtype::oid
   |]
+
+deployedSequences :: SqlName -> SqlT [Sequence]
+deployedSequences schema = do
+  seqs <- psqlQry qry1 (Only $ toSqlCode schema)
+  map toSequence <$> head <$> sequence <$> mapM doQry2 seqs
+  where
+    doQry2 (n, desc) = psqlQry (qry2 (n :: Text)) (Only $ (desc :: Maybe Text))
+    toSequence (seqname, seqstartvalue, seqincrementby, seqmaxvalue, seqminvalue, seqcachevalue, seqiscycled, seqdesc) =
+      Sequence
+      { sequenceName = seqname
+      , sequenceDescription = fromMaybe "" seqdesc
+      , sequenceIncrement = preset 1 seqincrementby
+      , sequenceMinValue = preset 1 seqminvalue
+      , sequenceMaxValue = preset 9223372036854775807 seqmaxvalue
+      , sequenceStartValue = preset 1 seqstartvalue
+      , sequenceCache = preset 1 seqcachevalue
+      , sequenceCycle = preset False seqiscycled
+      , sequenceOwnedByColumn = Nothing
+      }
+    qry1 =
+      [sql|
+        SELECT
+          oid::regclass::text,
+          pg_catalog.obj_description(oid, 'pg_class')::text AS seqdesc
+        FROM pg_class
+        WHERE
+          relkind = 'S'
+          AND relnamespace = ?::regnamespace::oid
+      |]
+    qry2 n =
+      toQry $
+      "SELECT sequence_name, start_value, increment_by, max_value," <\>
+      "min_value, cache_value, is_cycled::bool, ?::text AS desc FROM " <>
+      n
 
 sqlManageSchemaJoin :: Text -> Text
 sqlManageSchemaJoin schemaid =
