@@ -43,14 +43,20 @@ constrId ::
 constrId s t c = SqlObj SQL_TABLE_CONSTRAINT (schemaName s, tableName t, c)
 
 -- TODO: prefix with table name
-stmtCheck :: ToSqlId a => a -> Check -> Maybe SqlStmt
+stmtCheck :: ToSqlId a => a -> Check -> [Maybe SqlStmt]
 stmtCheck obj c =
-  newSqlStmt SqlCreateCheckConstr obj $
-  "ALTER TABLE " <> sqlIdCode obj <> " ADD CONSTRAINT " <>
-  toSqlCode (checkName c) <>
-  " CHECK (" <>
-  checkCheck c <>
-  ")"
+  [ newSqlStmt SqlCreateCheckConstr obj $
+    "ALTER TABLE " <> sqlIdCode obj <> " ADD CONSTRAINT " <>
+    toSqlCode (checkName c) <>
+    " CHECK (" <>
+    checkCheck c <>
+    ")"
+  , newSqlStmt SqlComment obj $
+    "COMMENT ON CONSTRAINT" <-> toSqlCode (checkName c) <-> "ON" <->
+    sqlIdCode obj <->
+    "IS" <->
+    toSqlCodeString (checkDescription c)
+  ]
 
 instance ToSqlStmts (SqlContext (Schema, Table, Column)) where
   toSqlStmts context obj@(SqlContext (schema, table, rawColumn)) =
@@ -98,7 +104,7 @@ instance ToSqlStmts (SqlContext (Schema, Table, Column)) where
           sqlDefault d =
             stmtAlterColumn SqlColumnSetDefault $ "SET DEFAULT " <> d
       -- [CHECK]
-      stmtsAddColumnCheck = maybeMap (stmtCheck tbl) (columnChecks c)
+      stmtsAddColumnCheck = concat $ maybeMap (stmtCheck tbl) (columnChecks c)
       -- FOREIGN KEY
       stmtAddForeignKey =
         case columnReferences c of
@@ -171,7 +177,7 @@ instance ToSqlStmts (SqlContext (Schema, Table)) where
       -- table comment
     , stmtCommentOn obj (tableDescription t)
     ] ++
-    maybeMap (stmtCheck obj) (tableChecks t) ++
+    (concat $ maybeMap (stmtCheck obj) (tableChecks t)) ++
     -- grant rights to roles
     maybeMap (sqlGrant "SELECT") (tablePrivSelect t) ++
     maybeMap (sqlGrant "UPDATE") (tablePrivUpdate t) ++

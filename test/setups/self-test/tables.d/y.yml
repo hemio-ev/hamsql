@@ -14,3 +14,11 @@ foreign_keys:
     columns: [y1, y2]
     ref_table: '"self-test"."X"'
     ref_columns: [X3, x1]
+
+checks:
+ - name: some number checks
+   description: A check
+   check: ((y1 > 0) AND (y2 < 0))
+ - name: trivial
+   description: This check is trivial.
+   check: "true"

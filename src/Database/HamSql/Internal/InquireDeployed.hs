@@ -78,6 +78,7 @@ deployedTables schema = do
       pk <- deployedPrimaryKey (schema, table)
       fks <- deployedForeignKeys (schema, table)
       uniques <- deployedUniqueConstraints (schema, table)
+      checks <- deployedTableChecks (schema, table)
       return
         Table
         { tableName = table
@@ -86,7 +87,7 @@ deployedTables schema = do
         , tablePrimaryKey = pk
         , tableUnique = presetEmpty uniques
         , tableForeignKeys = presetEmpty fks
-        , tableChecks = Nothing
+        , tableChecks = presetEmpty checks
         , tableInherits = Nothing
         , tablePrivSelect = Nothing
         , tablePrivInsert = Nothing
@@ -136,6 +137,30 @@ deployedColumns tbl = map toColumn <$> psqlQry qry (Only $ toSqlCode tbl)
           NOT attisdropped
           AND attnum > 0
           AND attrelid = ?::regclass::oid
+      |]
+
+deployedTableChecks :: (SqlName, SqlName) -> SqlT [Check]
+deployedTableChecks tbl = do
+  cons <- psqlQry qry (Only $ toSqlCode tbl)
+  return $ map toCheck cons
+  where
+    toCheck (coname, codesc, cocheck) =
+      Check
+      { checkName = coname
+      , checkDescription = fromMaybe "" codesc
+      , checkCheck = cocheck
+      }
+    qry =
+      [sql|
+        SELECT
+          conname,
+          pg_catalog.obj_description(oid, 'pg_constraint')::text AS condesc,
+          consrc
+        FROM pg_catalog.pg_constraint
+        WHERE
+          contype = 'c'
+          AND conrelid IS NOT NULL
+          AND conrelid = ?::regclass::oid
       |]
 
 --deployedKeys :: 
