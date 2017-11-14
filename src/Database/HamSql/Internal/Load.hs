@@ -34,16 +34,13 @@ loadSetup filePath = do
   return $ applyTpl setup'
   where
     initSetupInternal s' =
-      s'
-      { setupSchemas = removeDuplicates $ setupSchemas s'
-      , setupSchemaData = Nothing
-      }
+      s' {setupSchemas = removeDuplicates $ setupSchemas s'}
 
 -- Tries to loads all defined modules from defined module dirs
 loadSetupSchemas :: FilePath -> Setup -> IO Setup
 loadSetupSchemas path s = do
   schemaData <- loadSchemas path s [] (setupSchemas s)
-  return s {setupSchemaData = Just schemaData}
+  return s {setupSchemaData = setupSchemaData s <> Just schemaData}
 
 loadSchemas :: FilePath -> Setup -> [Schema] -> [SqlName] -> IO [Schema]
 loadSchemas _ _ allLoaded [] = return allLoaded

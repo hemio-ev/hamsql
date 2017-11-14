@@ -1,0 +1,6 @@
+schemas: []
+schema_data:
+ - name: self-test
+   description: Emptied Version
+
+role_prefix: hamsql-test_

@@ -34,8 +34,15 @@ main =
         [integrationTests, testCase "show help" $ exec' ["--help"]]
     , testGroup
         "Integration Tests"
-        [ testCase "domain.yml" $ deploySetup "test/setups/domain.yml"
-        , testGroup "self-test.yml" [selfTestStmt, selfTestStruct]
+        [ testCase "domain.yml" $ installSetup "test/setups/domain.yml"
+        , testGroup
+            "self-test.yml"
+            [ selfTestStmt
+            , selfTestStruct
+            , selfTestUpgrade "test/setups/self-test.yml"
+            , selfTestUpgradeDelete "test/setups/self-test-empty.yml"
+            , selfTestUpgrade "test/setups/self-test.yml"
+            ]
         ]
     ]
 
@@ -57,7 +64,8 @@ integrationTests =
 selfTestStmt :: TestTree
 selfTestStmt =
   testCaseSteps "stmt" $ \step -> do
-    (schemasDb, setupLocal) <- deploy step "test/setups/self-test.yml"
+    (schemasDb, setupLocal) <-
+      deploy step installSetup "test/setups/self-test.yml"
     mapM_ (doWrite "/tmp/testout" . schemaToDirTree) schemasDb
     step "check statement diff"
     assertNoDiff
@@ -67,14 +75,33 @@ selfTestStmt =
 selfTestStruct :: TestTree
 selfTestStruct =
   testCaseSteps "struct" $ \step -> do
-    (schemasDb, setupLocal) <- deploy step "test/setups/self-test.yml"
+    (schemasDb, setupLocal) <-
+      deploy step installSetup "test/setups/self-test.yml"
     step "check schema diff"
     assertNoShowDiff schemasDb (fromMaybe [] $ setupSchemaData setupLocal)
 
-deploy :: (String -> IO ()) -> String -> IO ([Schema], Setup)
-deploy step file = do
+selfTestUpgrade :: String -> TestTree
+selfTestUpgrade file =
+  testCaseSteps ("upgrade self-test " ++ file) $ \step -> do
+    (schemasDb, setupLocal) <- deploy step upgradeSetup file
+    step "check schema diff"
+    assertNoShowDiff schemasDb (fromMaybe [] $ setupSchemaData setupLocal)
+
+selfTestUpgradeDelete :: String -> TestTree
+selfTestUpgradeDelete file =
+  testCaseSteps ("upgrade self-test delete " ++ file) $ \step -> do
+    (schemasDb, setupLocal) <- deploy step upgradeSetupDelete file
+    step "check schema diff"
+    assertNoShowDiff schemasDb (fromMaybe [] $ setupSchemaData setupLocal)
+
+deploy ::
+     (String -> IO ())
+  -> (String -> Assertion)
+  -> String
+  -> IO ([Schema], Setup)
+deploy step f file = do
   step "deploy ..."
-  deploySetup file
+  f file
   step "retrive deployed from database ..."
   schemasDb <- conn >>= runReaderT deployedSchemas
   step "load setup ..."
@@ -85,13 +112,28 @@ conn :: IO Connection
 conn =
   pgsqlConnectUrl $ getConUrlApp "hamsql-test" "postgresql://postgres@/test1"
 
-deploySetup :: String -> Assertion
-deploySetup s =
+installSetup :: String -> Assertion
+installSetup s =
   exec'
     [ "install"
     , "--delete-residual-roles"
     , "--permit-data-deletion"
     , "-ds"
+    , s
+    , "-c"
+    , "postgresql://postgres@/test1"
+    ]
+
+upgradeSetup :: String -> Assertion
+upgradeSetup s =
+  exec' ["upgrade", "-s", s, "-c", "postgresql://postgres@/test1"]
+
+upgradeSetupDelete :: String -> Assertion
+upgradeSetupDelete s =
+  exec'
+    [ "upgrade"
+    , "--permit-data-deletion"
+    , "-s"
     , s
     , "-c"
     , "postgresql://postgres@/test1"
