@@ -32,6 +32,7 @@ deployedSchemas = do
       sequences <- deployedSequences schema
       functions <- deployedFunctions schema
       domains <- deployedDomains schema
+      types <- deployedTypes schema
       return
         Schema
         { schemaName = schema
@@ -52,7 +53,7 @@ deployedSchemas = do
         , schemaPrivExecuteAll = Nothing
         , schemaPrivAllAll = Nothing
         , schemaDomains = presetEmpty domains
-        , schemaTypes = Nothing
+        , schemaTypes = presetEmpty types
         , schemaExecPostInstall = Nothing
         , schemaExecPostInstallAndUpgrade = Nothing
         }
@@ -322,15 +323,15 @@ deployedDomainConstraints dom = do
       }
     qry =
       [sql|
-    SELECT
-      conname,
-      pg_catalog.obj_description(c.oid, 'pg_constraint')::text AS condesc,
-      consrc
-    FROM pg_catalog.pg_constraint c
-    JOIN pg_type t ON t.oid = contypid
-    WHERE
-      t.oid = ?::regtype::oid
-  |]
+        SELECT
+          conname,
+          pg_catalog.obj_description(c.oid, 'pg_constraint')::text AS condesc,
+          consrc
+        FROM pg_catalog.pg_constraint c
+        JOIN pg_type t ON t.oid = contypid
+        WHERE
+          t.oid = ?::regtype::oid
+      |]
 
 deployedSequences :: SqlName -> SqlT [Sequence]
 deployedSequences schema = do
@@ -365,6 +366,37 @@ deployedSequences schema = do
       "SELECT sequence_name, start_value, increment_by, max_value," <\>
       "min_value, cache_value, is_cycled::bool, ?::text AS desc FROM " <>
       n
+
+deployedTypes :: SqlName -> SqlT [Type]
+deployedTypes schema = do
+  types <- psqlQry qry (Only $ toSqlCode schema)
+  mapM toType types
+  where
+    toType (typname, typdesc) = do
+      elements <- map toElement <$> deployedColumns (schema, typname)
+      return $
+        Type
+        { typeName = typname
+        , typeDescription = fromMaybe "" typdesc
+        , typeElements = elements
+        }
+    toElement x =
+      TypeElement
+      {typeelementName = columnName x, typeelementType = columnType x}
+    qry =
+      [sql|
+        SELECT
+          typname,
+          pg_catalog.obj_description(oid, 'pg_type')::text AS desc
+          -- typdefault
+        FROM pg_type
+        WHERE
+          typtype = 'c'
+          AND typisdefined
+          AND (SELECT c.relkind = 'c' FROM pg_catalog.pg_class c
+              WHERE c.oid = typrelid)
+          AND typnamespace = ?::regnamespace::oid
+      |]
 
 sqlManageSchemaJoin :: Text -> Text
 sqlManageSchemaJoin schemaid =

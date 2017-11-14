@@ -1,0 +1,10 @@
+name: t_plant
+description: |
+ Stores numbers of ``flowers`` and ``leaves`` of a plant.
+elements:
+ -
+  name: flowers
+  type: integer
+ -
+  name: leaves
+  type: integer
