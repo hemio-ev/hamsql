@@ -17,6 +17,5 @@ cabal.sandbox.config
 test/coverage
 test/docs
 test/tmp
-hamsql.tix
-hamsql-stmt-log.sql
+*.tix
 .cache

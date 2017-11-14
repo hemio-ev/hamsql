@@ -1,0 +1,14 @@
+name: A_serial
+description: With serial
+primary_key: [y1]
+columns:
+ - name: y1
+   type: SERial
+   description: PostgreSQL serial
+ - name: y2
+   type: bigserial
+   description: PostgreSQL serial
+ - name: y3
+   type: smallserial
+   description: PostgreSQL serial
+

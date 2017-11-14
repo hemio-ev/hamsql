@@ -1,0 +1,3 @@
+name: self-test-stmt
+description: Self tests that only validate on stmt level
+

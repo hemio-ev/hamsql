@@ -127,7 +127,7 @@ instance ToSqlStmts (SqlContext (Schema, Table, Column)) where
                maybePrefix " ON DELETE " (columnOnRefDelete c)
       -- CREATE SEQUENCE (for type SERIAL)
       stmtsSerialSequence
-        | columnIsSerial = toSqlStmts context serialSequenceContext
+        | columnIsSerial /= Nothing = toSqlStmts context serialSequenceContext
         | otherwise = [Nothing]
       -- Helpers
       stmtAlterColumn t x =
@@ -135,17 +135,24 @@ instance ToSqlStmts (SqlContext (Schema, Table, Column)) where
         "ALTER TABLE " <> tblId <> " ALTER COLUMN " <> toSqlCode (columnName c) <>
         " " <>
         x
-      -- TODO: there is also smallserial and bigserial
-      columnIsSerial = toSqlCode (columnType rawColumn) == "SERIAL"
-      c
-        | columnIsSerial =
-          rawColumn
-          { columnType = SqlType "integer"
-          , columnDefault =
-              Just $
-              "nextval('" <> toSqlCode (sqlId serialSequenceContext) <> "')"
-          }
-        | otherwise = rawColumn
+      columnIsSerial =
+        let serialKey = T.toLower $ toSqlCode $ columnType rawColumn
+        in lookup
+             serialKey
+             [ ("smallserial", "smallint")
+             , ("serial", "integer")
+             , ("bigserial", "bigint")
+             ]
+      c =
+        case columnIsSerial of
+          Just sType ->
+            rawColumn
+            { columnType = SqlType sType
+            , columnDefault =
+                Just $
+                "nextval('" <> toSqlCode (sqlId serialSequenceContext) <> "')"
+            }
+          Nothing -> rawColumn
       tblId = sqlIdCode tbl
       tbl = SqlContext (schema, table)
       serialSequenceContext =

@@ -7,6 +7,7 @@ import Control.Monad.Trans.Reader (runReaderT)
 import Data.Monoid ((<>))
 import qualified Data.Text.Lazy as T
 
+import Data.List (sort)
 import Data.Maybe (catMaybes, fromMaybe)
 import Database.PostgreSQL.Simple (Connection)
 import System.Exit
@@ -37,12 +38,15 @@ main =
         [ testCase "domain.yml" $ installSetup "test/setups/domain.yml"
         , testGroup
             "self-test.yml"
-            [ selfTestStmt
+            [ selfTestStmt "test/setups/self-test.yml"
             , selfTestStruct
             , selfTestUpgrade "test/setups/self-test.yml"
             , selfTestUpgradeDelete "test/setups/self-test-empty.yml"
             , selfTestUpgrade "test/setups/self-test.yml"
             ]
+        , testGroup
+            "self test stmt only"
+            [selfTestStmt "test/setups/self-test-stmt.yml"]
         ]
     ]
 
@@ -61,16 +65,15 @@ integrationTests =
     r @? "Should fail"
     --pPrint schemasDb
 
-selfTestStmt :: TestTree
-selfTestStmt =
-  testCaseSteps "stmt" $ \step -> do
-    (schemasDb, setupLocal) <-
-      deploy step installSetup "test/setups/self-test.yml"
+selfTestStmt :: String -> TestTree
+selfTestStmt file =
+  testCaseSteps ("stmt " ++ file) $ \step -> do
+    (schemasDb, setupLocal) <- deploy step installSetup file
     mapM_ (doWrite "/tmp/testout" . schemaToDirTree) schemasDb
     step "check statement diff"
     assertNoDiff
-      (pgsqlGetFullStatements (newSetup schemasDb))
-      (pgsqlGetFullStatements setupLocal)
+      (sort $ pgsqlGetFullStatements (newSetup schemasDb))
+      (sort $ pgsqlGetFullStatements setupLocal)
 
 selfTestStruct :: TestTree
 selfTestStruct =
