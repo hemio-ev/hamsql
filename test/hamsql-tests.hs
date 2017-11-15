@@ -2,14 +2,11 @@ module Main where
 
 import Control.Exception.Safe
 import Control.Monad.Trans.Reader (runReaderT)
-
---import qualified Data.ByteString as B
-import Data.Monoid ((<>))
-import qualified Data.Text.Lazy as T
-
 import Data.List (sort)
 import Data.Maybe (catMaybes, fromMaybe)
-import Database.PostgreSQL.Simple (Connection)
+import Data.Monoid ((<>))
+import qualified Data.Text.Lazy as T
+import Database.PostgreSQL.Simple (Connection, close)
 import System.Exit
 import Text.Pretty.Simple
 
@@ -41,12 +38,18 @@ main =
             [ selfTestStmt "test/setups/self-test.yml"
             , selfTestStruct
             , selfTestUpgrade "test/setups/self-test.yml"
+            --, selfTestUpgrade "test/setups/self-test-empty.yml"
             --, selfTestUpgradeDelete "test/setups/self-test-empty.yml"
-            --, selfTestUpgrade "test/setups/self-test.yml"
+            , selfTestUpgrade "test/setups/self-test.yml"
             ]
         , testGroup
             "self test stmt only"
-            [] --[selfTestStmt "test/setups/self-test-stmt.yml"]
+            [ selfTestStmt "test/setups/self-test-empty.yml"
+            --,selfTestStmt "test/setups/self-test-stmt.yml"
+            , selfTestStmt "test/setups/domain.yml"
+            , selfTestUpgrade "test/setups/domain.yml"
+            , selfTestUpgrade "test/setups/domain-upgrade.yml"
+            ]
         ]
     ]
 
@@ -72,8 +75,8 @@ selfTestStmt file =
     mapM_ (doWrite "/tmp/testout" . schemaToDirTree) schemasDb
     step "check statement diff"
     assertNoDiff
-      (sort $ pgsqlGetFullStatements (newSetup schemasDb))
-      (sort $ pgsqlGetFullStatements setupLocal)
+      (sort $ stmtsInstall (newSetup schemasDb))
+      (sort $ stmtsInstall setupLocal)
 
 selfTestStruct :: TestTree
 selfTestStruct =
@@ -85,7 +88,21 @@ selfTestStruct =
 
 selfTestUpgrade :: String -> TestTree
 selfTestUpgrade file =
-  testCaseSteps ("upgrade self-test " ++ file) $ \step -> do
+  testCaseSteps ("upgrade self-test " ++ file) $ \step
+    {-
+    step "load setup ..."
+    schemasDb <- conn >>= runReaderT deployedSchemas
+    setupLocal <- loadSetup file
+    let stmtsDb = sort $ stmtsInstall (newSetup schemasDb)
+    let stmtsSrc = sort $ stmtsInstall setupLocal
+    step $ "stmts src: " ++ show (length stmtsSrc) ++ ", stmts db: " ++ show (length stmtsDb)
+    step "Missing statements, to be executed"
+    step $ T.unpack $ pShow (stmtsSrc \\ stmtsDb)
+    step "Residual statements, to be dropped or converted to delete stmt"
+    step $ T.unpack $ pShow $ stmtsUpdateDrop (stmtsDb \\ stmtsSrc)
+    -}
+    --------------------------------------
+   -> do
     (schemasDb, setupLocal) <- deploy step upgradeSetup file
     step "check schema diff"
     assertNoShowDiff schemasDb (fromMaybe [] $ setupSchemaData setupLocal)
@@ -106,7 +123,9 @@ deploy step f file = do
   step "deploy ..."
   f file
   step "retrive deployed from database ..."
-  schemasDb <- conn >>= runReaderT deployedSchemas
+  con <- conn
+  schemasDb <- runReaderT deployedSchemas con
+  close con
   step "load setup ..."
   setupLocal <- loadSetup file
   return (schemasDb, setupLocal)
@@ -119,27 +138,33 @@ installSetup :: String -> Assertion
 installSetup s =
   exec'
     [ "install"
+    , "--verbose"
     , "--delete-residual-roles"
     , "--permit-data-deletion"
     , "-ds"
     , s
     , "-c"
     , "postgresql://postgres@/test1"
+    , "--sql-log"
+    , "/tmp/log.sql"
     ]
 
 upgradeSetup :: String -> Assertion
 upgradeSetup s =
-  exec' ["upgrade", "-s", s, "-c", "postgresql://postgres@/test1"]
+  exec' ["upgrade", "--verbose", "-s", s, "-c", "postgresql://postgres@/test1"]
 
 upgradeSetupDelete :: String -> Assertion
 upgradeSetupDelete s =
   exec'
     [ "upgrade"
+    , "--verbose"
     , "--permit-data-deletion"
     , "-s"
     , s
     , "-c"
     , "postgresql://postgres@/test1"
+    , "--sql-log"
+    , "/tmp/del.sql"
     ]
 
 newSetup :: [Schema] -> Setup

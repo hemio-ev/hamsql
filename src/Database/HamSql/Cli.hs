@@ -9,6 +9,7 @@ module Database.HamSql.Cli
   ) where
 
 import Control.Monad (when)
+import Control.Monad.Trans.Reader (runReaderT)
 import Data.List
 import Data.Maybe
 import qualified Data.Text as T
@@ -22,7 +23,9 @@ import System.Environment (getArgs)
 import Paths_hamsql (version)
 
 import Database.HamSql
+import Database.HamSql.Internal.InquireDeployed
 import Database.HamSql.Internal.Stmt.Database
+import Database.HamSql.Setup
 import Database.YamSql
 
 parserPrefs :: ParserPrefs
@@ -35,6 +38,17 @@ parseThisArgv :: [String] -> IO Command
 parseThisArgv xs =
   handleParseResult $ execParserPure parserPrefs parserInfoHamsql xs
 
+newSetup' :: [Schema] -> Setup
+newSetup' s =
+  Setup
+  { setupSchemas = []
+  , setupSchemaDirs = Nothing
+  , setupRolePrefix = Just "hamsql-test_"
+  , setupPreCode = Nothing
+  , setupPostCode = Nothing
+  , setupSchemaData = Just s
+  }
+
 run :: Command -> IO ()
 -- Install
 run (Install optCommon optDb optInstall)
@@ -44,7 +58,6 @@ run (Install optCommon optDb optInstall)
     "must be supplied or non of them."
   | otherwise = do
     setup <- loadSetup (optSetup optCommon)
-    let stmts = pgsqlGetFullStatements setup
     let dbname = SqlName $ T.pack $ tail $ uriPath $ getConUrl optDb
     if not (optEmulate optDb || optPrint optDb)
       then close =<<
@@ -60,17 +73,24 @@ run (Install optCommon optDb optInstall)
            "database exists for those commands to make sense."
     dropRoleStmts <-
       if optDeleteResidualRoles optInstall
-        then pgsqlDropAllRoleStmts optDb setup
+        then return [] --TODO: pgsqlDropAllRoleStmts optDb setup
         else return []
-    useSqlStmts optCommon optDb $ sort $ stmts ++ dropRoleStmts
+    useSqlStmts optCommon optDb $ sort $ (stmtsInstall setup) ++ dropRoleStmts
 -- Upgrade
 run (Upgrade optCommon optDb) = do
-  setup <- loadSetup (optSetup optCommon)
+  sourceSetup <- loadSetup (optSetup optCommon)
   conn <- pgsqlConnectUrl (getConUrl optDb)
-  deleteStmts <- pgsqlDeleteAllStmt conn
-  let createStmts = pgsqlGetFullStatements setup
-  fragile <- pgsqlUpdateFragile setup conn createStmts
-  let stmts = sort deleteStmts ++ Data.List.filter allowInUpgrade (sort fragile)
+  targetModules <- runReaderT deployedSchemas conn
+  let sourceStmts = stmtsInstall sourceSetup
+  let targetStmts = stmtsInstall $ newSetup' targetModules
+  let stmts =
+        sort $
+        (sourceStmts \\ targetStmts) ++
+        stmtsUpdateDrop (targetStmts \\ sourceStmts)
+  --deleteStmts <- pgsqlDeleteAllStmt conn
+  --fragile <- pgsqlUpdateFragile setup conn (stmtsInstall setup)
+  --let stmts = sort deleteStmts ++ Data.List.filter allowInUpgrade (sort fragile)
+  print $ stmts
   useSqlStmts optCommon optDb stmts
 -- Doc
 run (Doc optCommon optDoc) = do

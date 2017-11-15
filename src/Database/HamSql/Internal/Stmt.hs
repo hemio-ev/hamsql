@@ -23,7 +23,7 @@ instance Show SqlStmtId where
 data SqlStmt =
   SqlStmt SqlStmtId
           Text
-  deriving (Show)
+  deriving (Show, Eq, Ord)
 
 stmtId :: SqlStmt -> SqlStmtId
 stmtId (SqlStmt x _) = x
@@ -37,12 +37,10 @@ stmtIdType (SqlStmt x _) = stmtType x
 stmtDesc :: SqlStmt -> Text
 stmtDesc stmt = sqlIdShowType (sqlId stmt) <-> sqlIdCode stmt
 
-instance Eq SqlStmt where
-  x == y = stmtId x == stmtId y
-
-instance Ord SqlStmt where
-  x `compare` y = stmtId x `compare` stmtId y
-
+--instance Eq SqlStmt where
+--  x == y = stmtId x == stmtId y
+--instance Ord SqlStmt where
+--  x `compare` y = stmtId x `compare` stmtId y
 instance ToSqlId SqlStmt where
   sqlId = stmtSqlId . stmtId
 
@@ -95,6 +93,7 @@ data SqlStmtType
   | SqlDropTableConstr
   | SqlDropDomainConstr
   | SqlDropSequence
+  | SqlDropTrigger
     -- DROP FUNCTION
   | SqlDropTableColumn
   | SqlDropTable
@@ -115,6 +114,7 @@ data SqlStmtType
     -- FUNCTION
   | SqlDropDomain
   | SqlDropType
+  | SqlDropSchema
   | SqlCreateFunction
   | SqlInherit
   | SqlAddTableConstr
@@ -122,6 +122,7 @@ data SqlStmtType
   | SqlCreateUniqueConstr
   | SqlCreateForeignKeyConstr
   | SqlCreateCheckConstr
+  | SqlCreateTableCheckConstr
   | SqlDomainSetDefault
     -- TRIGGER
   | SqlCreateTrigger

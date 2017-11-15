@@ -1,4 +1,5 @@
 schemas: 
  - self-test
+ - public
 
 role_prefix: hamsql-test_

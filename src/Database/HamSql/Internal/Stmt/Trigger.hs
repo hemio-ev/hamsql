@@ -11,6 +11,12 @@ import qualified Data.Text as T
 import Database.HamSql.Internal.Stmt.Basic
 import Database.HamSql.Internal.Stmt.Function ()
 
+stmtsDropTrigger :: SqlObj SQL_TRIGGER (SqlName, SqlName) -> [Maybe SqlStmt]
+stmtsDropTrigger x@(SqlObj _ (tbl, trig)) =
+  [ newSqlStmt SqlDropTrigger x $
+    "DROP TRIGGER" <-> toSqlCode trig <-> "ON" <-> toSqlCode tbl
+  ]
+
 instance ToSqlStmts (SqlContext (Schema, Table, Trigger)) where
   toSqlStmts _ obj@(SqlContext (s, tabl, t)) = [triggerStmt, triggerComment]
     where

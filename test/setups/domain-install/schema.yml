@@ -7,7 +7,7 @@ domains:
 # Simple domain dependency
  - name: A1
    description: A1
-   type: int
+   type: integer
  - name: A2
    description: A2
    type: domain-install.A1
@@ -18,12 +18,12 @@ domains:
    type: domain-install.B1
  - name: B1
    description: B1
-   type: int
+   type: integer
 
 # Limited type
  - name: L1
    description: limited varchar
-   type: varchar(25)
+   type: character varying(25)
 
 tables:
  - name: t1
@@ -31,5 +31,5 @@ tables:
    primary_key: [a]
    columns:
     - name: a
-      type: int
+      type: integer
       description: A

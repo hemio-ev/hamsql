@@ -1,4 +1,5 @@
-schemas: []
+schemas:
+ - public
 schema_data:
  - name: self-test
    description: Emptied Version

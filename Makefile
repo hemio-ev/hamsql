@@ -1,7 +1,5 @@
 
 HS = $(shell find app/ src/ test/ -name '*.hs')
-VERSION = 0.9.90.0
-HPCDIRS = --hpcdir dist/hpc/vanilla/mix/hamsql --hpcdir dist/hpc/vanilla/mix/hamsql-${VERSION}
 
 .PHONY: test $(HS)
 
@@ -13,6 +11,10 @@ update:
 	cabal install -ffast --only-dependencies --disable-optimization
 
 test:
+	cabal configure --disable-optimization --enable-tests
+	cabal test --show-details=direct --test-option=--color=always
+
+test-coverage:
 	cabal configure --disable-optimization --enable-coverage --enable-tests
 	cabal test --show-details=direct --test-option=--color=always
 

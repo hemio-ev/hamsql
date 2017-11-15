@@ -5,4 +5,4 @@ domains:
  -
   name: dep
   description: Dep
-  type: int
+  type: integer

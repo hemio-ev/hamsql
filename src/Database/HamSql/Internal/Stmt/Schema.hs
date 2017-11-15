@@ -8,6 +8,9 @@ module Database.HamSql.Internal.Stmt.Schema where
 
 import Database.HamSql.Internal.Stmt.Basic
 
+stmtsDropSchema :: SqlObj SQL_SCHEMA SqlName -> [Maybe SqlStmt]
+stmtsDropSchema x = [newSqlStmt SqlDropSchema x $ "DROP SCHEMA" <-> toSqlCode x]
+
 instance ToSqlStmts (SqlContext Schema) where
   toSqlStmts SetupContext {setupContextSetup = setup} obj@(SqlContext s) =
     [ newSqlStmt SqlCreateSchema obj $

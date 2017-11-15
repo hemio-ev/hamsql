@@ -65,28 +65,39 @@ CREATE only defines name on demand.
 Properties all via ALTER SEQUENCE.
 
 -}
-module Database.HamSql.Internal.PostgresCon where
+module Database.HamSql.Internal.PostgresCon
+  ( stmtsInstall
+  , pgsqlExecWithoutTransact
+  , pgsqlExec
+  , stmtsUpdateDrop
+  ) where
 
 import Control.Exception
 import Control.Monad
 import qualified Data.ByteString.Char8 as B
-import Data.Function
+
+--import Data.Function
 import Data.Maybe
-import Data.Set (fromList, notMember)
+
+--import Data.Set (fromList, notMember)
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.Transaction
 import Network.URI (URI)
 
 import Database.HamSql.Internal.DbUtils
-import Database.HamSql.Internal.InquireDeployed
+
+--import Database.HamSql.Internal.InquireDeployed
 import Database.HamSql.Internal.Option
 import Database.HamSql.Internal.Stmt
 import Database.HamSql.Internal.Stmt.Create
 import Database.HamSql.Internal.Stmt.Domain
 import Database.HamSql.Internal.Stmt.Function
-import Database.HamSql.Internal.Stmt.Role
+
+import Database.HamSql.Internal.Stmt.Schema
+--import Database.HamSql.Internal.Stmt.Role
 import Database.HamSql.Internal.Stmt.Sequence
 import Database.HamSql.Internal.Stmt.Table
+import Database.HamSql.Internal.Stmt.Trigger
 import Database.HamSql.Internal.Stmt.Type
 import Database.HamSql.Internal.Utils
 import Database.HamSql.Setup
@@ -95,51 +106,36 @@ import Database.YamSql
 sqlErrInvalidFunctionDefinition :: B.ByteString
 sqlErrInvalidFunctionDefinition = "42P13"
 
-pgsqlGetFullStatements :: Setup -> [SqlStmt]
-pgsqlGetFullStatements setup = catMaybes $ getSetupStatements setup
+sqlErrUndefinedTable :: B.ByteString
+sqlErrUndefinedTable = "42P01"
 
-pgsqlDeleteAllStmt :: Connection -> IO [SqlStmt]
-pgsqlDeleteAllStmt conn = do
-  domainConstrs <- deployedDomainConstrIds conn
-  tableConstrs <- deployedTableConstrIds conn
-  return $
-    catMaybes $
-    concatMap stmtsDropDomainConstr domainConstrs ++
-    concatMap stmtsDropTableConstr tableConstrs
+stmtsInstall :: Setup -> [SqlStmt]
+stmtsInstall setup = catMaybes $ getSetupStatements setup
 
-pgsqlUpdateFragile :: Setup -> Connection -> [SqlStmt] -> IO [SqlStmt]
-pgsqlUpdateFragile setup conn stmts =
-  stmts & correctStmts SqlAddColumn deployedTableColumnIds stmtsDropTableColumn >>=
-  correctStmts SqlCreateDomain deployedDomainIds stmtsDropDomain >>=
-  correctStmts SqlCreateRole (deployedRoleIds setup) (stmtsDropRole setup) >>=
-  correctStmts SqlCreateSequence deployedSequenceIds stmtsDropSequence >>=
-  correctStmts SqlCreateTable deployedTableIds stmtsDropTable >>=
-  correctStmts SqlCreateType deployedTypeIds stmtsDropType >>=
-  correctStmts
-    SqlGrantMembership
-    (deployedRoleMemberIds setup)
-    (stmtRevokeMembership setup) >>=
-  dropResidual SqlCreateFunction deployedFunctionIds stmtsDropFunction >>=
-  revokeAllPrivileges conn setup (deployedRoleIds setup conn)
-  where
-    correctStmts ::
-         ToSqlId a
-      => SqlStmtType
-      -> (Connection -> IO [a])
-      -> (a -> [Maybe SqlStmt]) -- ^ drop statement generator
-      -> [SqlStmt]
-      -> IO [SqlStmt]
-    correctStmts createType existingInquire =
-      correctStatements createType (existingInquire conn)
-    dropResidual ::
-         ToSqlId a
-      => SqlStmtType
-      -> (Connection -> IO [a])
-      -> (a -> [Maybe SqlStmt])
-      -> [SqlStmt]
-      -> IO [SqlStmt]
-    dropResidual t isf = addDropResidual t (isf conn)
+stmtsUpdateDrop :: [SqlStmt] -> [SqlStmt]
+stmtsUpdateDrop = catMaybes . concatMap dropStmt
 
+dropStmt :: SqlStmt -> [Maybe SqlStmt]
+dropStmt (SqlStmt (SqlStmtId t i) _) =
+  let n = SqlName $ toSqlCode i
+      s = expSqlName n
+      ncol = ((s !! 0) <.> (s !! 1), s !! 2)
+  in case t of
+       SqlAddColumn -> stmtsDropTableColumn (SqlObj SQL_COLUMN ncol)
+       SqlCreateDomain -> stmtsDropDomain (SqlObj SQL_DOMAIN n)
+       SqlCreateSequence -> stmtsDropSequence (SqlObj SQL_SEQUENCE n)
+       SqlCreateTable -> stmtsDropTable (SqlObj SQL_TABLE n)
+       SqlCreateType -> stmtsDropType (SqlObj SQL_TYPE n)
+       SqlCreateFunction -> return <$> stmtsDropFunction' i
+       SqlCreateTrigger -> stmtsDropTrigger (SqlObj SQL_TRIGGER ncol)
+       SqlCreateTableCheckConstr ->
+         stmtsDropTableConstr (SqlObj SQL_TABLE_CONSTRAINT ncol)
+       SqlCreateForeignKeyConstr ->
+         stmtsDropTableConstr (SqlObj SQL_TABLE_CONSTRAINT ncol)
+       SqlDropSchema -> stmtsDropSchema (SqlObj SQL_SCHEMA n)
+       _ -> []
+
+{-
 revokeAllPrivileges ::
      Connection
   -> Setup
@@ -159,18 +155,13 @@ pgsqlDropAllRoleStmts optDb setup = do
     (deployedRoleIds setup conn)
     (stmtsDropRole setup)
     []
-
+-}
 -- DB Utils
 pgsqlExecWithoutTransact :: OptCommonDb -> URI -> [SqlStmt] -> IO Connection
 pgsqlExecWithoutTransact opt = pgsqlExecIntern opt PgSqlWithoutTransaction
 
 pgsqlExec :: OptCommonDb -> URI -> [SqlStmt] -> IO Connection
 pgsqlExec opt = pgsqlExecIntern opt PgSqlWithTransaction
-
-pgsqlExecAndRollback :: OptCommonDb -> URI -> [SqlStmt] -> IO ()
-pgsqlExecAndRollback opt url stmts = do
-  conn <- pgsqlExecIntern opt PgSqlWithTransaction url stmts
-  rollback conn
 
 pgsqlExecStmtList ::
      OptCommonDb
@@ -182,7 +173,9 @@ pgsqlExecStmtList ::
 pgsqlExecStmtList _ Init _ (x:_) _ =
   err $ "supplied failed statements to (pgsqlExecStmtList _ Init): " <> tshow x
 -- No remaining statements to execute
-pgsqlExecStmtList _ _ [] [] conn = commit conn
+pgsqlExecStmtList dbOpt _ [] [] conn
+  | optEmulate dbOpt = rollback conn
+  | otherwise = commit conn
 pgsqlExecStmtList _ Unchanged [] failed conn =
   pgsqlExecStmtHandled conn (head failed)
 pgsqlExecStmtList opt Changed [] failed conn =
@@ -205,6 +198,8 @@ pgsqlExecStmtList opt status (x:xs) failed conn = do
     handleSqlError savepoint SqlError {sqlState = errCode}
       | errCode == sqlErrInvalidFunctionDefinition =
         skipQuery savepoint (stmtsDropFunction' (sqlId x) ++ [x])
+      -- SEQENCEs might be gone allready
+      | errCode == sqlErrUndefinedTable = skipQuery savepoint []
       | otherwise = skipQuery savepoint [x]
     handleQueryError savepoint QueryError {} = proceed savepoint
     -- action after execution has failed
@@ -230,55 +225,3 @@ pgsqlExecIntern opt mode connUrl xs = do
     pgsqlExecStmtList opt Init xs [] conn
   when (mode == PgSqlWithoutTransaction) $ mapM_ (pgsqlExecStmtHandled conn) xs
   return conn
-
-addSqlStmtType ::
-     ToSqlId a
-  => SqlStmtType -- ^ statment
-  -> [a] -- ^ SQL ids that should become a "SqlStmtId" type to use
-  -> [SqlStmtId]
-addSqlStmtType t = map (SqlStmtId t . sqlId)
-
-filterSqlStmtType :: SqlStmtType -> [SqlStmt] -> [SqlStmt]
-filterSqlStmtType t xs = [x | x <- xs, stmtIdType x == t]
-
-filterStmtsMatchingIds ::
-     [SqlStmtId] -- ^ Statement ids to remove
-  -> [SqlStmt]
-  -> [SqlStmt]
-filterStmtsMatchingIds ids = filter (\x -> stmtId x `notMember` ids')
-  where
-    ids' = fromList ids
-
-filterSqlIdBySqlStmts ::
-     ToSqlId a
-  => SqlStmtType -- ^ stmts to be considered by stmt type
-  -> [SqlStmt] -- ^ stmts that have the forbidden ids
-  -> [a] -- elements that get filtered
-  -> [a]
-filterSqlIdBySqlStmts t xs = filter (\x -> sqlId x `notMember` ids)
-  where
-    ids = fromList . map sqlId $ filterSqlStmtType t xs
-
--- target set of sql ids
-correctStatements ::
-     ToSqlId a
-  => SqlStmtType -- ^ install statements and the stmt type of interest
-  -> IO [a] -- ^ deployed (existing) elements
-  -> (a -> [Maybe SqlStmt]) -- ^ drop statment generator
-  -> [SqlStmt] -- ^ install statements, representing desired state
-  -> IO [SqlStmt]
-correctStatements t iois f xs = do
-  is <- iois
-  xs' <- addDropResidual t iois f xs
-  return $ filterStmtsMatchingIds (addSqlStmtType t is) xs'
-
-addDropResidual ::
-     ToSqlId a
-  => SqlStmtType
-  -> IO [a]
-  -> (a -> [Maybe SqlStmt])
-  -> [SqlStmt]
-  -> IO [SqlStmt]
-addDropResidual t iois f xs = do
-  is <- iois
-  return $ xs ++ catMaybes (concatMap f (filterSqlIdBySqlStmts t xs is))

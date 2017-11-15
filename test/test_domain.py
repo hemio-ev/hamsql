@@ -17,6 +17,11 @@ def test_domains():
      'tables':
      [
       ('domain-install', 't1', 'BASE TABLE') ,
+     ],
+     
+     'functions':
+     [
+      ('public', 'f', [], 'integer', None, False)
      ]
     }
 

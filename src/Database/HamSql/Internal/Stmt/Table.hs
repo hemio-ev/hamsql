@@ -18,11 +18,10 @@ import Database.HamSql.Internal.Stmt.Sequence ()
 -- | Assuming that CASCADE will only cause other constraints to be deleted.
 -- | Required since foreign keys may depend on other keys.
 stmtsDropTableConstr ::
-     SqlObj SQL_TABLE_CONSTRAINT (SqlName, SqlName, SqlName) -> [Maybe SqlStmt]
-stmtsDropTableConstr x@(SqlObj _ (s, t, c)) =
+     SqlObj SQL_TABLE_CONSTRAINT (SqlName, SqlName) -> [Maybe SqlStmt]
+stmtsDropTableConstr x@(SqlObj _ (tbl, c)) =
   [ newSqlStmt SqlDropTableConstr x $
-    "ALTER TABLE" <-> toSqlCode (s <.> t) <-> "DROP CONSTRAINT IF EXISTS" <->
-    toSqlCode c <->
+    "ALTER TABLE" <-> toSqlCode tbl <-> "DROP CONSTRAINT" <-> toSqlCode c <->
     "CASCADE"
   ]
 
@@ -39,24 +38,27 @@ constrId ::
      Schema
   -> Table
   -> SqlName
-  -> SqlObj SQL_TABLE_CONSTRAINT (SqlName, SqlName, SqlName)
-constrId s t c = SqlObj SQL_TABLE_CONSTRAINT (schemaName s, tableName t, c)
+  -> SqlObj SQL_TABLE_CONSTRAINT (SqlName, SqlName)
+constrId s t c = SqlObj SQL_TABLE_CONSTRAINT (schemaName s <.> tableName t, c)
 
 -- TODO: prefix with table name
-stmtCheck :: ToSqlId a => a -> Check -> [Maybe SqlStmt]
-stmtCheck obj c =
-  [ newSqlStmt SqlCreateCheckConstr obj $
-    "ALTER TABLE " <> sqlIdCode obj <> " ADD CONSTRAINT " <>
-    toSqlCode (checkName c) <>
-    " CHECK (" <>
-    checkCheck c <>
-    ")"
-  , newSqlStmt SqlComment obj $
-    "COMMENT ON CONSTRAINT" <-> toSqlCode (checkName c) <-> "ON" <->
-    sqlIdCode obj <->
-    "IS" <->
-    toSqlCodeString (checkDescription c)
-  ]
+stmtCheck :: (Schema, Table) -> Check -> [Maybe SqlStmt]
+stmtCheck (s, t) c =
+  let x =
+        SqlObj SQL_TABLE_CONSTRAINT (schemaName s <.> tableName t, checkName c)
+      obj = (schemaName s, tableName t)
+  in [ newSqlStmt SqlCreateTableCheckConstr x $
+       "ALTER TABLE " <> toSqlCode obj <> " ADD CONSTRAINT " <>
+       toSqlCode (checkName c) <>
+       " CHECK (" <>
+       checkCheck c <>
+       ")"
+     , newSqlStmt SqlComment x $
+       "COMMENT ON CONSTRAINT" <-> toSqlCode (checkName c) <-> "ON" <->
+       toSqlCode obj <->
+       "IS" <->
+       toSqlCodeString (checkDescription c)
+     ]
 
 instance ToSqlStmts (SqlContext (Schema, Table, Column)) where
   toSqlStmts context obj@(SqlContext (schema, table, rawColumn)) =
@@ -104,7 +106,8 @@ instance ToSqlStmts (SqlContext (Schema, Table, Column)) where
           sqlDefault d =
             stmtAlterColumn SqlColumnSetDefault $ "SET DEFAULT " <> d
       -- [CHECK]
-      stmtsAddColumnCheck = concat $ maybeMap (stmtCheck tbl) (columnChecks c)
+      stmtsAddColumnCheck =
+        concat $ maybeMap (stmtCheck (schema, table)) (columnChecks c)
       -- FOREIGN KEY
       stmtAddForeignKey =
         case columnReferences c of
@@ -150,7 +153,8 @@ instance ToSqlStmts (SqlContext (Schema, Table, Column)) where
             { columnType = SqlType sType
             , columnDefault =
                 Just $
-                "nextval('" <> toSqlCode (sqlId serialSequenceContext) <> "')"
+                "nextval('" <> toSqlCode (sqlId serialSequenceContext) <>
+                "'::regclass)"
             }
           Nothing -> rawColumn
       tblId = sqlIdCode tbl
@@ -184,7 +188,7 @@ instance ToSqlStmts (SqlContext (Schema, Table)) where
       -- table comment
     , stmtCommentOn obj (tableDescription t)
     ] ++
-    concat (maybeMap (stmtCheck obj) (tableChecks t)) ++
+    concat (maybeMap (stmtCheck (s, t)) (tableChecks t)) ++
     -- grant rights to roles
     maybeMap (sqlGrant "SELECT") (tablePrivSelect t) ++
     maybeMap (sqlGrant "UPDATE") (tablePrivUpdate t) ++
