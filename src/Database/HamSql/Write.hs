@@ -51,7 +51,7 @@ schemaToDirTree schema =
 toYml :: ToJSON a => a -> B.ByteString
 toYml =
   encodePretty $
-  setConfCompare (comparing ymlOrd) $ (setConfDropNull True) defConfig
+  setConfCompare (comparing ymlOrd) $ setConfDropNull True defConfig
 
 doWrite :: FilePath -> DirTree B.ByteString -> IO (AnchoredDirTree ())
 doWrite p x = writeDirectoryWith B.writeFile (p :/ x)

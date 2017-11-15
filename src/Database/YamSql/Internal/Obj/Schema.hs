@@ -13,6 +13,7 @@ module Database.YamSql.Internal.Obj.Schema
   , module Database.YamSql.Internal.Obj.Role
   , module Database.YamSql.Internal.Obj.Sequence
   , module Database.YamSql.Internal.Obj.Table
+  , module Database.YamSql.Internal.Obj.Trigger
   , module Database.YamSql.Internal.Obj.Type
   ) where
 
@@ -24,6 +25,7 @@ import Database.YamSql.Internal.Obj.Function
 import Database.YamSql.Internal.Obj.Role
 import Database.YamSql.Internal.Obj.Sequence
 import Database.YamSql.Internal.Obj.Table
+import Database.YamSql.Internal.Obj.Trigger
 import Database.YamSql.Internal.Obj.Type
 
 -- Schema --
@@ -80,6 +82,10 @@ instance ToSqlId (SqlContext (Schema, Table, Column)) where
 instance ToSqlId (SqlContext (Schema, Domain)) where
   sqlId (SqlContext (s, x)) =
     SqlId $ SqlObj SQL_DOMAIN (schemaName s <.> domainName x)
+
+instance ToSqlId (SqlContext (Schema, Table, Trigger)) where
+  sqlId (SqlContext (s, x, y)) =
+    SqlId $ SqlObj SQL_TRIGGER (schemaName s <.> tableName x, triggerName y)
 
 instance ToSqlId (SqlContext (Schema, Function)) where
   sqlId (SqlContext (s, x)) =

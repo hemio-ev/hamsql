@@ -3,6 +3,7 @@ module Database.YamSql.Internal.Obj.Table where
 import Database.YamSql.Internal.Basic
 import Database.YamSql.Internal.Commons
 import Database.YamSql.Internal.Obj.Check
+import Database.YamSql.Internal.Obj.Trigger
 
 data Table = Table
   { tableName :: SqlName
@@ -17,6 +18,7 @@ data Table = Table
   , tablePrivInsert :: Maybe [SqlName]
   , tablePrivUpdate :: Maybe [SqlName]
   , tablePrivDelete :: Maybe [SqlName]
+  , tableTriggers :: Maybe [Trigger]
   , tableTemplates :: Maybe [SqlName]
   } deriving (Data, Generic, Show)
 

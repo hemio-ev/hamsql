@@ -19,3 +19,20 @@ unique:
     columns: [x1]
   - [x1, X3]
   - [x1]
+triggers:
+ - name: T1
+   description: First trigger
+   events:
+    - INSERT
+    - UPDATE OF x1, x2
+   for_each: ROW
+   moment: AFTER
+   condition: "true"
+   execute: '"self-test".trig(''kleiner text'', ''73'')'
+ - name: T2
+   description: Sec trigger
+   events:
+    - INSERT
+   for_each: ROW
+   moment: AFTER
+   execute: '"self-test".trig()'

@@ -79,6 +79,7 @@ deployedTables schema = do
       fks <- deployedForeignKeys (schema, table)
       uniques <- deployedUniqueConstraints (schema, table)
       checks <- deployedTableChecks (schema, table)
+      trs <- deployedTriggers (schema, table)
       return
         Table
         { tableName = table
@@ -94,6 +95,7 @@ deployedTables schema = do
         , tablePrivUpdate = Nothing
         , tablePrivDelete = Nothing
         , tableTemplates = Nothing
+        , tableTriggers = presetEmpty trs
         }
     qry =
       [sql|
@@ -137,7 +139,58 @@ deployedColumns tbl = map toColumn <$> psqlQry qry (Only $ toSqlCode tbl)
           NOT attisdropped
           AND attnum > 0
           AND attrelid = ?::regclass::oid
+        ORDER BY attname
       |]
+
+deployedTriggers :: (SqlName, SqlName) -> SqlT [Trigger]
+deployedTriggers tbl = do
+  trs <- psqlQry qry (Only $ toSqlCode tbl)
+  return $ map toTrigger trs
+  where
+    toTrigger (trname, trdesc, trevents, trcond, trorient, trtiming, trcall, cols) =
+      Trigger
+      { triggerName = trname
+      , triggerDescription = fromMaybe "" trdesc
+      , triggerMoment = trtiming
+      , triggerEvents =
+          map (fixUpd (fromPGArray <$> cols)) $ fromPGArray trevents
+      , triggerForEach = trorient
+      , triggerCondition = trcond
+      , triggerExecute =
+          fromMaybe trcall $ stripPrefix "EXECUTE PROCEDURE " trcall
+      }
+    fixUpd :: Maybe [Text] -> Text -> Text
+    fixUpd (Just ys) x
+      | x == "UPDATE" = x <> " OF " <> intercalate ", " ys
+      | otherwise = x
+    fixUpd _ x = x
+    qry =
+      [sql|
+      SELECT
+        inf.trigger_name,
+        pg_catalog.obj_description(tr.oid, 'pg_trigger') AS desc,
+        (SELECT
+          array_agg(i.event_manipulation::text)
+        FROM information_schema.triggers i
+        WHERE i.trigger_schema = inf.trigger_schema AND i.trigger_name = inf.trigger_name )
+        AS events,
+        inf.action_condition,
+        inf.action_orientation,
+        inf.action_timing,
+        inf.action_statement,
+        (
+          SELECT array_agg(col.attname)
+          FROM pg_catalog.pg_attribute col
+          WHERE col.attrelid = tr.tgrelid AND col.attnum = ANY(tr.tgattr))
+        AS cols
+      FROM pg_catalog.pg_trigger tr
+      JOIN pg_catalog.pg_class cl ON tr.tgrelid = cl.oid
+      JOIN pg_catalog.pg_namespace ns ON ns.oid = cl.relnamespace
+      JOIN information_schema.triggers inf
+        ON inf.trigger_schema = ns.nspname AND inf.trigger_name = tr.tgname
+      WHERE tr.tgrelid = ?::regclass::oid
+      GROUP BY 1, 2, 4, 5, 6, 7, 8, inf.trigger_schema;
+    |]
 
 deployedTableChecks :: (SqlName, SqlName) -> SqlT [Check]
 deployedTableChecks tbl = do
@@ -305,6 +358,7 @@ deployedFunctions schema = do
         JOIN pg_catalog.pg_language AS l
           ON p.prolang = l.oid
         WHERE pronamespace::regnamespace = ?::regnamespace
+        ORDER BY proname
       |]
 
 deployedDomains :: SqlName -> SqlT [Domain]
@@ -314,7 +368,7 @@ deployedDomains schema = do
   where
     toDomain (domname, domdesc, domtype, domdefault) = do
       constraints <- deployedDomainConstraints (schema, domname)
-      return $
+      return
         Domain
         { domainName = domname
         , domainDescription = fromMaybe "" domdesc
@@ -361,9 +415,9 @@ deployedDomainConstraints dom = do
 deployedSequences :: SqlName -> SqlT [Sequence]
 deployedSequences schema = do
   seqs <- psqlQry qry1 (Only $ toSqlCode schema)
-  map toSequence <$> head <$> sequence <$> mapM doQry2 seqs
+  (map toSequence . head) . sequence <$> mapM doQry2 seqs
   where
-    doQry2 (n, desc) = psqlQry (qry2 (n :: Text)) (Only $ (desc :: Maybe Text))
+    doQry2 (n, desc) = psqlQry (qry2 (n :: Text)) (Only (desc :: Maybe Text))
     toSequence (seqname, seqstartvalue, seqincrementby, seqmaxvalue, seqminvalue, seqcachevalue, seqiscycled, seqdesc) =
       Sequence
       { sequenceName = seqname
@@ -399,7 +453,7 @@ deployedTypes schema = do
   where
     toType (typname, typdesc) = do
       elements <- map toElement <$> deployedColumns (schema, typname)
-      return $
+      return
         Type
         { typeName = typname
         , typeDescription = fromMaybe "" typdesc

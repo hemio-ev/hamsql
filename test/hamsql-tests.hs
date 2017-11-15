@@ -41,12 +41,12 @@ main =
             [ selfTestStmt "test/setups/self-test.yml"
             , selfTestStruct
             , selfTestUpgrade "test/setups/self-test.yml"
-            , selfTestUpgradeDelete "test/setups/self-test-empty.yml"
-            , selfTestUpgrade "test/setups/self-test.yml"
+            --, selfTestUpgradeDelete "test/setups/self-test-empty.yml"
+            --, selfTestUpgrade "test/setups/self-test.yml"
             ]
         , testGroup
             "self test stmt only"
-            [selfTestStmt "test/setups/self-test-stmt.yml"]
+            [] --[selfTestStmt "test/setups/self-test-stmt.yml"]
         ]
     ]
 

@@ -1,3 +1,7 @@
+v0.11.0.0
+  - Adds support for reading type defintions from type.d
+  - Adds support for TRIGGERs
+  - Fixes upgrades failing if types exist
 v0.10.0.0
   - Adds support for reading setup.yml from STDIN
   - Adds "did you mean" for YamSql fields

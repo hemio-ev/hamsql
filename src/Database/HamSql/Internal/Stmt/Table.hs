@@ -127,7 +127,7 @@ instance ToSqlStmts (SqlContext (Schema, Table, Column)) where
                maybePrefix " ON DELETE " (columnOnRefDelete c)
       -- CREATE SEQUENCE (for type SERIAL)
       stmtsSerialSequence
-        | columnIsSerial /= Nothing = toSqlStmts context serialSequenceContext
+        | isJust columnIsSerial = toSqlStmts context serialSequenceContext
         | otherwise = [Nothing]
       -- Helpers
       stmtAlterColumn t x =
@@ -184,7 +184,7 @@ instance ToSqlStmts (SqlContext (Schema, Table)) where
       -- table comment
     , stmtCommentOn obj (tableDescription t)
     ] ++
-    (concat $ maybeMap (stmtCheck obj) (tableChecks t)) ++
+    concat (maybeMap (stmtCheck obj) (tableChecks t)) ++
     -- grant rights to roles
     maybeMap (sqlGrant "SELECT") (tablePrivSelect t) ++
     maybeMap (sqlGrant "UPDATE") (tablePrivUpdate t) ++

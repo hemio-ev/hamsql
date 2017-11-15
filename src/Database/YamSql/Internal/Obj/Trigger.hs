@@ -8,19 +8,16 @@
 module Database.YamSql.Internal.Obj.Trigger where
 
 import Database.YamSql.Internal.Basic
-import Database.YamSql.Internal.Commons
 
+--import Database.YamSql.Internal.Commons
 data Trigger = Trigger
   { triggerName :: SqlName
   , triggerDescription :: Text
-  , triggerTables :: [SqlName]
   , triggerMoment :: Text
   , triggerEvents :: [Text]
   , triggerForEach :: Text
   , triggerCondition :: Maybe Text
-  , triggerLanguage :: Maybe Text
-  , triggerVariables :: Maybe [Variable]
-  , triggerBody :: Maybe Text
+  , triggerExecute :: Text
   } deriving (Generic, Show, Data)
 
 instance FromJSON Trigger where
@@ -29,6 +26,11 @@ instance FromJSON Trigger where
 instance ToJSON Trigger where
   toJSON = toYamSqlJson
 
-instance ToSqlIdPart Trigger where
-  sqlIdPart = triggerName
-  sqlIdPartType = const "TRIGGER"
+data SQL_TRIGGER =
+  SQL_TRIGGER
+  deriving (SqlObjType, Show)
+
+instance ToSqlCode SQL_TRIGGER where
+  toSqlCode = const "TRIGGER"
+
+type TriggerTemplate = Trigger
