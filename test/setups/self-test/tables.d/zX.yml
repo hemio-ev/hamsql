@@ -5,6 +5,12 @@ columns:
  - name: X3
    type: integer
    description: Column X3
+ - name: ts
+   type: timestamp(2) with time zone
+   description: Timestamp
+ - name: txt
+   type: character varying(15)
+   description: limited varchar
  - name: x1
    type: integer
    description: Column x1

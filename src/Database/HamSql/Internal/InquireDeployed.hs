@@ -127,7 +127,7 @@ deployedColumns tbl = map toColumn <$> psqlQry qry (Only $ toSqlCode tbl)
       [sql|
         SELECT
           attname,
-          atttypid::regtype::text,
+          pg_catalog.format_type(atttypid, atttypmod),
           def.adsrc,
           NOT attnotnull,
           pg_catalog.col_description(attrelid, attnum)
