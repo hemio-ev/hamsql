@@ -5,7 +5,7 @@
 {-# LANGUAGE GADTs #-}
 
 module Database.YamSql.Internal.Obj.Schema
-  ( Schema(..)
+  ( module Database.YamSql.Internal.Obj.Schema
   , SQL_SCHEMA(..)
   , module Database.YamSql.Internal.Obj.Check
   , module Database.YamSql.Internal.Obj.Domain
@@ -33,12 +33,14 @@ data Schema = Schema
   { schemaName :: SqlName
   , schemaDescription :: Text
   , schemaDependencies :: Maybe [SqlName]
-  , schemaFunctions :: Maybe [Function]
+  , _schemaDomains :: Maybe [Domain]
+  , _schemaFunctions :: Maybe [Function]
+  , _schemaTables :: Maybe [Table]
+  , _schemaTypes :: Maybe [Type]
+  , _schemaSequences :: Maybe [Sequence]
   , schemaFunctionTemplates :: Maybe [FunctionTpl]
-  , schemaTables :: Maybe [Table]
   , schemaTableTemplates :: Maybe [TableTpl]
   , schemaRoles :: Maybe [Role]
-  , schemaSequences :: Maybe [Sequence]
   , schemaPrivUsage :: Maybe [SqlName]
   , schemaPrivSelectAll :: Maybe [SqlName]
   , schemaPrivInsertAll :: Maybe [SqlName]
@@ -47,8 +49,6 @@ data Schema = Schema
   , schemaPrivSequenceAll :: Maybe [SqlName]
   , schemaPrivExecuteAll :: Maybe [SqlName]
   , schemaPrivAllAll :: Maybe [SqlName]
-  , schemaDomains :: Maybe [Domain]
-  , schemaTypes :: Maybe [Type]
   , schemaExecPostInstall :: Maybe Text
     -- TODO: rename to execPostAll
   , schemaExecPostInstallAndUpgrade :: Maybe Text
@@ -93,7 +93,7 @@ instance ToSqlId (SqlContext (Schema, Function)) where
     SqlObj
       SQL_FUNCTION
       ( schemaName s <.> functionName x
-      , map variableType $ fromMaybe [] $ functionParameters x)
+      , map _variableType $ fromMaybe [] $ _functionParameters x)
 
 instance ToSqlId (SqlContext (Schema, Sequence)) where
   sqlId (SqlContext (s, x)) =
@@ -102,3 +102,5 @@ instance ToSqlId (SqlContext (Schema, Sequence)) where
 instance ToSqlId (SqlContext (Schema, Type)) where
   sqlId (SqlContext (s, x)) =
     SqlId $ SqlObj SQL_TYPE (schemaName s <.> typeName x)
+
+makeLenses ''Schema

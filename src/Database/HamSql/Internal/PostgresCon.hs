@@ -70,6 +70,7 @@ module Database.HamSql.Internal.PostgresCon
   , pgsqlExecWithoutTransact
   , pgsqlExec
   , stmtsUpdateDrop
+  , normalizeOnline
   ) where
 
 import Control.Exception
@@ -94,6 +95,7 @@ import Database.HamSql.Internal.Stmt.Domain
 import Database.HamSql.Internal.Stmt.Function
 
 import Database.HamSql.Internal.Stmt.Schema
+
 --import Database.HamSql.Internal.Stmt.Role
 import Database.HamSql.Internal.Stmt.Sequence
 import Database.HamSql.Internal.Stmt.Table
@@ -134,6 +136,49 @@ dropStmt (SqlStmt (SqlStmtId t i) _) =
          stmtsDropTableConstr (SqlObj SQL_TABLE_CONSTRAINT ncol)
        SqlDropSchema -> stmtsDropSchema (SqlObj SQL_SCHEMA n)
        _ -> []
+
+normalizeOnline :: Setup -> SqlT Setup
+normalizeOnline set = applyColumnTypes set >>= applyFunctionTypes
+  where
+    applyColumnTypes s =
+      foldM (\x y -> traverseOf y normalizeColumnTypeOnline x) s lensColumTypes
+    applyFunctionTypes s =
+      foldM
+        (\x y -> traverseOf y normalizeFunctionTypeOnline x)
+        s
+        lensFunctionTypes
+
+lensFunctionTypes :: Applicative m => [LensLike' m Setup SqlType]
+lensFunctionTypes =
+  [ setupSchemaData .
+    _Just . each . schemaFunctions . _Just . each . functionReturns
+  ]
+
+lensColumTypes :: Applicative m => [LensLike' m Setup SqlType]
+lensColumTypes =
+  [ setupSchemaData . _Just . each . schemaDomains . _Just . each . domainType
+  , setupSchemaData .
+    _Just .
+    each . schemaTypes . _Just . each . typeElements . each . typeelementType
+  , setupSchemaData .
+    _Just .
+    each . schemaTables . _Just . each . tableColumns . each . columnType
+  ]
+
+normalizeTypeOnline :: SqlType -> SqlT SqlType
+normalizeTypeOnline t = do
+  xs <- psqlQry "SELECT to_regtype(?)::text" (Only $ toSqlCode t)
+  return $ fromMaybe t (fromOnly $ head xs)
+
+normalizeColumnTypeOnline :: SqlType -> SqlT SqlType
+normalizeColumnTypeOnline t
+  | '(' `isIn` (toSqlCode t) = return t
+  | otherwise = normalizeTypeOnline t
+
+normalizeFunctionTypeOnline :: SqlType -> SqlT SqlType
+normalizeFunctionTypeOnline t
+  | '%' `isIn` (toSqlCode t) = return t
+  | otherwise = normalizeTypeOnline t
 
 {-
 revokeAllPrivileges ::

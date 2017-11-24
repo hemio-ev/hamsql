@@ -50,7 +50,7 @@ import Database.YamSql.Internal.Utils
 removeFirstPart :: String -> String
 removeFirstPart xs = lowerStr rest
   where
-    rest = dropWhile isLower xs
+    rest = dropWhile (\x -> isLower x || x == '_') xs
     lowerStr (x':xs') = toLower x' : xs'
     lowerStr [] = "__"
 

@@ -31,11 +31,11 @@ instance ToSqlStmts (SqlContext (Schema, Function)) where
         prefixedRole setup u
       stmtCreateFunction =
         newSqlStmt SqlCreateFunction obj $
-        --(maybeMap variableType (functionParameters f)) $
+        --(maybeMap _variableType (_functionParameters f)) $
         "CREATE OR REPLACE FUNCTION " <> sqlFunctionIdentifierDef <> "\n" <>
         "RETURNS" <->
-        toSqlCode (functionReturns f) <>
-        sqlReturnsColumns (functionReturnsColumns f) <>
+        toSqlCode (_functionReturns f) <>
+        sqlReturnsColumns (_functionReturnsColumns f) <>
         "\nLANGUAGE " <>
         sqlLanguage (functionLanguage f) <>
         "\nSECURITY " <>
@@ -51,18 +51,18 @@ instance ToSqlStmts (SqlContext (Schema, Function)) where
       sqlSetOwner Nothing = Nothing
       sqlFunctionIdentifierDef =
         toSqlCode (schemaName s <.> functionName f) <> "(\n" <>
-        T.intercalate ",\n" (maybeMap sqlParameterDef (functionParameters f)) <>
+        T.intercalate ",\n" (maybeMap sqlParameterDef (_functionParameters f)) <>
         "\n)"
       -- function parameter
       sqlParameterDef p =
-        toSqlCode (variableName p) <-> toSqlCode (variableType p) <->
+        toSqlCode (variableName p) <-> toSqlCode (_variableType p) <->
         sqlParamDefault (variableDefault p)
         where
           sqlParamDefault Nothing = ""
           sqlParamDefault (Just x) = "DEFAULT" <-> x
       -- If function returns a table, use service for field definition
       sqlReturnsColumns cs
-        | toSqlCode (functionReturns f) == "TABLE" =
+        | toSqlCode (_functionReturns f) == "TABLE" =
           " (" <\> T.intercalate ",\n" (maybeMap sqlReturnsColumn cs) <> ") "
         | otherwise = ""
       sqlReturnsColumn c =
@@ -79,15 +79,16 @@ instance ToSqlStmts (SqlContext (Schema, Function)) where
             T.intercalate "\n" postludes
           preludes :: [Text]
           preludes =
-            catMaybes $maybeMap functiontplBodyPrelude (functionTemplateData f)
+            catMaybes $ maybeMap functiontplBodyPrelude (functionTemplateData f)
           postludes :: [Text]
           postludes =
-            catMaybes $maybeMap functiontplBodyPostlude (functionTemplateData f)
+            catMaybes $
+            maybeMap functiontplBodyPostlude (functionTemplateData f)
       -- Service for variable definitions
       sqlVariables Nothing = ""
       sqlVariables (Just vs) = T.concat (map sqlVariable vs)
       sqlVariable v =
-        toSqlCode (variableName v) <-> toSqlCode (variableType v) <->
+        toSqlCode (variableName v) <-> toSqlCode (_variableType v) <->
         sqlVariableDefault (variableDefault v) <>
         ";\n"
       sqlVariableDefault Nothing = ""

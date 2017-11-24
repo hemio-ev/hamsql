@@ -38,12 +38,12 @@ deployedSchemas = do
         { schemaName = schema
         , schemaDescription = description
         , schemaDependencies = Nothing
-        , schemaFunctions = presetEmpty functions
+        , _schemaFunctions = presetEmpty functions
         , schemaFunctionTemplates = Nothing
-        , schemaTables = presetEmpty tables
+        , _schemaTables = presetEmpty tables
         , schemaTableTemplates = Nothing
         , schemaRoles = Nothing
-        , schemaSequences = presetEmpty sequences
+        , _schemaSequences = presetEmpty sequences
         , schemaPrivUsage = Nothing
         , schemaPrivSelectAll = Nothing
         , schemaPrivInsertAll = Nothing
@@ -52,8 +52,8 @@ deployedSchemas = do
         , schemaPrivSequenceAll = Nothing
         , schemaPrivExecuteAll = Nothing
         , schemaPrivAllAll = Nothing
-        , schemaDomains = presetEmpty domains
-        , schemaTypes = presetEmpty types
+        , _schemaDomains = presetEmpty domains
+        , _schemaTypes = presetEmpty types
         , schemaExecPostInstall = Nothing
         , schemaExecPostInstallAndUpgrade = Nothing
         }
@@ -64,6 +64,7 @@ deployedSchemas = do
         COALESCE(pg_catalog.obj_description(oid, 'pg_namespace'), '')
       FROM pg_catalog.pg_namespace
       WHERE nspname <> 'information_schema' AND nspname NOT LIKE 'pg\_%'
+      ORDER BY nspname
       -- TODO: do public right
     |]
 
@@ -83,7 +84,7 @@ deployedTables schema = do
         Table
         { tableName = table
         , tableDescription = fromMaybe "" description
-        , tableColumns = columns
+        , _tableColumns = columns
         , tablePrimaryKey = pk
         , tableUnique = presetEmpty uniques
         , tableForeignKeys = presetEmpty fks
@@ -113,7 +114,7 @@ deployedColumns tbl = map toColumn <$> psqlQry qry (Only $ toSqlCode tbl)
     toColumn (sname, dataType, columnDefault', isNullable, description) =
       Column
       { columnName = sname
-      , columnType = dataType
+      , _columnType = dataType
       , columnDescription = fromMaybe "" description
       , columnDefault = columnDefault'
       , columnNull = preset False isNullable
@@ -305,7 +306,7 @@ toVariable varType varName varDefault =
   Variable
   { variableName = fromMaybe undefined varName
   , variableDescription = Nothing
-  , variableType = varType
+  , _variableType = varType
   , variableDefault = varDefault
   }
 
@@ -318,8 +319,8 @@ deployedFunctions schema = do
       Function
       { functionName = proname
       , functionDescription = fromMaybe "" description
-      , functionReturns = prorettype
-      , functionParameters =
+      , _functionReturns = prorettype
+      , _functionParameters =
           let n = length $ fromPGArray proargtypes
               def = fromMaybe (replicate n Nothing)
           in presetEmpty $
@@ -330,7 +331,7 @@ deployedFunctions schema = do
                (def $ fromPGArray <$> proargdefaults)
       , functionTemplates = Nothing
       , functionTemplateData = Nothing
-      , functionReturnsColumns = Nothing
+      , _functionReturnsColumns = Nothing
       , functionVariables = Nothing
       , functionPrivExecute = Nothing
       , functionSecurityDefiner = preset False prosecdef
@@ -371,7 +372,7 @@ deployedDomains schema = do
         Domain
         { domainName = domname
         , domainDescription = fromMaybe "" domdesc
-        , domainType = domtype
+        , _domainType = domtype
         , domainDefault = domdefault
         , domainChecks = presetEmpty constraints
         }
@@ -386,6 +387,7 @@ deployedDomains schema = do
         WHERE
           typtype = 'd'
           AND typnamespace = ?::regnamespace::oid
+        ORDER BY typname
       |]
 
 deployedDomainConstraints :: (SqlName, SqlName) -> SqlT [Check]
@@ -467,11 +469,11 @@ deployedTypes schema = do
         Type
         { typeName = typname
         , typeDescription = fromMaybe "" typdesc
-        , typeElements = elements
+        , _typeElements = elements
         }
     toElement x =
       TypeElement
-      {typeelementName = columnName x, typeelementType = columnType x}
+      {typeelementName = columnName x, _typeelementType = _columnType x}
     qry =
       [sql|
         SELECT

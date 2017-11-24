@@ -48,7 +48,7 @@ main =
             --,selfTestStmt "test/setups/self-test-stmt.yml"
             , selfTestStmt "test/setups/domain.yml"
             , selfTestUpgrade "test/setups/domain.yml"
-            , selfTestUpgrade "test/setups/domain-upgrade.yml"
+            --, selfTestUpgrade "test/setups/domain-upgrade.yml"
             ]
         ]
     ]
@@ -66,34 +66,34 @@ integrationTests =
         , "postgresql://postgres@/test1"
         ]
     r @? "Should fail"
-    --pPrint schemasDb
+    --pPrint setupRemote
 
 selfTestStmt :: String -> TestTree
 selfTestStmt file =
   testCaseSteps ("stmt " ++ file) $ \step -> do
-    (schemasDb, setupLocal) <- deploy step installSetup file
-    mapM_ (doWrite "/tmp/testout" . schemaToDirTree) schemasDb
+    (setupRemote, setupLocal) <- deploy step installSetup file
+    mapM_ (doWrite "/tmp/testout" . schemaToDirTree) $ onlyModules setupRemote
     step "check statement diff"
     assertNoDiff
-      (sort $ stmtsInstall (newSetup schemasDb))
+      (sort $ stmtsInstall setupRemote)
       (sort $ stmtsInstall setupLocal)
 
 selfTestStruct :: TestTree
 selfTestStruct =
   testCaseSteps "struct" $ \step -> do
-    (schemasDb, setupLocal) <-
+    (setupRemote, setupLocal) <-
       deploy step installSetup "test/setups/self-test.yml"
     step "check schema diff"
-    assertNoShowDiff schemasDb (fromMaybe [] $ setupSchemaData setupLocal)
+    assertNoShowDiff (onlyModules setupRemote) (onlyModules setupLocal)
 
 selfTestUpgrade :: String -> TestTree
 selfTestUpgrade file =
   testCaseSteps ("upgrade self-test " ++ file) $ \step
     {-
     step "load setup ..."
-    schemasDb <- conn >>= runReaderT deployedSchemas
+    setupRemote <- conn >>= runReaderT deployedSchemas
     setupLocal <- loadSetup file
-    let stmtsDb = sort $ stmtsInstall (newSetup schemasDb)
+    let stmtsDb = sort $ stmtsInstall (newSetup setupRemote)
     let stmtsSrc = sort $ stmtsInstall setupLocal
     step $ "stmts src: " ++ show (length stmtsSrc) ++ ", stmts db: " ++ show (length stmtsDb)
     step "Missing statements, to be executed"
@@ -103,32 +103,33 @@ selfTestUpgrade file =
     -}
     --------------------------------------
    -> do
-    (schemasDb, setupLocal) <- deploy step upgradeSetup file
+    (setupRemote, setupLocal) <- deploy step upgradeSetup file
     step "check schema diff"
-    assertNoShowDiff schemasDb (fromMaybe [] $ setupSchemaData setupLocal)
+    assertNoShowDiff (onlyModules setupRemote) (onlyModules setupLocal)
 
 selfTestUpgradeDelete :: String -> TestTree
 selfTestUpgradeDelete file =
   testCaseSteps ("upgrade self-test delete " ++ file) $ \step -> do
-    (schemasDb, setupLocal) <- deploy step upgradeSetupDelete file
+    (setupRemote, setupLocal) <- deploy step upgradeSetupDelete file
     step "check schema diff"
-    assertNoShowDiff schemasDb (fromMaybe [] $ setupSchemaData setupLocal)
+    assertNoShowDiff (onlyModules setupRemote) (onlyModules setupLocal)
+
+onlyModules :: Setup -> [Schema]
+onlyModules = fromMaybe [] . _setupSchemaData
 
 deploy ::
-     (String -> IO ())
-  -> (String -> Assertion)
-  -> String
-  -> IO ([Schema], Setup)
+     (String -> IO ()) -> (String -> Assertion) -> String -> IO (Setup, Setup)
 deploy step f file = do
   step "deploy ..."
   f file
   step "retrive deployed from database ..."
   con <- conn
-  schemasDb <- runReaderT deployedSchemas con
+  schemasRemote <- runReaderT deployedSchemas con
+  setupLocal' <- loadSetup file
+  setupLocal <- runReaderT (normalizeOnline setupLocal') con
   close con
   step "load setup ..."
-  setupLocal <- loadSetup file
-  return (schemasDb, setupLocal)
+  return (newSetup schemasRemote, setupLocal)
 
 conn :: IO Connection
 conn =
@@ -175,7 +176,7 @@ newSetup s =
   , setupRolePrefix = Just "hamsql-test_"
   , setupPreCode = Nothing
   , setupPostCode = Nothing
-  , setupSchemaData = Just s
+  , _setupSchemaData = Just s
   }
 
 exec :: (Eq e, Exception e) => e -> [String] -> IO Bool

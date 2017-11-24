@@ -33,7 +33,8 @@ library
     FlexibleContexts,
     FlexibleInstances,
     OverloadedStrings,
-    QuasiQuotes
+    QuasiQuotes,
+    TemplateHaskell
     
   other-extensions: 
     GADTs,
@@ -97,6 +98,7 @@ library
     file-embed == 0.0.*,
     filepath == 1.4.*,
     frontmatter == 0.1.*,
+    microlens-platform == 0.3.*,
     network-uri == 2.6.*,
     optparse-applicative == 0.14.*,
     postgresql-simple >=0.4 && <0.6,

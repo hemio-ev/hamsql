@@ -20,16 +20,16 @@ schemaToDirTree schema =
   let schemaFile =
         File
           "schema.yml"
-          (toYml schema {schemaTables = Nothing, schemaFunctions = Nothing})
+          (toYml schema {_schemaTables = Nothing, _schemaFunctions = Nothing})
   in Dir
        (filePath $ schemaName schema)
        (schemaFile :
         catMaybes
           [ Dir "domains.d" . map (toYamlFile domainName) <$>
-            schemaDomains schema
+            _schemaDomains schema
           , Dir "sequences.d" . map (toYamlFile sequenceName) <$>
-            schemaSequences schema
-          , Dir "types.d" . map (toYamlFile typeName) <$> schemaTypes schema
+            _schemaSequences schema
+          , Dir "types.d" . map (toYamlFile typeName) <$> _schemaTypes schema
           , Dir "functions.d" .
             map
               (\x ->
@@ -37,7 +37,7 @@ schemaToDirTree schema =
                    functionName
                    (x {functionBody = Nothing})
                    (functionBody x)) <$>
-            schemaFunctions schema
+            _schemaFunctions schema
           ])
   where
     toYamlFile getName obj = File (filePath (getName obj) <> ".yml") (toYml obj)

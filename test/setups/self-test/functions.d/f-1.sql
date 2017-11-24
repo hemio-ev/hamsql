@@ -2,7 +2,7 @@
 name: f
 description: Function f
 language: plpgsql
-returns: integer
+returns: int
 parameters:
  - name: x1
    type: character varying

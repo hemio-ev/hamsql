@@ -40,7 +40,7 @@ loadSetup filePath = do
 loadSetupSchemas :: FilePath -> Setup -> IO Setup
 loadSetupSchemas path s = do
   schemaData <- loadSchemas path s [] (setupSchemas s)
-  return s {setupSchemaData = setupSchemaData s <> Just schemaData}
+  return s {_setupSchemaData = _setupSchemaData s <> Just schemaData}
 
 loadSchemas :: FilePath -> Setup -> [Schema] -> [SqlName] -> IO [Schema]
 loadSchemas _ _ allLoaded [] = return allLoaded
@@ -124,11 +124,13 @@ readSchema md = do
     in confDirFiles "functions.d" >>= mapM (readFunctionFromFile ins)
   let schemaData' =
         schemaData
-        { schemaDomains = schemaDomains schemaData <> presetEmpty domains
-        , schemaFunctions = schemaFunctions schemaData <> presetEmpty functions
-        , schemaSequences = schemaSequences schemaData <> presetEmpty sequences
-        , schemaTables = schemaTables schemaData <> presetEmpty tables
-        , schemaTypes = schemaTypes schemaData <> presetEmpty types
+        { _schemaDomains = _schemaDomains schemaData <> presetEmpty domains
+        , _schemaFunctions =
+            _schemaFunctions schemaData <> presetEmpty functions
+        , _schemaSequences =
+            _schemaSequences schemaData <> presetEmpty sequences
+        , _schemaTables = _schemaTables schemaData <> presetEmpty tables
+        , _schemaTypes = _schemaTypes schemaData <> presetEmpty types
         }
   return schemaData'
   where

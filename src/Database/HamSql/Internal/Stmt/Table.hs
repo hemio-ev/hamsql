@@ -77,7 +77,7 @@ instance ToSqlStmts (SqlContext (Schema, Table, Column)) where
       stmtAddColumn =
         newSqlStmt SqlAddColumn obj $
         "ALTER TABLE" <-> tblId <-> "ADD COLUMN" <-> toSqlCode (columnName c) <->
-        toSqlCode (columnType c)
+        toSqlCode (_columnType c)
       -- UNIQUE
       stmtColumnUnique
         | columnUnique c == Just True =
@@ -97,7 +97,7 @@ instance ToSqlStmts (SqlContext (Schema, Table, Column)) where
       -- SET DATA TYPE
       stmtAlterColumnType =
         stmtAlterColumn SqlColumnSetType $
-        "SET DATA TYPE " <> toSqlCode (columnType c)
+        "SET DATA TYPE " <> toSqlCode (_columnType c)
       -- DROP DEFAULT
       stmtDropDefault = stmtAlterColumn SqlColumnSetDefault "DROP DEFAULT"
       -- SET DEFAULT
@@ -139,7 +139,7 @@ instance ToSqlStmts (SqlContext (Schema, Table, Column)) where
         " " <>
         x
       columnIsSerial =
-        let serialKey = T.toLower $ toSqlCode $ columnType rawColumn
+        let serialKey = T.toLower $ toSqlCode $ _columnType rawColumn
         in lookup
              serialKey
              [ ("smallserial", "smallint")
@@ -150,7 +150,7 @@ instance ToSqlStmts (SqlContext (Schema, Table, Column)) where
         case columnIsSerial of
           Just sType ->
             rawColumn
-            { columnType = SqlType sType
+            { _columnType = SqlType sType
             , columnDefault =
                 Just $
                 "nextval('" <> toSqlCode (sqlId serialSequenceContext) <>

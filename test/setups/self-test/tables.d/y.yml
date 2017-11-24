@@ -6,7 +6,7 @@ columns:
    type: integer
    description: Column y1
  - name: y2
-   type: integer
+   type: int
    description: Column y2
 
 foreign_keys:

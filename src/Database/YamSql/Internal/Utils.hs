@@ -9,6 +9,8 @@ module Database.YamSql.Internal.Utils
   , (<>)
   , asum
   , fromMaybe
+  , makeLenses
+  , LensLike'
   ) where
 
 import Data.Foldable (asum)
@@ -17,6 +19,7 @@ import Data.Semigroup ((<>))
 import qualified Data.Text as T
 import Data.Text (Text)
 import Data.Text.Lazy (toStrict)
+import Lens.Micro.Platform (LensLike', makeLenses)
 import Text.Pretty.Simple (pShow)
 
 tshow :: (Show a) => a -> Text

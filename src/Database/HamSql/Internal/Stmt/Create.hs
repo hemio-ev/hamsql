@@ -23,19 +23,19 @@ allSchemaElements :: Schema -> [SetupElement]
 allSchemaElements schema =
   [SetupElement $ SqlContext schema] ++
   toElemList' schemaRoles schema ++
-  toElemList schemaDomains schema ++
-  toElemList schemaFunctions schema ++
-  toElemList schemaSequences schema ++
-  toElemList schemaTables schema ++
-  toElemList schemaTypes schema ++
+  toElemList _schemaDomains schema ++
+  toElemList _schemaFunctions schema ++
+  toElemList _schemaSequences schema ++
+  toElemList _schemaTables schema ++
+  toElemList _schemaTypes schema ++
   concat
     [ map
       (SetupElement . (\x -> SqlContext (schema, table, x)))
-      (tableColumns table) ++
+      (_tableColumns table) ++
     map
       (SetupElement . (\x -> SqlContext (schema, table, x)))
       (fromMaybe [] $ tableTriggers table)
-    | table <- fromMaybe [] $ schemaTables schema
+    | table <- fromMaybe [] $ _schemaTables schema
     ]
   where
     toElemList y = maybeMap (SetupElement . (\x -> SqlContext (schema, x))) . y
@@ -65,7 +65,7 @@ getSetupStatements s =
   [getStmt $ setupPreCode s] ++ schemaStatements ++ [getStmt $ setupPostCode s]
   where
     schemaStatements =
-      concat $ maybeMap (getSchemaStatements s) (setupSchemaData s)
+      concat $ maybeMap (getSchemaStatements s) (_setupSchemaData s)
     getStmt (Just code) = newSqlStmt SqlPre emptyName code
     getStmt Nothing = Nothing
 

@@ -12,7 +12,7 @@ import Database.YamSql.Internal.Basic
 data Type = Type
   { typeName :: SqlName
   , typeDescription :: Text
-  , typeElements :: [TypeElement]
+  , _typeElements :: [TypeElement]
   } deriving (Generic, Show, Data)
 
 instance FromJSON Type where
@@ -23,7 +23,7 @@ instance ToJSON Type where
 
 data TypeElement = TypeElement
   { typeelementName :: SqlName
-  , typeelementType :: SqlType
+  , _typeelementType :: SqlType
   } deriving (Generic, Show, Data)
 
 instance FromJSON TypeElement where
@@ -38,3 +38,7 @@ data SQL_TYPE =
 
 instance ToSqlCode SQL_TYPE where
   toSqlCode = const "TYPE"
+
+makeLenses ''Type
+
+makeLenses ''TypeElement

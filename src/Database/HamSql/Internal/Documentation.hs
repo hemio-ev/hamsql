@@ -33,7 +33,7 @@ templateCompile str =
 docWrite :: OptDoc -> Setup -> IO ()
 docWrite optDoc s = do
   t <- templateFromFile (optTemplate optDoc)
-  mapM_ (docWriteSchema optDoc t) (fromMaybe [] $ setupSchemaData s)
+  mapM_ (docWriteSchema optDoc t) (fromMaybe [] $ _setupSchemaData s)
   return ()
 
 docWriteSchema :: OptDoc -> Template -> Schema -> IO ()

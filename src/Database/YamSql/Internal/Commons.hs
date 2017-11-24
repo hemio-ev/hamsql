@@ -14,7 +14,7 @@ import Database.YamSql.Internal.Basic
 data Variable = Variable
   { variableName :: SqlName
   , variableDescription :: Maybe Text
-  , variableType :: SqlType
+  , _variableType :: SqlType
   , variableDefault :: Maybe Text
   } deriving (Generic, Show, Data)
 
@@ -44,3 +44,5 @@ data Abbr a b
 instance (FromJSON a, FromJSON b) => FromJSON (Abbr a b) where
   parseJSON x@(Object _) = LongForm <$> parseJSON x
   parseJSON x = ShortForm <$> parseJSON x
+
+makeLenses ''Variable

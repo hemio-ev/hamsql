@@ -46,7 +46,7 @@ newSetup' s =
   , setupRolePrefix = Just "hamsql-test_"
   , setupPreCode = Nothing
   , setupPostCode = Nothing
-  , setupSchemaData = Just s
+  , _setupSchemaData = Just s
   }
 
 run :: Command -> IO ()
@@ -78,8 +78,9 @@ run (Install optCommon optDb optInstall)
     useSqlStmts optCommon optDb $ sort $ (stmtsInstall setup) ++ dropRoleStmts
 -- Upgrade
 run (Upgrade optCommon optDb) = do
-  sourceSetup <- loadSetup (optSetup optCommon)
+  sourceSetup' <- loadSetup (optSetup optCommon)
   conn <- pgsqlConnectUrl (getConUrl optDb)
+  sourceSetup <- runReaderT (normalizeOnline sourceSetup') conn
   targetModules <- runReaderT deployedSchemas conn
   let sourceStmts = stmtsInstall sourceSetup
   let targetStmts = stmtsInstall $ newSetup' targetModules

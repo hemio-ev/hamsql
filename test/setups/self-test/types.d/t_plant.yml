@@ -7,4 +7,4 @@ elements:
   type: integer
  -
   name: leaves
-  type: integer
+  type: int

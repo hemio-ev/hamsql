@@ -6,6 +6,9 @@ module Database.HamSql.Internal.Utils
   ( module Data.Maybe
   , module Database.HamSql.Internal.Utils
   , module Database.YamSql.Internal.Utils
+  , traverseOf
+  , _Just
+  , each
   ) where
 
 import Data.List (group, intercalate, sort)
@@ -13,6 +16,7 @@ import Data.Maybe
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import Debug.Trace
+import Lens.Micro.Platform (_Just, each, traverseOf)
 import System.Exit
 import System.IO (stderr)
 import System.IO.Unsafe

@@ -7,7 +7,7 @@ import Database.YamSql.Internal.Obj.Check
 data Domain = Domain
   { domainName :: SqlName
   , domainDescription :: Text
-  , domainType :: SqlType
+  , _domainType :: SqlType
   , domainDefault :: Maybe Text
   , domainChecks :: Maybe [Check]
   } deriving (Generic, Show, Data)
@@ -31,3 +31,5 @@ data SQL_DOMAIN_CONSTRAINT =
 
 instance ToSqlCode SQL_DOMAIN_CONSTRAINT where
   toSqlCode = const "DOMAIN_CONSTRAINT"
+
+makeLenses ''Domain

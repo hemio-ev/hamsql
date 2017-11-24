@@ -40,8 +40,10 @@ data Setup = Setup
   , setupRolePrefix :: Maybe Text
   , setupPreCode :: Maybe Text
   , setupPostCode :: Maybe Text
-  , setupSchemaData :: Maybe [Schema]
+  , _setupSchemaData :: Maybe [Schema]
   } deriving (Generic, Show, Data)
+
+makeLenses ''Setup
 
 instance FromJSON Setup where
   parseJSON = parseYamSql
@@ -93,7 +95,7 @@ selectTemplate x ts =
 
 -- get things from Setup
 setupAllSchemas :: Setup -> [Schema]
-setupAllSchemas = fromMaybe [] . setupSchemaData
+setupAllSchemas = fromMaybe [] . _setupSchemaData
 
 setupAllFunctionTemplates :: Setup -> [WithSchema FunctionTpl]
 setupAllFunctionTemplates s =
@@ -111,12 +113,12 @@ applyTpl :: Setup -> Setup
 applyTpl s =
   s
   -- TODO: possible overwrite here!
-  {setupSchemaData = map applySchema <$> setupSchemaData s}
+  {_setupSchemaData = map applySchema <$> _setupSchemaData s}
   where
     applySchema m =
       m
-      { schemaTables = map applyTableTemplates <$> schemaTables m
-      , schemaFunctions = map applyFunctionTemplates <$> schemaFunctions m
+      { _schemaTables = map applyTableTemplates <$> _schemaTables m
+      , _schemaFunctions = map applyFunctionTemplates <$> _schemaFunctions m
       }
     applyTableTemplates :: Table -> Table
     applyTableTemplates t = foldr applyTableTpl t (tableTpls t)

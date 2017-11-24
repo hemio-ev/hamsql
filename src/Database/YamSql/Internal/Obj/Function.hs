@@ -13,9 +13,9 @@ data Function = Function
     -- | description what the function is good for
   , functionDescription :: Text
     -- | return type of the function, TABLE is special (see return_columns)
-  , functionReturns :: SqlType
+  , _functionReturns :: SqlType
     -- | parameters the function takes
-  , functionParameters :: Maybe [Variable]
+  , _functionParameters :: Maybe [Variable]
     -- | list of templates, used for this function
   , functionTemplates :: Maybe [SqlName]
     -- | loaded templates, not designed for use via Yaml
@@ -23,7 +23,7 @@ data Function = Function
     -- __TODO: move to xfunctionInternal__
   , functionTemplateData :: Maybe [FunctionTpl]
     -- | if return is TABLE, gives the columns that are returned (see parameter)
-  , functionReturnsColumns :: Maybe [Parameter]
+  , _functionReturnsColumns :: Maybe [Parameter]
     -- | variables that are defined (ignored if language is given)
   , functionVariables :: Maybe [Variable]
     -- | Role that has the privilege to execute the function
@@ -91,7 +91,7 @@ applyFunctionTpl t f =
   , functionSecurityDefiner =
       asum [functionSecurityDefiner f, functiontplSecurityDefiner t]
   , functionOwner = asum [functionOwner f, functiontplOwner t]
-  , functionParameters = functionParameters f <> functiontplParameters t
+  , _functionParameters = _functionParameters f <> functiontplParameters t
   , functionVariables = functionVariables f <> functiontplVariables t
   , functionBody =
       Just $
@@ -103,3 +103,5 @@ applyFunctionTpl t f =
     maybeStringL Nothing = ""
     maybeStringR (Just xs) = "\n" <> xs
     maybeStringR Nothing = ""
+
+makeLenses ''Function

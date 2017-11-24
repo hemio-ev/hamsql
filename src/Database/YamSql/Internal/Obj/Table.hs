@@ -8,7 +8,7 @@ import Database.YamSql.Internal.Obj.Trigger
 data Table = Table
   { tableName :: SqlName
   , tableDescription :: Text
-  , tableColumns :: [Column]
+  , _tableColumns :: [Column]
   , tablePrimaryKey :: [SqlName]
   , tableUnique :: Maybe [Abbr [SqlName] UniqueConstraint]
   , tableForeignKeys :: Maybe [ForeignKey]
@@ -59,7 +59,7 @@ instance ToJSON TableTpl where
 
 data Column = Column
   { columnName :: SqlName
-  , columnType :: SqlType
+  , _columnType :: SqlType
   , columnDescription :: Text
   , columnDefault :: Maybe Text
   , columnNull :: Maybe Bool
@@ -86,7 +86,7 @@ instance ToSqlCode SQL_COLUMN where
 applyTableTpl :: TableTpl -> Table -> Table
 applyTableTpl tpl t =
   t
-  { tableColumns = fromMaybe [] (tabletplColumns tpl) <> tableColumns t
+  { _tableColumns = fromMaybe [] (tabletplColumns tpl) <> _tableColumns t
   , tableForeignKeys = tabletplForeignKeys tpl <> tableForeignKeys t
   , tableInherits = tabletplInherits tpl <> tableInherits t
   , tableChecks = tabletplChecks tpl <> tableChecks t
@@ -139,3 +139,7 @@ data SQL_TABLE_CONSTRAINT =
 
 instance ToSqlCode SQL_TABLE_CONSTRAINT where
   toSqlCode = const "COLUMN"
+
+makeLenses ''Table
+
+makeLenses ''Column

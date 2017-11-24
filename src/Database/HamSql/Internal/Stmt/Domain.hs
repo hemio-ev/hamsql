@@ -28,7 +28,7 @@ instance ToSqlStmts (SqlContext (Schema, Domain)) where
     where
       stmtCreateDomain =
         newSqlStmt SqlCreateDomain obj $
-        "CREATE DOMAIN" <-> sqlIdCode obj <-> "AS" <-> toSqlCode (domainType d)
+        "CREATE DOMAIN" <-> sqlIdCode obj <-> "AS" <-> toSqlCode (_domainType d)
       checkComment c =
         newSqlStmt SqlComment obj $
         "COMMENT ON CONSTRAINT" <-> toSqlCode (checkName c) <-> "ON DOMAIN" <->
