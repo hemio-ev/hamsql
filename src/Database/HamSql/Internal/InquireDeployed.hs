@@ -1,6 +1,6 @@
 -- This file is part of HamSql
 --
--- Copyright 2014-2016 by it's authors.
+-- Copyright 2014-2017 by it's authors.
 -- Some rights reserved. See COPYING, AUTHORS.
 module Database.HamSql.Internal.InquireDeployed where
 
@@ -14,13 +14,7 @@ import Database.HamSql.Internal.Utils
 import Database.HamSql.Setup
 import Database.YamSql
 
-recoverIndexName :: Text -> [Text] -> Text -> Text -> Maybe IndexName
-recoverIndexName tbl keys n s =
-  case stripPrefix (tbl <> "_") n >>= stripSuffix ("_" <> s) of
-    Nothing -> Just IndexNamePrefixed {indexnamePrefixed = SqlName n}
-    Just unprefixed
-      | unprefixed == intercalate "_" keys -> Nothing
-      | otherwise -> Just $ IndexNameUnprefixed (SqlName unprefixed)
+-- ** Schemas
 
 deployedSchemas :: SqlT [Schema]
 deployedSchemas = do
@@ -67,6 +61,8 @@ deployedSchemas = do
       ORDER BY nspname
       -- TODO: do public right
     |]
+
+-- ** Tables
 
 deployedTables :: SqlName -> SqlT [Table]
 deployedTables schema = do
@@ -280,6 +276,14 @@ deployedForeignKeys tbl@(_, table) = do
         WHERE contype='f' AND conrelid::regclass = ?::regclass
       |]
 
+recoverIndexName :: Text -> [Text] -> Text -> Text -> Maybe IndexName
+recoverIndexName tbl keys n s =
+  case stripPrefix (tbl <> "_") n >>= stripSuffix ("_" <> s) of
+    Nothing -> Just IndexNamePrefixed {indexnamePrefixed = SqlName n}
+    Just unprefixed
+      | unprefixed == intercalate "_" keys -> Nothing
+      | otherwise -> Just $ IndexNameUnprefixed (SqlName unprefixed)
+
 -- (tbl, unique, primary)
 keyQuery :: Query
 keyQuery =
@@ -301,14 +305,7 @@ keyQuery =
           GROUP BY tnsp.nspname, trel.relname, irel.relname;      
     |]
 
-toVariable :: SqlType -> Maybe SqlName -> Maybe Text -> Variable
-toVariable varType varName varDefault =
-  Variable
-  { variableName = fromMaybe undefined varName
-  , variableDescription = Nothing
-  , _variableType = varType
-  , variableDefault = varDefault
-  }
+-- ** Functions
 
 deployedFunctions :: SqlName -> SqlT [Function]
 deployedFunctions schema = do
@@ -360,6 +357,17 @@ deployedFunctions schema = do
         WHERE pronamespace::regnamespace = ?::regnamespace
         ORDER BY proname
       |]
+
+toVariable :: SqlType -> Maybe SqlName -> Maybe Text -> Variable
+toVariable varType varName varDefault =
+  Variable
+  { variableName = fromMaybe undefined varName
+  , variableDescription = Nothing
+  , _variableType = varType
+  , variableDefault = varDefault
+  }
+
+-- ** Domains
 
 deployedDomains :: SqlName -> SqlT [Domain]
 deployedDomains schema = do
@@ -413,6 +421,8 @@ deployedDomainConstraints dom = do
           t.oid = ?::regtype::oid
       |]
 
+-- ** Sequences
+
 deployedSequences :: SqlName -> SqlT [Sequence]
 deployedSequences schema = do
   seqs <- psqlQry qry1 (Only $ toSqlCode schema)
@@ -457,6 +467,8 @@ deployedSequences schema = do
       "SELECT sequence_name, start_value, increment_by, max_value," <\>
       "min_value, cache_value, is_cycled::bool, ?::text AS desc, ?::text AS ownedby FROM " <>
       n
+
+-- ** Types
 
 deployedTypes :: SqlName -> SqlT [Type]
 deployedTypes schema = do
