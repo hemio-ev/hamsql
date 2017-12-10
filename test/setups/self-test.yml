@@ -7,3 +7,8 @@ role_prefix: hamsql-test_
 roles:
  - name: myrole
    description: a role
+ - name: myrole-2
+   description: another role
+   login: true
+   member_in:
+    - myrole

@@ -39,21 +39,28 @@ inquireRoles prfx = do
   mapM toRole roles
   where
     prfx' = fromMaybe "" prfx
-    toRole (name, description) =
+    unprefixed x = SqlName $ fromMaybe x (stripPrefix prfx' x)
+    toRole (rname, description, rolcanlogin, memberin) =
       return
         Role
-        { roleName = SqlName $ fromMaybe name (stripPrefix prfx' name)
+        { roleName = unprefixed rname
         , roleDescription = fromMaybe "" description
-        , roleLogin = Nothing
+        , roleLogin = preset False rolcanlogin
         , rolePassword = Nothing
-        , roleMemberIn = Nothing
+        , roleMemberIn = presetEmpty $ map unprefixed $ fromPGArray memberin
         }
     qry =
       [sql|
       SELECT
-        rolname,
-        pg_catalog.shobj_description(oid, 'pg_authid') AS desc
-      FROM pg_catalog.pg_roles
+        r.rolname,
+        pg_catalog.shobj_description(r.oid, 'pg_authid') AS desc,
+        r.rolcanlogin,
+        ARRAY(
+          SELECT b.rolname
+          FROM pg_catalog.pg_auth_members m
+          JOIN pg_catalog.pg_roles b ON m.roleid = b.oid
+          WHERE m.member = r.oid) as memberof
+      FROM pg_catalog.pg_roles r
       WHERE rolname LIKE ?
       ORDER BY rolname
     |]
