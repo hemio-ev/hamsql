@@ -41,6 +41,7 @@ data Setup = Setup
   , setupPreCode :: Maybe Text
   , setupPostCode :: Maybe Text
   , _setupSchemaData :: Maybe [Schema]
+  , setupRoles :: Maybe [Role]
   } deriving (Generic, Show, Data)
 
 makeLenses ''Setup

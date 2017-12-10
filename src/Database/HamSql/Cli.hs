@@ -38,17 +38,6 @@ parseThisArgv :: [String] -> IO Command
 parseThisArgv xs =
   handleParseResult $ execParserPure parserPrefs parserInfoHamsql xs
 
-newSetup' :: [Schema] -> Setup
-newSetup' s =
-  Setup
-  { setupSchemas = []
-  , setupSchemaDirs = Nothing
-  , setupRolePrefix = Just "hamsql-test_"
-  , setupPreCode = Nothing
-  , setupPostCode = Nothing
-  , _setupSchemaData = Just s
-  }
-
 run :: Command -> IO ()
 -- Install
 run (Install optCommon optDb optInstall)
@@ -73,7 +62,8 @@ run (Install optCommon optDb optInstall)
            "database exists for those commands to make sense."
     dropRoleStmts <-
       if optDeleteResidualRoles optInstall
-        then return [] --TODO: pgsqlDropAllRoleStmts optDb setup
+        then pgsqlConnectUrl (getConUrl optDb) >>=
+             runReaderT (pgsqlDropAllRoleStmts setup)
         else return []
     useSqlStmts optCommon optDb $ sort $ (stmtsInstall setup) ++ dropRoleStmts
 -- Upgrade
@@ -81,17 +71,11 @@ run (Upgrade optCommon optDb) = do
   sourceSetup' <- loadSetup (optSetup optCommon)
   conn <- pgsqlConnectUrl (getConUrl optDb)
   sourceSetup <- runReaderT (normalizeOnline sourceSetup') conn
-  targetModules <- runReaderT deployedSchemas conn
-  let sourceStmts = stmtsInstall sourceSetup
-  let targetStmts = stmtsInstall $ newSetup' targetModules
-  let stmts =
-        sort $
-        (sourceStmts \\ targetStmts) ++
-        stmtsUpdateDrop (targetStmts \\ sourceStmts)
+  targetSetup <- runReaderT (inquireSetup $ setupRolePrefix sourceSetup') conn
+  let stmts = upgradeStmts sourceSetup targetSetup
   --deleteStmts <- pgsqlDeleteAllStmt conn
   --fragile <- pgsqlUpdateFragile setup conn (stmtsInstall setup)
   --let stmts = sort deleteStmts ++ Data.List.filter allowInUpgrade (sort fragile)
-  print $ stmts
   useSqlStmts optCommon optDb stmts
 -- Doc
 run (Doc optCommon optDoc) = do

@@ -72,7 +72,7 @@ selfTestStmt :: String -> TestTree
 selfTestStmt file =
   testCaseSteps ("stmt " ++ file) $ \step -> do
     (setupRemote, setupLocal) <- deploy step installSetup file
-    mapM_ (doWrite "/tmp/testout" . schemaToDirTree) $ onlyModules setupRemote
+    --mapM_ (doWrite "/tmp/testout" . schemaToDirTree) $ onlyModules setupRemote
     step "check statement diff"
     assertNoDiff
       (sort $ stmtsInstall setupRemote)
@@ -114,8 +114,8 @@ selfTestUpgradeDelete file =
     step "check schema diff"
     assertNoShowDiff (onlyModules setupRemote) (onlyModules setupLocal)
 
-onlyModules :: Setup -> [Schema]
-onlyModules = fromMaybe [] . _setupSchemaData
+onlyModules :: Setup -> Setup
+onlyModules s = s {setupSchemas = []}
 
 deploy ::
      (String -> IO ()) -> (String -> Assertion) -> String -> IO (Setup, Setup)
@@ -124,12 +124,12 @@ deploy step f file = do
   f file
   step "retrive deployed from database ..."
   con <- conn
-  schemasRemote <- runReaderT deployedSchemas con
   setupLocal' <- loadSetup file
   setupLocal <- runReaderT (normalizeOnline setupLocal') con
+  setupRemote <- runReaderT (inquireSetup $ setupRolePrefix setupLocal) con
   close con
   step "load setup ..."
-  return (newSetup schemasRemote, setupLocal)
+  return (setupRemote, setupLocal)
 
 conn :: IO Connection
 conn =
@@ -160,6 +160,7 @@ upgradeSetupDelete s =
     [ "upgrade"
     , "--verbose"
     , "--permit-data-deletion"
+    , "--delete-residual-roles"
     , "-s"
     , s
     , "-c"
@@ -167,17 +168,6 @@ upgradeSetupDelete s =
     , "--sql-log"
     , "/tmp/del.sql"
     ]
-
-newSetup :: [Schema] -> Setup
-newSetup s =
-  Setup
-  { setupSchemas = []
-  , setupSchemaDirs = Nothing
-  , setupRolePrefix = Just "hamsql-test_"
-  , setupPreCode = Nothing
-  , setupPostCode = Nothing
-  , _setupSchemaData = Just s
-  }
 
 exec :: (Eq e, Exception e) => e -> [String] -> IO Bool
 exec y xs =

@@ -3,3 +3,7 @@ schemas:
  - public
 
 role_prefix: hamsql-test_
+
+roles:
+ - name: myrole
+   description: a role

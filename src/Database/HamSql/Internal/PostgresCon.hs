@@ -69,8 +69,9 @@ module Database.HamSql.Internal.PostgresCon
   ( stmtsInstall
   , pgsqlExecWithoutTransact
   , pgsqlExec
-  , stmtsUpdateDrop
+  , upgradeStmts
   , normalizeOnline
+  , pgsqlDropAllRoleStmts
   ) where
 
 import Control.Exception
@@ -80,23 +81,22 @@ import qualified Data.ByteString.Char8 as B
 --import Data.Function
 import Data.Maybe
 
+import Data.List ((\\), sort)
+
 --import Data.Set (fromList, notMember)
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.Transaction
 import Network.URI (URI)
 
 import Database.HamSql.Internal.DbUtils
-
---import Database.HamSql.Internal.InquireDeployed
+import Database.HamSql.Internal.InquireDeployed
 import Database.HamSql.Internal.Option
 import Database.HamSql.Internal.Stmt
 import Database.HamSql.Internal.Stmt.Create
 import Database.HamSql.Internal.Stmt.Domain
 import Database.HamSql.Internal.Stmt.Function
-
+import Database.HamSql.Internal.Stmt.Role
 import Database.HamSql.Internal.Stmt.Schema
-
---import Database.HamSql.Internal.Stmt.Role
 import Database.HamSql.Internal.Stmt.Sequence
 import Database.HamSql.Internal.Stmt.Table
 import Database.HamSql.Internal.Stmt.Trigger
@@ -114,11 +114,24 @@ sqlErrUndefinedTable = "42P01"
 stmtsInstall :: Setup -> [SqlStmt]
 stmtsInstall setup = catMaybes $ getSetupStatements setup
 
-stmtsUpdateDrop :: [SqlStmt] -> [SqlStmt]
-stmtsUpdateDrop = catMaybes . concatMap dropStmt
+pgsqlDropAllRoleStmts :: Setup -> SqlT [SqlStmt]
+pgsqlDropAllRoleStmts s =
+  stmtsUpdateDrop s <$> catMaybes <$> getRoleStmts s <$>
+  inquireRoles (setupRolePrefix s)
 
-dropStmt :: SqlStmt -> [Maybe SqlStmt]
-dropStmt (SqlStmt (SqlStmtId t i) _) =
+upgradeStmts :: Setup -> Setup -> [SqlStmt]
+upgradeStmts sourceSetup targetSetup =
+  let sourceStmts = stmtsInstall sourceSetup
+      targetStmts = stmtsInstall targetSetup
+  in sort $
+     (sourceStmts \\ targetStmts) ++
+     stmtsUpdateDrop sourceSetup (targetStmts \\ sourceStmts)
+
+stmtsUpdateDrop :: Setup -> [SqlStmt] -> [SqlStmt]
+stmtsUpdateDrop s = catMaybes . concatMap (dropStmt s)
+
+dropStmt :: Setup -> SqlStmt -> [Maybe SqlStmt]
+dropStmt setup (SqlStmt (SqlStmtId t i) _) =
   let n = SqlName $ toSqlCode i
       s = expSqlName n
       ncol = ((s !! 0) <.> (s !! 1), s !! 2)
@@ -134,6 +147,7 @@ dropStmt (SqlStmt (SqlStmtId t i) _) =
          stmtsDropTableConstr (SqlObj SQL_TABLE_CONSTRAINT ncol)
        SqlCreateForeignKeyConstr ->
          stmtsDropTableConstr (SqlObj SQL_TABLE_CONSTRAINT ncol)
+       SqlCreateRole -> stmtsDropRole setup (SqlObj SQL_ROLE n)
        SqlDropSchema -> stmtsDropSchema (SqlObj SQL_SCHEMA n)
        _ -> []
 

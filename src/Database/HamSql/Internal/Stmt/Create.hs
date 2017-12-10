@@ -59,13 +59,19 @@ sqlAddTransact xs =
   catMaybes [newSqlStmt SqlUnclassified emptyName "BEGIN TRANSACTION"] ++
   xs ++ catMaybes [newSqlStmt SqlUnclassified emptyName "COMMIT"]
 
+getRoleStmts :: Setup -> [Role] -> [Maybe SqlStmt]
+getRoleStmts s r =
+  concat $ map (toSqlStmts (SetupContext s)) $ map (SetupElement . SqlContext) r
+
 -- | Setup
 getSetupStatements :: Setup -> [Maybe SqlStmt]
 getSetupStatements s =
-  [getStmt $ setupPreCode s] ++ schemaStatements ++ [getStmt $ setupPostCode s]
+  [getStmt $ setupPreCode s] ++
+  schemaStatements ++ myStmts ++ [getStmt $ setupPostCode s]
   where
     schemaStatements =
       concat $ maybeMap (getSchemaStatements s) (_setupSchemaData s)
+    myStmts = getRoleStmts s $ fromMaybe [] $ setupRoles s
     getStmt (Just code) = newSqlStmt SqlPre emptyName code
     getStmt Nothing = Nothing
 

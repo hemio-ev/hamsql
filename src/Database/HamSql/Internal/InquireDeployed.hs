@@ -14,8 +14,51 @@ import Database.HamSql.Internal.Utils
 import Database.HamSql.Setup
 import Database.YamSql
 
--- ** Schemas
+-- * Database
+inquireSetup ::
+     Maybe Text -- ^ Role prefix
+  -> SqlT Setup
+inquireSetup rolePrefix = do
+  schemas <- deployedSchemas
+  roles <- inquireRoles rolePrefix
+  return
+    Setup
+    { setupSchemas = []
+    , setupSchemaDirs = Nothing
+    , setupRolePrefix = rolePrefix
+    , setupPreCode = Nothing
+    , setupPostCode = Nothing
+    , _setupSchemaData = Just schemas
+    , setupRoles = presetEmpty roles
+    }
 
+-- ** Roles
+inquireRoles :: Maybe Text -> SqlT [Role]
+inquireRoles prfx = do
+  roles <- psqlQry qry (Only $ prfx' <> "%")
+  mapM toRole roles
+  where
+    prfx' = fromMaybe "" prfx
+    toRole (name, description) =
+      return
+        Role
+        { roleName = SqlName $ fromMaybe name (stripPrefix prfx' name)
+        , roleDescription = fromMaybe "" description
+        , roleLogin = Nothing
+        , rolePassword = Nothing
+        , roleMemberIn = Nothing
+        }
+    qry =
+      [sql|
+      SELECT
+        rolname,
+        pg_catalog.shobj_description(oid, 'pg_authid') AS desc
+      FROM pg_catalog.pg_roles
+      WHERE rolname LIKE ?
+      ORDER BY rolname
+    |]
+
+-- ** Schemas
 deployedSchemas :: SqlT [Schema]
 deployedSchemas = do
   schemas <- psqlQry_ qry
@@ -62,8 +105,7 @@ deployedSchemas = do
       -- TODO: do public right
     |]
 
--- ** Tables
-
+-- *** Tables
 deployedTables :: SqlName -> SqlT [Table]
 deployedTables schema = do
   tbls <- psqlQry qry (Only $ toSqlCode schema)
@@ -305,8 +347,7 @@ keyQuery =
           GROUP BY tnsp.nspname, trel.relname, irel.relname;      
     |]
 
--- ** Functions
-
+-- *** Functions
 deployedFunctions :: SqlName -> SqlT [Function]
 deployedFunctions schema = do
   funs <- psqlQry qry (Only $ toSqlCode schema)
@@ -367,8 +408,7 @@ toVariable varType varName varDefault =
   , variableDefault = varDefault
   }
 
--- ** Domains
-
+-- *** Domains
 deployedDomains :: SqlName -> SqlT [Domain]
 deployedDomains schema = do
   doms <- psqlQry qry (Only $ toSqlCode schema)
@@ -421,8 +461,7 @@ deployedDomainConstraints dom = do
           t.oid = ?::regtype::oid
       |]
 
--- ** Sequences
-
+-- *** Sequences
 deployedSequences :: SqlName -> SqlT [Sequence]
 deployedSequences schema = do
   seqs <- psqlQry qry1 (Only $ toSqlCode schema)
@@ -468,8 +507,7 @@ deployedSequences schema = do
       "min_value, cache_value, is_cycled::bool, ?::text AS desc, ?::text AS ownedby FROM " <>
       n
 
--- ** Types
-
+-- *** Types
 deployedTypes :: SqlName -> SqlT [Type]
 deployedTypes schema = do
   types <- psqlQry qry (Only $ toSqlCode schema)

@@ -119,7 +119,7 @@ instance ToSqlCode SqlName where
       else toSqlCode' $ expSqlName n'
 
 instance SqlIdentifierConcat SqlName where
-  (//) (SqlName s) (SqlName t) = SqlName (s <> t)
+  (//) (SqlName s) (SqlName t) = SqlName (s <> T.replace "\"" "" t)
 
 (<.>) :: SqlName -> SqlName -> SqlName
 (<.>) (SqlName s) (SqlName t) = SqlName $ s <> "." <> t
