@@ -13,17 +13,14 @@ data Function = Function
     -- | description what the function is good for
   , functionDescription :: Text
     -- | return type of the function, TABLE is special (see return_columns)
-  , _functionReturns :: SqlType
+  , _functionReturns :: ReturnType
     -- | parameters the function takes
   , _functionParameters :: Maybe [Variable]
     -- | list of templates, used for this function
   , functionTemplates :: Maybe [SqlName]
     -- | loaded templates, not designed for use via Yaml
-    --
     -- __TODO: move to xfunctionInternal__
   , functionTemplateData :: Maybe [FunctionTpl]
-    -- | if return is TABLE, gives the columns that are returned (see parameter)
-  , _functionReturnsColumns :: Maybe [Parameter]
     -- | variables that are defined (ignored if language is given)
   , functionVariables :: Maybe [Variable]
     -- | Role that has the privilege to execute the function
@@ -45,6 +42,29 @@ instance FromJSON Function where
   parseJSON = parseYamSql
 
 instance ToJSON Function where
+  toJSON = toYamSqlJson
+
+data Parameter = Parameter
+  { parameterName :: SqlName
+  , parameterDescription :: Maybe Text
+  , _parameterType :: SqlType
+  } deriving (Generic, Show, Data)
+
+instance FromJSON Parameter where
+  parseJSON = parseYamSql
+
+instance ToJSON Parameter where
+  toJSON = toYamSqlJson
+
+data ReturnType
+  = ReturnType SqlType
+  | ReturnTypeTable { _returntypeTable :: [Parameter] }
+  deriving (Generic, Show, Data)
+
+instance FromJSON ReturnType where
+  parseJSON = parseYamSql
+
+instance ToJSON ReturnType where
   toJSON = toYamSqlJson
 
 data SQL_FUNCTION =
@@ -105,3 +125,9 @@ applyFunctionTpl t f =
     maybeStringR Nothing = ""
 
 makeLenses ''Function
+
+makePrisms ''ReturnType
+
+makeLenses ''ReturnType
+
+makeLenses ''Parameter

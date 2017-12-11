@@ -1,6 +1,6 @@
 ---
 name: f
-description: Function f
+description: Function f 1 arg
 language: plpgsql
 returns: int
 parameters:

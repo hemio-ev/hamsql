@@ -11,15 +11,16 @@ module Database.YamSql.Internal.Utils
   , fromMaybe
   , makeLenses
   , LensLike'
+  , makePrisms
   ) where
 
+import Control.Lens (LensLike', makeLenses, makePrisms)
 import Data.Foldable (asum)
 import Data.Maybe (fromMaybe)
 import Data.Semigroup ((<>))
 import qualified Data.Text as T
 import Data.Text (Text)
 import Data.Text.Lazy (toStrict)
-import Lens.Micro.Platform (LensLike', makeLenses)
 import Text.Pretty.Simple (pShow)
 
 tshow :: (Show a) => a -> Text

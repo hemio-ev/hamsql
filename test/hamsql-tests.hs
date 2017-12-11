@@ -3,7 +3,7 @@ module Main where
 import Control.Exception.Safe
 import Control.Monad.Trans.Reader (runReaderT)
 import Data.List (sort)
-import Data.Maybe (catMaybes, fromMaybe)
+import Data.Maybe (catMaybes)
 import Data.Monoid ((<>))
 import qualified Data.Text.Lazy as T
 import Database.PostgreSQL.Simple (Connection, close)
@@ -20,8 +20,8 @@ import Database.HamSql.Internal.Load (loadSetup)
 import Database.HamSql.Internal.PostgresCon
 import Database.HamSql.Setup
 import Database.HamSql.Write
-import Database.YamSql
 
+--import Database.YamSql
 main :: IO ()
 main =
   defaultMain $
@@ -35,9 +35,9 @@ main =
         [ testCase "domain.yml" $ installSetup "test/setups/domain.yml"
         , testGroup
             "self-test.yml"
-            [ selfTestStmt "test/setups/self-test.yml"
-            , selfTestStruct
+            [ selfTestStruct
             , selfTestUpgrade "test/setups/self-test.yml"
+            , selfTestStmt "test/setups/self-test.yml"
             --, selfTestUpgrade "test/setups/self-test-empty.yml"
             --, selfTestUpgradeDelete "test/setups/self-test-empty.yml"
             , selfTestUpgrade "test/setups/self-test.yml"
@@ -48,7 +48,7 @@ main =
             --,selfTestStmt "test/setups/self-test-stmt.yml"
             , selfTestStmt "test/setups/domain.yml"
             , selfTestUpgrade "test/setups/domain.yml"
-            --, selfTestUpgrade "test/setups/domain-upgrade.yml"
+            , selfTestUpgrade "test/setups/domain-upgrade.yml"
             ]
         ]
     ]

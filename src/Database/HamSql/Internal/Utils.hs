@@ -11,12 +11,12 @@ module Database.HamSql.Internal.Utils
   , each
   ) where
 
+import Control.Lens (_Just, each, traverseOf)
 import Data.List (group, intercalate, sort)
 import Data.Maybe
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import Debug.Trace
-import Lens.Micro.Platform (_Just, each, traverseOf)
 import System.Exit
 import System.IO (stderr)
 import System.IO.Unsafe

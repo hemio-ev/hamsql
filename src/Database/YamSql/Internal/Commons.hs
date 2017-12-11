@@ -16,24 +16,13 @@ data Variable = Variable
   , variableDescription :: Maybe Text
   , _variableType :: SqlType
   , variableDefault :: Maybe Text
+  , variableMode :: Maybe Text
   } deriving (Generic, Show, Data)
 
 instance FromJSON Variable where
   parseJSON = parseYamSql
 
 instance ToJSON Variable where
-  toJSON = toYamSqlJson
-
-data Parameter = Parameter
-  { parameterName :: SqlName
-  , parameterDescription :: Maybe Text
-  , parameterType :: SqlType
-  } deriving (Generic, Show, Data)
-
-instance FromJSON Parameter where
-  parseJSON = parseYamSql
-
-instance ToJSON Parameter where
   toJSON = toYamSqlJson
 
 data Abbr a b

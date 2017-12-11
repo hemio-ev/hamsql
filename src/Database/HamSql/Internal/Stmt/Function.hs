@@ -34,8 +34,7 @@ instance ToSqlStmts (SqlContext (Schema, Function)) where
         --(maybeMap _variableType (_functionParameters f)) $
         "CREATE OR REPLACE FUNCTION " <> sqlFunctionIdentifierDef <> "\n" <>
         "RETURNS" <->
-        toSqlCode (_functionReturns f) <>
-        sqlReturnsColumns (_functionReturnsColumns f) <>
+        sqlReturns (_functionReturns f) <>
         "\nLANGUAGE " <>
         sqlLanguage (functionLanguage f) <>
         "\nSECURITY " <>
@@ -61,12 +60,11 @@ instance ToSqlStmts (SqlContext (Schema, Function)) where
           sqlParamDefault Nothing = ""
           sqlParamDefault (Just x) = "DEFAULT" <-> x
       -- If function returns a table, use service for field definition
-      sqlReturnsColumns cs
-        | toSqlCode (_functionReturns f) == "TABLE" =
-          " (" <\> T.intercalate ",\n" (maybeMap sqlReturnsColumn cs) <> ") "
-        | otherwise = ""
+      sqlReturns (ReturnType rt) = toSqlCode rt
+      sqlReturns (ReturnTypeTable cs) =
+        "TABLE (" <\> T.intercalate ",\n" (map sqlReturnsColumn cs) <> ") "
       sqlReturnsColumn c =
-        toSqlCode (parameterName c) <> " " <> toSqlCode (parameterType c)
+        toSqlCode (parameterName c) <> " " <> toSqlCode (_parameterType c)
       -- If language not defined, use service for variable definitions
       sqlBody
         | isNothing (functionLanguage f) =

@@ -1,5 +1,5 @@
 name:                hamsql
-version:             0.10.0.0
+version:             0.10.0.99
 synopsis:            Interpreter for SQL-structure definitions in YAML (YamSql)
 category:            Database
 description:         Interpreter for SQL-structure definitions in YAML (YamSql)
@@ -98,7 +98,7 @@ library
     file-embed == 0.0.*,
     filepath == 1.4.*,
     frontmatter == 0.1.*,
-    microlens-platform == 0.3.*,
+    lens == 4.15.*,
     network-uri == 2.6.*,
     optparse-applicative == 0.14.*,
     postgresql-simple >=0.4 && <0.6,

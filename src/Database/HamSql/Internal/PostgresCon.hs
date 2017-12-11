@@ -165,7 +165,13 @@ normalizeOnline set = applyColumnTypes set >>= applyFunctionTypes
 lensFunctionTypes :: Applicative m => [LensLike' m Setup SqlType]
 lensFunctionTypes =
   [ setupSchemaData .
-    _Just . each . schemaFunctions . _Just . each . functionReturns
+    _Just .
+    each . schemaFunctions . _Just . each . functionReturns . _ReturnType
+  , setupSchemaData .
+    _Just .
+    each .
+    schemaFunctions .
+    _Just . each . functionReturns . _ReturnTypeTable . each . parameterType
   ]
 
 lensColumTypes :: Applicative m => [LensLike' m Setup SqlType]
@@ -180,9 +186,11 @@ lensColumTypes =
   ]
 
 normalizeTypeOnline :: SqlType -> SqlT SqlType
-normalizeTypeOnline t = do
-  xs <- psqlQry "SELECT to_regtype(?)::text" (Only $ toSqlCode t)
-  return $ fromMaybe t (fromOnly $ head xs)
+normalizeTypeOnline t
+  | t == SqlType "TABLE" = return t
+  | otherwise = do
+    xs <- psqlQry "SELECT to_regtype(?)::text" (Only $ toSqlCode t)
+    return $ fromMaybe t (fromOnly $ head xs)
 
 normalizeColumnTypeOnline :: SqlType -> SqlT SqlType
 normalizeColumnTypeOnline t

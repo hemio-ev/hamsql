@@ -4,7 +4,8 @@
 -- Some rights reserved. See COPYING, AUTHORS.
 module Database.HamSql.Internal.InquireDeployed where
 
-import Data.Text (intercalate, stripPrefix, stripSuffix)
+import Data.List (zipWith4)
+import Data.Text (intercalate, singleton, stripPrefix, stripSuffix)
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.SqlQQ
 import Database.PostgreSQL.Simple.Types (PGArray(..), fromPGArray)
@@ -360,23 +361,15 @@ deployedFunctions schema = do
   funs <- psqlQry qry (Only $ toSqlCode schema)
   return $ map toFunction funs
   where
-    toFunction (proname, description, prorettype, proargnames, proargtypes, proargdefaults, owner, language, prosecdef, source) =
+    toFunction ((proname, description, prorettype, owner, language, prosecdef, source) :. args) =
       Function
       { functionName = proname
       , functionDescription = fromMaybe "" description
-      , _functionReturns = prorettype
+      , _functionReturns = rettype prorettype args
       , _functionParameters =
-          let n = length $ fromPGArray proargtypes
-              def = fromMaybe (replicate n Nothing)
-          in presetEmpty $
-             zipWith3
-               toVariable
-               (fromPGArray proargtypes)
-               (def $ fromPGArray <$> proargnames)
-               (def $ fromPGArray <$> proargdefaults)
+          presetEmpty $ filter ((/= Just "t") . variableMode) $ params args
       , functionTemplates = Nothing
       , functionTemplateData = Nothing
-      , _functionReturnsColumns = Nothing
       , functionVariables = Nothing
       , functionPrivExecute = Nothing
       , functionSecurityDefiner = preset False prosecdef
@@ -384,21 +377,41 @@ deployedFunctions schema = do
       , functionLanguage = Just language
       , functionBody = source
       }
+    params (proargnames, proargtypes, proargmodes, proargdefaults) =
+      let n = length $ fromPGArray proargtypes
+          def v (Just xs) = xs ++ (replicate (n - length xs) v)
+          def v Nothing = replicate n v
+      in zipWith4
+           toVariable
+           (fromPGArray proargtypes)
+           (def Nothing $ fromPGArray <$> proargnames)
+           (def Nothing $ fromPGArray <$> proargdefaults)
+           (def 'i' $ fromPGArray <$> proargmodes)
+    rettype prorettype args =
+      let tParams = filter ((== Just "t") . variableMode) $ params args
+      in if null tParams --prorettype /= SqlType "record"
+           then ReturnType prorettype
+           else ReturnTypeTable $ map variableToParameter tParams
     qry =
       [sql|
         SELECT
           proname,
           pg_catalog.obj_description(p.oid, 'pg_proc')::text AS description,
           prorettype::regtype::text,
-          proargnames,
-          ARRAY(SELECT UNNEST(proargtypes::regtype[]::text[])),
-          ARRAY(SELECT pg_get_function_arg_default(p.oid, n)
-            FROM generate_series(1, pronargs) t(n)),
           CASE WHEN proowner<>current_user::regrole
            THEN proowner::regrole::text END,
           lanname,
           prosecdef,
-          prosrc
+          prosrc,
+          -- function arguments
+          proargnames,
+          COALESCE(
+            proallargtypes::regtype[]::text[],
+            ARRAY(SELECT UNNEST(proargtypes::regtype[]::text[]))
+          ) AS argtypes,
+          proargmodes,
+          ARRAY(SELECT pg_get_function_arg_default(p.oid, n)
+            FROM generate_series(1, pronargs) t(n)) AS argdefault
         FROM pg_catalog.pg_proc AS p
         JOIN pg_catalog.pg_language AS l
           ON p.prolang = l.oid
@@ -406,14 +419,29 @@ deployedFunctions schema = do
         ORDER BY proname
       |]
 
-toVariable :: SqlType -> Maybe SqlName -> Maybe Text -> Variable
-toVariable varType varName varDefault =
+variableToParameter :: Variable -> Parameter
+variableToParameter v =
+  Parameter
+  { parameterName = variableName v
+  , _parameterType = _variableType v
+  , parameterDescription = Nothing
+  }
+
+toVariable :: SqlType -> Maybe SqlName -> Maybe Text -> Char -> Variable
+toVariable varType varName varDefault varMode =
   Variable
   { variableName = fromMaybe undefined varName
   , variableDescription = Nothing
   , _variableType = varType
   , variableDefault = varDefault
+  , variableMode = preset "IN" $ toMode varMode
   }
+  where
+    toMode 'i' = "IN"
+    toMode 'o' = "OUT"
+    toMode 'b' = "INOUT"
+    toMode 'v' = "VARIADIC"
+    toMode x = singleton x
 
 -- *** Domains
 deployedDomains :: SqlName -> SqlT [Domain]
