@@ -185,7 +185,7 @@ deployedColumns tbl = map toColumn <$> psqlQry qry (Only $ toSqlCode tbl)
           NOT attisdropped
           AND attnum > 0
           AND attrelid = ?::regclass::oid
-        ORDER BY attname
+        ORDER BY attnum
       |]
 
 deployedTriggers :: (SqlName, SqlName) -> SqlT [Trigger]
