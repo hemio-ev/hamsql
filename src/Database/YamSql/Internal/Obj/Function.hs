@@ -59,6 +59,7 @@ instance ToJSON Parameter where
 data ReturnType
   = ReturnType SqlType
   | ReturnTypeTable { _returntypeTable :: [Parameter] }
+  | ReturnTypeSetof { _returntypeSetof :: SqlType }
   deriving (Generic, Show, Data)
 
 instance FromJSON ReturnType where

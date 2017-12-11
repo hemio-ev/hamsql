@@ -72,7 +72,7 @@ selfTestStmt :: String -> TestTree
 selfTestStmt file =
   testCaseSteps ("stmt " ++ file) $ \step -> do
     (setupRemote, setupLocal) <- deploy step installSetup file
-    --mapM_ (doWrite "/tmp/testout" . schemaToDirTree) $ onlyModules setupRemote
+    _ <- doWrite "/tmp/testout" $ setupToDirTree "x" setupRemote
     step "check statement diff"
     assertNoDiff
       (sort $ stmtsInstall setupRemote)

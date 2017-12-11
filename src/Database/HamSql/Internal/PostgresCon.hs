@@ -169,6 +169,9 @@ lensFunctionTypes =
     each . schemaFunctions . _Just . each . functionReturns . _ReturnType
   , setupSchemaData .
     _Just .
+    each . schemaFunctions . _Just . each . functionReturns . _ReturnTypeSetof
+  , setupSchemaData .
+    _Just .
     each .
     schemaFunctions .
     _Just . each . functionReturns . _ReturnTypeTable . each . parameterType

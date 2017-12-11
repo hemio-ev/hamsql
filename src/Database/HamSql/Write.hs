@@ -1,5 +1,6 @@
 module Database.HamSql.Write
   ( schemaToDirTree
+  , setupToDirTree
   , toYml
   , doWrite
   ) where
@@ -13,7 +14,15 @@ import Data.Yaml.Pretty
 import System.Directory.Tree
 
 import Database.HamSql.Internal.Utils
+import Database.HamSql.Setup
 import Database.YamSql
+
+setupToDirTree :: FilePath -> Setup -> DirTree B.ByteString
+setupToDirTree d s =
+  let setupFile = File "setup.yml" (toYml s {_setupSchemaData = Nothing})
+  in Dir
+       d
+       (setupFile : (map schemaToDirTree $ fromMaybe [] $ _setupSchemaData s))
 
 schemaToDirTree :: Schema -> DirTree B.ByteString
 schemaToDirTree schema =

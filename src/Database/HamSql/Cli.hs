@@ -8,7 +8,7 @@ module Database.HamSql.Cli
   , parseThisArgv
   ) where
 
-import Control.Monad (when)
+import Control.Monad (void, when)
 import Control.Monad.Trans.Reader (runReaderT)
 import Data.List
 import Data.Maybe
@@ -26,6 +26,7 @@ import Database.HamSql
 import Database.HamSql.Internal.InquireDeployed
 import Database.HamSql.Internal.Stmt.Database
 import Database.HamSql.Setup
+import Database.HamSql.Write
 import Database.YamSql
 
 parserPrefs :: ParserPrefs
@@ -77,6 +78,10 @@ run (Upgrade optCommon optDb) = do
   --fragile <- pgsqlUpdateFragile setup conn (stmtsInstall setup)
   --let stmts = sort deleteStmts ++ Data.List.filter allowInUpgrade (sort fragile)
   useSqlStmts optCommon optDb stmts
+run (Yamsql optDb OptYamsql {optYamsqlDir = p}) = do
+  conn <- pgsqlConnectUrl (getConUrl optDb)
+  setup <- runReaderT (inquireSetup Nothing) conn
+  void $ doWrite p $ setupToDirTree "db" setup
 -- Doc
 run (Doc optCommon optDoc) = do
   setup <- loadSetup (optSetup optCommon)

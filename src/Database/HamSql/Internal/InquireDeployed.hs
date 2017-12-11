@@ -361,11 +361,11 @@ deployedFunctions schema = do
   funs <- psqlQry qry (Only $ toSqlCode schema)
   return $ map toFunction funs
   where
-    toFunction ((proname, description, prorettype, owner, language, prosecdef, source) :. args) =
+    toFunction ((proname, description, prorettype, proretset, owner, language, prosecdef, source) :. args) =
       Function
       { functionName = proname
       , functionDescription = fromMaybe "" description
-      , _functionReturns = rettype prorettype args
+      , _functionReturns = rettype prorettype proretset args
       , _functionParameters =
           presetEmpty $ filter ((/= Just "t") . variableMode) $ params args
       , functionTemplates = Nothing
@@ -387,10 +387,12 @@ deployedFunctions schema = do
            (def Nothing $ fromPGArray <$> proargnames)
            (def Nothing $ fromPGArray <$> proargdefaults)
            (def 'i' $ fromPGArray <$> proargmodes)
-    rettype prorettype args =
+    rettype prorettype proretset args =
       let tParams = filter ((== Just "t") . variableMode) $ params args
-      in if null tParams --prorettype /= SqlType "record"
-           then ReturnType prorettype
+      in if null tParams
+           then if proretset
+                  then ReturnTypeSetof prorettype
+                  else ReturnType prorettype
            else ReturnTypeTable $ map variableToParameter tParams
     qry =
       [sql|
@@ -398,6 +400,7 @@ deployedFunctions schema = do
           proname,
           pg_catalog.obj_description(p.oid, 'pg_proc')::text AS description,
           prorettype::regtype::text,
+          proretset,
           CASE WHEN proowner<>current_user::regrole
            THEN proowner::regrole::text END,
           lanname,

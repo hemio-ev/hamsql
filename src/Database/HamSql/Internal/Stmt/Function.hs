@@ -61,6 +61,7 @@ instance ToSqlStmts (SqlContext (Schema, Function)) where
           sqlParamDefault (Just x) = "DEFAULT" <-> x
       -- If function returns a table, use service for field definition
       sqlReturns (ReturnType rt) = toSqlCode rt
+      sqlReturns (ReturnTypeSetof rt) = "SETOF" <-> toSqlCode rt
       sqlReturns (ReturnTypeTable cs) =
         "TABLE (" <\> T.intercalate ",\n" (map sqlReturnsColumn cs) <> ") "
       sqlReturnsColumn c =

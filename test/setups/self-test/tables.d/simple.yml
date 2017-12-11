@@ -1,0 +1,10 @@
+name: "simple"
+description: Simple table
+primary_key: [col1]
+columns:
+ - name: col1
+   type: integer
+   description: Column col1
+ - name: col2
+   type: varchar
+   description: Column col2

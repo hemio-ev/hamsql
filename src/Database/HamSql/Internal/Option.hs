@@ -32,6 +32,8 @@ data Command
             OptInstall
   | Upgrade OptCommon
             OptCommonDb
+  | Yamsql OptCommonDb
+           OptYamsql
   | Doc OptCommon
         OptDoc
   | NoCommand OptNoCommand
@@ -51,6 +53,9 @@ parserCommand =
           (parserCmdUpgrade <**> helper)
           (progDesc "Upgrades an existing setup on a database.")) <>
      command
+       "yamsql"
+       (info (parserCmdYamsql <**> helper) (progDesc "Output yamsql")) <>
+     command
        "doc"
        (info
           (parserCmdDoc <**> helper)
@@ -63,6 +68,9 @@ parserCmdInstall =
 
 parserCmdUpgrade :: Parser Command
 parserCmdUpgrade = Upgrade <$> parserOptCommon <*> parserOptCommonDb
+
+parserCmdYamsql :: Parser Command
+parserCmdYamsql = Yamsql <$> parserOptCommonDb <*> parserOptYamsql
 
 parserCmdDoc :: Parser Command
 parserCmdDoc = Doc <$> parserOptCommon <*> parserOptDoc
@@ -136,6 +144,13 @@ parserOptInstall =
     (long "delete-existing-database" <> short 'd' <>
      help "Delete database if it allready exists") <*>
   boolFlag (long "delete-residual-roles" <> help "Delete residual roles")
+
+data OptYamsql = OptYamsql
+  { optYamsqlDir :: FilePath
+  } deriving (Show)
+
+parserOptYamsql :: Parser OptYamsql
+parserOptYamsql = OptYamsql <$> strArgument (help "Out dir")
 
 -- Command NoCommand
 data OptNoCommand = OptNoCommand
