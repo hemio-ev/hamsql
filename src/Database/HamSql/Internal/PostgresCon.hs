@@ -164,18 +164,14 @@ normalizeOnline set = applyColumnTypes set >>= applyFunctionTypes
 
 lensFunctionTypes :: Applicative m => [LensLike' m Setup SqlType]
 lensFunctionTypes =
-  [ setupSchemaData .
-    _Just .
-    each . schemaFunctions . _Just . each . functionReturns . _ReturnType
-  , setupSchemaData .
-    _Just .
-    each . schemaFunctions . _Just . each . functionReturns . _ReturnTypeSetof
-  , setupSchemaData .
-    _Just .
-    each .
-    schemaFunctions .
-    _Just . each . functionReturns . _ReturnTypeTable . each . parameterType
+  [ eachFunction . functionParameters . _Just . each . variableType
+  , eachFunction . functionReturns . _ReturnType
+  , eachFunction . functionReturns . _ReturnTypeSetof
+  , eachFunction . functionReturns . _ReturnTypeTable . each . parameterType
   ]
+  where
+    eachFunction =
+      setupSchemaData . _Just . each . schemaFunctions . _Just . each
 
 lensColumTypes :: Applicative m => [LensLike' m Setup SqlType]
 lensColumTypes =
