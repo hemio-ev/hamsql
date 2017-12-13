@@ -77,13 +77,8 @@ module Database.HamSql.Internal.PostgresCon
 import Control.Exception
 import Control.Monad
 import qualified Data.ByteString.Char8 as B
-
---import Data.Function
-import Data.Maybe
-
 import Data.List ((\\), sort)
-
---import Data.Set (fromList, notMember)
+import Data.Maybe
 import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.Transaction
 import Network.URI (URI)
@@ -147,6 +142,8 @@ dropStmt setup (SqlStmt (SqlStmtId t i) _) =
          stmtsDropTableConstr (SqlObj SQL_TABLE_CONSTRAINT ncol)
        SqlCreateForeignKeyConstr ->
          stmtsDropTableConstr (SqlObj SQL_TABLE_CONSTRAINT ncol)
+       SqlCreateDomainCheckConstr ->
+         stmtsDropDomainConstr (SqlObj SQL_DOMAIN_CONSTRAINT ncol)
        SqlCreateRole -> stmtsDropRole setup (SqlObj SQL_ROLE n)
        SqlDropSchema -> stmtsDropSchema (SqlObj SQL_SCHEMA n)
        _ -> []

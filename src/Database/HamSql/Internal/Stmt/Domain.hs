@@ -19,7 +19,7 @@ stmtsDropDomainConstr obj@(SqlObj _ (d, c)) =
   ]
 
 instance ToSqlStmts (SqlContext (Schema, Domain)) where
-  toSqlStmts _ obj@(SqlContext (_, d)) =
+  toSqlStmts _ obj@(SqlContext (s, d)) =
     stmtCreateDomain :
     sqlDefault (domainDefault d) :
     stmtCommentOn obj (domainDescription d) :
@@ -37,7 +37,11 @@ instance ToSqlStmts (SqlContext (Schema, Domain)) where
         toSqlCodeString (checkDescription c)
       sqlCheck :: Check -> Maybe SqlStmt
       sqlCheck c =
-        newSqlStmt SqlCreateCheckConstr obj $
+        newSqlStmt
+          SqlCreateDomainCheckConstr
+          (SqlObj
+             SQL_TABLE_CONSTRAINT
+             (schemaName s <.> domainName d, checkName c)) $
         "ALTER DOMAIN" <-> sqlIdCode obj <-> "ADD CONSTRAINT" <->
         toSqlCode (checkName c) <->
         "CHECK (" <>

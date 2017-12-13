@@ -121,7 +121,7 @@ data SqlStmtType
   | SqlCreatePrimaryKeyConstr
   | SqlCreateUniqueConstr
   | SqlCreateForeignKeyConstr
-  | SqlCreateCheckConstr
+  | SqlCreateDomainCheckConstr
   | SqlCreateTableCheckConstr
   | SqlDomainSetDefault
     -- TRIGGER

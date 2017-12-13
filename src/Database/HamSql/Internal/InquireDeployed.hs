@@ -514,17 +514,33 @@ deployedSequences schema = do
     doQry2 (n, desc, ownedby) =
       psqlQry (qry2 (n :: Text)) (desc :: Maybe Text, ownedby :: Maybe Text)
     toSequence (seqname, seqstartvalue, seqincrementby, seqmaxvalue, seqminvalue, seqcachevalue, seqiscycled, seqdesc, ownedby) =
-      Sequence
-      { sequenceName = seqname
-      , sequenceDescription = fromMaybe "" seqdesc
-      , sequenceIncrement = preset 1 seqincrementby
-      , sequenceMinValue = preset 1 seqminvalue
-      , sequenceMaxValue = preset 9223372036854775807 seqmaxvalue
-      , sequenceStartValue = preset 1 seqstartvalue
-      , sequenceCache = preset 1 seqcachevalue
-      , sequenceCycle = preset False seqiscycled
-      , sequenceOwnedByColumn = ownedby
-      }
+      let positive = seqincrementby > 0
+      in Sequence
+         { sequenceName = seqname
+         , sequenceDescription = fromMaybe "" seqdesc
+         , sequenceIncrement = preset 1 seqincrementby
+         , sequenceMinValue =
+             preset
+               (if positive
+                  then 1
+                  else -9223372036854775807)
+               seqminvalue
+         , sequenceMaxValue =
+             preset
+               (if positive
+                  then 9223372036854775807
+                  else -1)
+               seqmaxvalue
+         , sequenceStartValue =
+             preset
+               (if positive
+                  then seqminvalue
+                  else seqmaxvalue)
+               seqstartvalue
+         , sequenceCache = preset 1 seqcachevalue
+         , sequenceCycle = preset False seqiscycled
+         , sequenceOwnedByColumn = ownedby
+         }
     qry1 =
       [sql|
         SELECT
