@@ -418,7 +418,13 @@ deployedFunctions schema = do
         FROM pg_catalog.pg_proc AS p
         JOIN pg_catalog.pg_language AS l
           ON p.prolang = l.oid
-        WHERE pronamespace::regnamespace = ?::regnamespace
+        -- for check if functions belongs to an extension
+        LEFT JOIN pg_depend AS d
+          ON d.objid = p.oid AND d.deptype = 'e'
+        WHERE
+          pronamespace::regnamespace = ?::regnamespace
+          -- exclude all originating from extensions
+          AND d.objid IS NULL
         ORDER BY proname
       |]
 
