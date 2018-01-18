@@ -4,7 +4,7 @@ HamSql
 An interpreter for SQL structure definitions in YAML ([YamSql](http://yamsql.readthedocs.io/))
 
 [![build status](https://git.hemio.de/hemio/hamsql/badges/master/build.svg)](https://git.hemio.de/hemio/hamsql/commits/master)
-[![Hackage-Deps](https://img.shields.io/hackage-deps/v/hamsql.svg?maxAge=2592000)](https://hackage.haskell.org/package/hamsql)
+[![Hackage-Deps](https://img.shields.io/hackage-deps/v/hamsql.svg?maxAge=2592000)](https://packdeps.haskellers.com/feed?needle=hamsql)
 [![Hackage](https://img.shields.io/hackage/v/hamsql.svg?maxAge=2592000)](https://hackage.haskell.org/package/hamsql)
 
 ## About HamSql
