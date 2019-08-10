@@ -189,8 +189,8 @@ assertNoDiff xs ys =
     Just i ->
       assertFailure $
       T.unpack $
-      "version 1:\n" <> showContext xs i <> "\n\nversion 2:\n" <>
-      showContext ys i
+      "version 1:\n" <>
+      showContext xs i <> "\n\nversion 2:\n" <> showContext ys i
   where
     getContext zs i =
       let d =
@@ -199,7 +199,7 @@ assertNoDiff xs ys =
               Just n
                 | T.length (pShowNoColor n) > 150 -> 0
                 | otherwise -> 2
-      in catMaybes [get zs j | j <- [i - d .. i + d]]
+       in catMaybes [get zs j | j <- [i - d .. i + d]]
     showContext zs i = T.intercalate "\n" $ map pShowNoColor $ getContext zs i
 
 firstDiff :: Eq a => [a] -> [a] -> Maybe Int

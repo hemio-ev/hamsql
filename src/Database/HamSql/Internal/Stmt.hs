@@ -12,17 +12,18 @@ import Database.PostgreSQL.Simple.FromField
 import Database.HamSql.Internal.Utils
 import Database.YamSql
 
-data SqlStmtId = SqlStmtId
-  { stmtType :: SqlStmtType
-  , stmtSqlId :: SqlId
-  } deriving (Eq, Ord)
+data SqlStmtId =
+  SqlStmtId
+    { stmtType :: SqlStmtType
+    , stmtSqlId :: SqlId
+    }
+  deriving (Eq, Ord)
 
 instance Show SqlStmtId where
   show (SqlStmtId x y) = "(SqlStmtId " ++ show x ++ " " ++ show y ++ ")"
 
 data SqlStmt =
-  SqlStmt SqlStmtId
-          Text
+  SqlStmt SqlStmtId Text
   deriving (Show, Eq, Ord)
 
 stmtId :: SqlStmt -> SqlStmtId

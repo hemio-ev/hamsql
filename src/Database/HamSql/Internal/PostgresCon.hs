@@ -118,9 +118,9 @@ upgradeStmts :: Setup -> Setup -> [SqlStmt]
 upgradeStmts sourceSetup targetSetup =
   let sourceStmts = stmtsInstall sourceSetup
       targetStmts = stmtsInstall targetSetup
-  in sort $
-     (sourceStmts \\ targetStmts) ++
-     stmtsUpdateDrop sourceSetup (targetStmts \\ sourceStmts)
+   in sort $
+      (sourceStmts \\ targetStmts) ++
+      stmtsUpdateDrop sourceSetup (targetStmts \\ sourceStmts)
 
 stmtsUpdateDrop :: Setup -> [SqlStmt] -> [SqlStmt]
 stmtsUpdateDrop s = catMaybes . concatMap (dropStmt s)
@@ -130,23 +130,23 @@ dropStmt setup (SqlStmt (SqlStmtId t i) _) =
   let n = SqlName $ toSqlCode i
       s = expSqlName n
       ncol = ((s !! 0) <.> (s !! 1), s !! 2)
-  in case t of
-       SqlAddColumn -> stmtsDropTableColumn (SqlObj SQL_COLUMN ncol)
-       SqlCreateDomain -> stmtsDropDomain (SqlObj SQL_DOMAIN n)
-       SqlCreateSequence -> stmtsDropSequence (SqlObj SQL_SEQUENCE n)
-       SqlCreateTable -> stmtsDropTable (SqlObj SQL_TABLE n)
-       SqlCreateType -> stmtsDropType (SqlObj SQL_TYPE n)
-       SqlCreateFunction -> return <$> stmtsDropFunction' i
-       SqlCreateTrigger -> stmtsDropTrigger (SqlObj SQL_TRIGGER ncol)
-       SqlCreateTableCheckConstr ->
-         stmtsDropTableConstr (SqlObj SQL_TABLE_CONSTRAINT ncol)
-       SqlCreateForeignKeyConstr ->
-         stmtsDropTableConstr (SqlObj SQL_TABLE_CONSTRAINT ncol)
-       SqlCreateDomainCheckConstr ->
-         stmtsDropDomainConstr (SqlObj SQL_DOMAIN_CONSTRAINT ncol)
-       SqlCreateRole -> stmtsDropRole setup (SqlObj SQL_ROLE n)
-       SqlDropSchema -> stmtsDropSchema (SqlObj SQL_SCHEMA n)
-       _ -> []
+   in case t of
+        SqlAddColumn -> stmtsDropTableColumn (SqlObj SQL_COLUMN ncol)
+        SqlCreateDomain -> stmtsDropDomain (SqlObj SQL_DOMAIN n)
+        SqlCreateSequence -> stmtsDropSequence (SqlObj SQL_SEQUENCE n)
+        SqlCreateTable -> stmtsDropTable (SqlObj SQL_TABLE n)
+        SqlCreateType -> stmtsDropType (SqlObj SQL_TYPE n)
+        SqlCreateFunction -> return <$> stmtsDropFunction' i
+        SqlCreateTrigger -> stmtsDropTrigger (SqlObj SQL_TRIGGER ncol)
+        SqlCreateTableCheckConstr ->
+          stmtsDropTableConstr (SqlObj SQL_TABLE_CONSTRAINT ncol)
+        SqlCreateForeignKeyConstr ->
+          stmtsDropTableConstr (SqlObj SQL_TABLE_CONSTRAINT ncol)
+        SqlCreateDomainCheckConstr ->
+          stmtsDropDomainConstr (SqlObj SQL_DOMAIN_CONSTRAINT ncol)
+        SqlCreateRole -> stmtsDropRole setup (SqlObj SQL_ROLE n)
+        SqlDropSchema -> stmtsDropSchema (SqlObj SQL_SCHEMA n)
+        _ -> []
 
 normalizeOnline :: Setup -> SqlT Setup
 normalizeOnline set = applyColumnTypes set >>= applyFunctionTypes

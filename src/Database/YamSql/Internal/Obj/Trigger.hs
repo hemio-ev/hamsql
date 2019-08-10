@@ -10,15 +10,17 @@ module Database.YamSql.Internal.Obj.Trigger where
 import Database.YamSql.Internal.Basic
 
 --import Database.YamSql.Internal.Commons
-data Trigger = Trigger
-  { triggerName :: SqlName
-  , triggerDescription :: Text
-  , triggerMoment :: Text
-  , triggerEvents :: [Text]
-  , triggerForEach :: Text
-  , triggerCondition :: Maybe Text
-  , triggerExecute :: Text
-  } deriving (Generic, Show, Data)
+data Trigger =
+  Trigger
+    { triggerName :: SqlName
+    , triggerDescription :: Text
+    , triggerMoment :: Text
+    , triggerEvents :: [Text]
+    , triggerForEach :: Text
+    , triggerCondition :: Maybe Text
+    , triggerExecute :: Text
+    }
+  deriving (Generic, Show, Data)
 
 instance FromJSON Trigger where
   parseJSON = parseYamSql

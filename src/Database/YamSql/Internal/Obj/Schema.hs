@@ -29,30 +29,32 @@ import Database.YamSql.Internal.Obj.Trigger
 import Database.YamSql.Internal.Obj.Type
 
 -- Schema --
-data Schema = Schema
-  { schemaName :: SqlName
-  , schemaDescription :: Text
-  , schemaDependencies :: Maybe [SqlName]
-  , _schemaDomains :: Maybe [Domain]
-  , _schemaFunctions :: Maybe [Function]
-  , _schemaTables :: Maybe [Table]
-  , _schemaTypes :: Maybe [Type]
-  , _schemaSequences :: Maybe [Sequence]
-  , schemaFunctionTemplates :: Maybe [FunctionTpl]
-  , schemaTableTemplates :: Maybe [TableTpl]
-  , schemaRoles :: Maybe [Role]
-  , schemaPrivUsage :: Maybe [SqlName]
-  , schemaPrivSelectAll :: Maybe [SqlName]
-  , schemaPrivInsertAll :: Maybe [SqlName]
-  , schemaPrivUpdateAll :: Maybe [SqlName]
-  , schemaPrivDeleteAll :: Maybe [SqlName]
-  , schemaPrivSequenceAll :: Maybe [SqlName]
-  , schemaPrivExecuteAll :: Maybe [SqlName]
-  , schemaPrivAllAll :: Maybe [SqlName]
-  , schemaExecPostInstall :: Maybe Text
+data Schema =
+  Schema
+    { schemaName :: SqlName
+    , schemaDescription :: Text
+    , schemaDependencies :: Maybe [SqlName]
+    , _schemaDomains :: Maybe [Domain]
+    , _schemaFunctions :: Maybe [Function]
+    , _schemaTables :: Maybe [Table]
+    , _schemaTypes :: Maybe [Type]
+    , _schemaSequences :: Maybe [Sequence]
+    , schemaFunctionTemplates :: Maybe [FunctionTpl]
+    , schemaTableTemplates :: Maybe [TableTpl]
+    , schemaRoles :: Maybe [Role]
+    , schemaPrivUsage :: Maybe [SqlName]
+    , schemaPrivSelectAll :: Maybe [SqlName]
+    , schemaPrivInsertAll :: Maybe [SqlName]
+    , schemaPrivUpdateAll :: Maybe [SqlName]
+    , schemaPrivDeleteAll :: Maybe [SqlName]
+    , schemaPrivSequenceAll :: Maybe [SqlName]
+    , schemaPrivExecuteAll :: Maybe [SqlName]
+    , schemaPrivAllAll :: Maybe [SqlName]
+    , schemaExecPostInstall :: Maybe Text
     -- TODO: rename to execPostAll
-  , schemaExecPostInstallAndUpgrade :: Maybe Text
-  } deriving (Generic, Show, Data)
+    , schemaExecPostInstallAndUpgrade :: Maybe Text
+    }
+  deriving (Generic, Show, Data)
 
 instance FromJSON Schema where
   parseJSON = parseYamSql

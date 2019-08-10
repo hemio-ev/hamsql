@@ -56,13 +56,13 @@ getConUrlApp app str = appendQuery ("application_name=" <> app) uri
     uri = fromJustReason "Not a valid URI" (parseAbsoluteURI str)
     appendQuery v u =
       u
-      { uriQuery =
-          (case maybeHead $ uriQuery u of
-             Just '?' -> "&"
-             Just _ -> err $ "invalid URI" <-> tshow u
-             Nothing -> "?") <>
-          v
-      }
+        { uriQuery =
+            (case maybeHead $ uriQuery u of
+               Just '?' -> "&"
+               Just _ -> err $ "invalid URI" <-> tshow u
+               Nothing -> "?") <>
+            v
+        }
 
 pgsqlExecStmt :: Connection -> SqlStmt -> IO ()
 pgsqlExecStmt conn stmt = do
@@ -103,14 +103,9 @@ psqlHandleErr :: Query -> SqlError -> IO a
 psqlHandleErr stmt e =
   err $
   "An SQL error occured while executing the following statement" <>
-  showCode (tshow stmt) <\>
-  "The SQL-Server reported" <\>
-  "Message:" <>
-  showCode (decodeUtf8 (sqlErrorMsg e)) <\>
-  "Code: " <>
-  showCode (decodeUtf8 (sqlState e)) <\>
-  errDetail <\>
-  errHint <\>
+  showCode (tshow stmt) <\> "The SQL-Server reported" <\> "Message:" <>
+  showCode (decodeUtf8 (sqlErrorMsg e)) <\> "Code: " <>
+  showCode (decodeUtf8 (sqlState e)) <\> errDetail <\> errHint <\>
   "\nAll statements have been rolled back if possible."
   where
     errDetail =
@@ -140,15 +135,9 @@ pgsqlHandleErr stmt conn e = do
       else return ""
   err $
     "An SQL error occured while executing the following statement" <>
-    showCode (toSqlCode stmt) <\>
-    "The SQL-Server reported" <\>
-    "Message:" <>
-    showCode (decodeUtf8 (sqlErrorMsg e)) <\>
-    "Code: " <>
-    showCode (decodeUtf8 (sqlState e)) <\>
-    errDetail <\>
-    errHint <\>
-    extraMsg <\>
+    showCode (toSqlCode stmt) <\> "The SQL-Server reported" <\> "Message:" <>
+    showCode (decodeUtf8 (sqlErrorMsg e)) <\> "Code: " <>
+    showCode (decodeUtf8 (sqlState e)) <\> errDetail <\> errHint <\> extraMsg <\>
     "\nAll statements have been rolled back if possible."
   where
     showConnected (_, role, app) = " - role" <-> toSqlCode role <> appOut app

@@ -6,13 +6,15 @@ module Database.YamSql.Internal.Obj.Role where
 
 import Database.YamSql.Internal.Basic
 
-data Role = Role
-  { roleName :: SqlName
-  , roleDescription :: Text
-  , roleLogin :: Maybe Bool
-  , rolePassword :: Maybe Text
-  , roleMemberIn :: Maybe [SqlName]
-  } deriving (Generic, Show, Data)
+data Role =
+  Role
+    { roleName :: SqlName
+    , roleDescription :: Text
+    , roleLogin :: Maybe Bool
+    , rolePassword :: Maybe Text
+    , roleMemberIn :: Maybe [SqlName]
+    }
+  deriving (Generic, Show, Data)
 
 instance FromJSON Role where
   parseJSON = parseYamSql

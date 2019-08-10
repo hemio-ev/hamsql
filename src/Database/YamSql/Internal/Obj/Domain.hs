@@ -4,13 +4,15 @@ import Database.YamSql.Internal.Basic
 import Database.YamSql.Internal.Obj.Check
 
 -- | Domains are aliases of an existing SQL types, possibly with checks
-data Domain = Domain
-  { domainName :: SqlName
-  , domainDescription :: Text
-  , _domainType :: SqlType
-  , domainDefault :: Maybe Text
-  , domainChecks :: Maybe [Check]
-  } deriving (Generic, Show, Data)
+data Domain =
+  Domain
+    { domainName :: SqlName
+    , domainDescription :: Text
+    , _domainType :: SqlType
+    , domainDefault :: Maybe Text
+    , domainChecks :: Maybe [Check]
+    }
+  deriving (Generic, Show, Data)
 
 instance FromJSON Domain where
   parseJSON = parseYamSql

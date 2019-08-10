@@ -12,8 +12,9 @@ import Database.YamSql
 stmtCommentOn :: (ToSqlId a) => a -> Text -> Maybe SqlStmt
 stmtCommentOn obj comment =
   newSqlStmt SqlComment obj $
-  "COMMENT ON " <> sqlIdTypeCode (sqlId obj) <> " " <> sqlIdCode obj <> " IS " <>
-  toSqlCodeString comment
+  "COMMENT ON " <>
+  sqlIdTypeCode (sqlId obj) <>
+  " " <> sqlIdCode obj <> " IS " <> toSqlCodeString comment
 
 prefixedRole :: Setup -> SqlName -> Text
 prefixedRole setup role = toSqlCode ((SqlName $ setupRolePrefix' setup) // role)

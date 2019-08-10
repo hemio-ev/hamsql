@@ -1,3 +1,4 @@
+SHELL = /bin/bash
 
 HS = $(shell find app/ src/ test/ -name '*.hs')
 
@@ -32,7 +33,8 @@ install:
 dev-format-code: $(HS)
 
 $(HS):
-	-@../hindent/.cabal-sandbox/bin/hindent $@
+	-@hindent --sort-imports $@
+	-@hlint -j --no-summary $@
 
 # ununsual options
 

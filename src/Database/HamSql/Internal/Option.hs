@@ -22,20 +22,16 @@ parserInfoHamsql :: ParserInfo Command
 parserInfoHamsql =
   info
     (helper <*> parserCommand)
-    (fullDesc <> progDesc "A YamSql interpreter and smart executor." <>
+    (fullDesc <>
+     progDesc "A YamSql interpreter and smart executor." <>
      header "hamsql - YamSql interperter written in Haskell")
 
 -- Command
 data Command
-  = Install OptCommon
-            OptCommonDb
-            OptInstall
-  | Upgrade OptCommon
-            OptCommonDb
-  | Yamsql OptCommonDb
-           OptYamsql
-  | Doc OptCommon
-        OptDoc
+  = Install OptCommon OptCommonDb OptInstall
+  | Upgrade OptCommon OptCommonDb
+  | Yamsql OptCommonDb OptYamsql
+  | Doc OptCommon OptDoc
   | NoCommand OptNoCommand
   deriving (Show)
 
@@ -76,33 +72,36 @@ parserCmdDoc :: Parser Command
 parserCmdDoc = Doc <$> parserOptCommon <*> parserOptDoc
 
 -- Commons
-data OptCommon = OptCommon
-  { optSetup :: FilePath
-  , optVerbose :: Bool
-  , optDebug :: Bool
-  } deriving (Show)
+data OptCommon =
+  OptCommon
+    { optSetup :: FilePath
+    , optVerbose :: Bool
+    , optDebug :: Bool
+    }
+  deriving (Show)
 
 parserOptCommon :: Parser OptCommon
 parserOptCommon =
   OptCommon <$>
   strOption
-    (long "setup" <> short 's' <>
+    (long "setup" <>
+     short 's' <>
      help "Setup file (YAML). If '-' is supplied, the setup is read from STDIN." <>
-     val "setup.yml" <>
-     action "file -X '!*.yml'" <>
-     action "directory") <*>
+     val "setup.yml" <> action "file -X '!*.yml'" <> action "directory") <*>
   boolFlag (long "verbose" <> short 'v' <> help "Verbose") <*>
   boolFlag (long "debug" <> help "Debug")
 
 -- Commons Execute
-data OptCommonDb = OptCommonDb
-  { optEmulate :: Bool
-  , optPrint :: Bool
-  , optConnection :: String
-  , optPermitDataDeletion :: Bool
-  , optSqlLog :: Maybe FilePath
-  , optSqlLogHideRollbacks :: Bool
-  } deriving (Show)
+data OptCommonDb =
+  OptCommonDb
+    { optEmulate :: Bool
+    , optPrint :: Bool
+    , optConnection :: String
+    , optPermitDataDeletion :: Bool
+    , optSqlLog :: Maybe FilePath
+    , optSqlLogHideRollbacks :: Bool
+    }
+  deriving (Show)
 
 justStr :: ReadM (Maybe String)
 justStr = Just <$> ReadM ask
@@ -114,8 +113,8 @@ parserOptCommonDb =
   boolFlag
     (long "print" <> short 'p' <> help "Print SQL code instead of executing") <*>
   strOption
-    (long "connection" <> short 'c' <> help "Database connection URI" <>
-     val "postgresql://") <*>
+    (long "connection" <>
+     short 'c' <> help "Database connection URI" <> val "postgresql://") <*>
   boolFlag
     (long "permit-data-deletion" <> help "Permit deletion of columns and tables") <*>
   option
@@ -124,38 +123,43 @@ parserOptCommonDb =
      help
        ("If specified, log SQL statements to given file. " <>
         "Existing logfiles will be extended, not deleted.") <>
-     value Nothing <>
-     metavar "<log file>") <*>
+     value Nothing <> metavar "<log file>") <*>
   boolFlag
     (long "sql-log-hide-rollbacks" <>
      help
        "Hide ROLLBACK and SAVEPOINT statements. Useful for creating migration code via --log-sql.")
 
 -- Command Install
-data OptInstall = OptInstall
-  { optDeleteExistingDatabase :: Bool
-  , optDeleteResidualRoles :: Bool
-  } deriving (Show)
+data OptInstall =
+  OptInstall
+    { optDeleteExistingDatabase :: Bool
+    , optDeleteResidualRoles :: Bool
+    }
+  deriving (Show)
 
 parserOptInstall :: Parser OptInstall
 parserOptInstall =
   OptInstall <$>
   boolFlag
-    (long "delete-existing-database" <> short 'd' <>
-     help "Delete database if it allready exists") <*>
+    (long "delete-existing-database" <>
+     short 'd' <> help "Delete database if it allready exists") <*>
   boolFlag (long "delete-residual-roles" <> help "Delete residual roles")
 
-data OptYamsql = OptYamsql
-  { optYamsqlDir :: FilePath
-  } deriving (Show)
+data OptYamsql =
+  OptYamsql
+    { optYamsqlDir :: FilePath
+    }
+  deriving (Show)
 
 parserOptYamsql :: Parser OptYamsql
 parserOptYamsql = OptYamsql <$> strArgument (help "Out dir")
 
 -- Command NoCommand
-data OptNoCommand = OptNoCommand
-  { optVersion :: Bool
-  } deriving (Show)
+data OptNoCommand =
+  OptNoCommand
+    { optVersion :: Bool
+    }
+  deriving (Show)
 
 parserOptNoCommand :: Parser Command
 parserOptNoCommand =
@@ -163,22 +167,23 @@ parserOptNoCommand =
   flag' True (long "version" <> help "Prints program version")
 
 -- Command Doc
-data OptDoc = OptDoc
-  { optOutputDir :: FilePath
-  , optTemplate :: FilePath
-  } deriving (Show)
+data OptDoc =
+  OptDoc
+    { optOutputDir :: FilePath
+    , optTemplate :: FilePath
+    }
+  deriving (Show)
 
 parserOptDoc :: Parser OptDoc
 parserOptDoc =
   OptDoc <$>
   strOption
-    (long "output-dir" <> short 'o' <> help "Output directory" <> val "docs/" <>
-     action "directory") <*>
+    (long "output-dir" <>
+     short 'o' <> help "Output directory" <> val "docs/" <> action "directory") <*>
   strOption
-    (long "template" <> short 't' <>
+    (long "template" <>
+     short 't' <>
      help "Template file (DEFAULT.rst is loading a building template.)" <>
      val "DEFAULT.rst" <>
      action "file -X '!*.html'" <>
-     action "file -X '!*.md'" <>
-     action "file -X '!*.rst'" <>
-     action "directory")
+     action "file -X '!*.md'" <> action "file -X '!*.rst'" <> action "directory")

@@ -45,8 +45,7 @@ instance ToSqlStmts (SqlContext (Schema, Domain)) where
         "ALTER DOMAIN" <-> sqlIdCode obj <-> "ADD CONSTRAINT" <->
         toSqlCode (checkName c) <->
         "CHECK (" <>
-        checkCheck c <>
-        ")"
+        checkCheck c <> ")"
       sqlDefault Nothing =
         newSqlStmt SqlDomainSetDefault obj $
         "ALTER DOMAIN" <-> sqlIdCode obj <-> "DROP DEFAULT"

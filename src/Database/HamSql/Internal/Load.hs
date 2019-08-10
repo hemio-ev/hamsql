@@ -121,17 +121,17 @@ readSchema md = do
   tables <- confDirFiles "tables.d" >>= mapM readObjectFromFile
   functions <-
     let ins x s = x {functionBody = Just s}
-    in confDirFiles "functions.d" >>= mapM (readFunctionFromFile ins)
+     in confDirFiles "functions.d" >>= mapM (readFunctionFromFile ins)
   let schemaData' =
         schemaData
-        { _schemaDomains = _schemaDomains schemaData <> presetEmpty domains
-        , _schemaFunctions =
-            _schemaFunctions schemaData <> presetEmpty functions
-        , _schemaSequences =
-            _schemaSequences schemaData <> presetEmpty sequences
-        , _schemaTables = _schemaTables schemaData <> presetEmpty tables
-        , _schemaTypes = _schemaTypes schemaData <> presetEmpty types
-        }
+          { _schemaDomains = _schemaDomains schemaData <> presetEmpty domains
+          , _schemaFunctions =
+              _schemaFunctions schemaData <> presetEmpty functions
+          , _schemaSequences =
+              _schemaSequences schemaData <> presetEmpty sequences
+          , _schemaTables = _schemaTables schemaData <> presetEmpty tables
+          , _schemaTypes = _schemaTypes schemaData <> presetEmpty types
+          }
   return schemaData'
   where
     schemaConfig = combine md "schema.yml"

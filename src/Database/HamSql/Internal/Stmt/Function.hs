@@ -27,29 +27,29 @@ instance ToSqlStmts (SqlContext (Schema, Function)) where
     where
       sqlStmtGrantExecute u = newSqlStmt SqlPriv obj $ sqlGrantExecute u
       sqlGrantExecute u =
-        "GRANT EXECUTE ON FUNCTION \n" <> sqlIdCode obj <> "\nTO " <>
-        prefixedRole setup u
+        "GRANT EXECUTE ON FUNCTION \n" <>
+        sqlIdCode obj <> "\nTO " <> prefixedRole setup u
       stmtCreateFunction =
         newSqlStmt SqlCreateFunction obj $
         --(maybeMap _variableType (_functionParameters f)) $
-        "CREATE OR REPLACE FUNCTION " <> sqlFunctionIdentifierDef <> "\n" <>
-        "RETURNS" <->
-        sqlReturns (_functionReturns f) <>
+        "CREATE OR REPLACE FUNCTION " <>
+        sqlFunctionIdentifierDef <>
+        "\n" <>
+        "RETURNS" <-> sqlReturns (_functionReturns f) <>
         "\nLANGUAGE " <>
         sqlLanguage (functionLanguage f) <>
         "\nSECURITY " <>
         sqlSecurity (functionSecurityDefiner f) <>
-        "\nAS\n$BODY$" <>
-        sqlBody <>
-        "$BODY$\n"
+        "\nAS\n$BODY$" <> sqlBody <> "$BODY$\n"
       stmtComment = stmtCommentOn obj $ functionDescription f
       sqlSetOwner (Just o) =
         newSqlStmt SqlPriv obj $
-        "ALTER FUNCTION " <> sqlIdCode obj <> "OWNER TO " <>
-        prefixedRole setup o
+        "ALTER FUNCTION " <>
+        sqlIdCode obj <> "OWNER TO " <> prefixedRole setup o
       sqlSetOwner Nothing = Nothing
       sqlFunctionIdentifierDef =
-        toSqlCode (schemaName s <.> functionName f) <> "(\n" <>
+        toSqlCode (schemaName s <.> functionName f) <>
+        "(\n" <>
         T.intercalate ",\n" (maybeMap sqlParameterDef (_functionParameters f)) <>
         "\n)"
       -- function parameter
@@ -69,13 +69,13 @@ instance ToSqlStmts (SqlContext (Schema, Function)) where
       -- If language not defined, use service for variable definitions
       sqlBody
         | isNothing (functionLanguage f) =
-          "DECLARE" <\> sqlVariables (functionVariables f) <> "BEGIN" <\> body <\>
-          "END;"
+          "DECLARE" <\> sqlVariables (functionVariables f) <>
+          "BEGIN" <\> body <\> "END;"
         | otherwise = body
         where
           body =
-            T.intercalate "\n" preludes <> fromMaybe "" (functionBody f) <>
-            T.intercalate "\n" postludes
+            T.intercalate "\n" preludes <>
+            fromMaybe "" (functionBody f) <> T.intercalate "\n" postludes
           preludes :: [Text]
           preludes =
             catMaybes $ maybeMap functiontplBodyPrelude (functionTemplateData f)

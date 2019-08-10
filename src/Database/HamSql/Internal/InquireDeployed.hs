@@ -24,14 +24,14 @@ inquireSetup rolePrefix = do
   roles <- inquireRoles rolePrefix
   return
     Setup
-    { setupSchemas = []
-    , setupSchemaDirs = Nothing
-    , setupRolePrefix = rolePrefix
-    , setupPreCode = Nothing
-    , setupPostCode = Nothing
-    , _setupSchemaData = Just schemas
-    , setupRoles = presetEmpty roles
-    }
+      { setupSchemas = []
+      , setupSchemaDirs = Nothing
+      , setupRolePrefix = rolePrefix
+      , setupPreCode = Nothing
+      , setupPostCode = Nothing
+      , _setupSchemaData = Just schemas
+      , setupRoles = presetEmpty roles
+      }
 
 -- ** Roles
 inquireRoles :: Maybe Text -> SqlT [Role]
@@ -44,12 +44,12 @@ inquireRoles prfx = do
     toRole (rname, description, rolcanlogin, memberin) =
       return
         Role
-        { roleName = unprefixed rname
-        , roleDescription = fromMaybe "" description
-        , roleLogin = preset False rolcanlogin
-        , rolePassword = Nothing
-        , roleMemberIn = presetEmpty $ map unprefixed $ fromPGArray memberin
-        }
+          { roleName = unprefixed rname
+          , roleDescription = fromMaybe "" description
+          , roleLogin = preset False rolcanlogin
+          , rolePassword = Nothing
+          , roleMemberIn = presetEmpty $ map unprefixed $ fromPGArray memberin
+          }
     qry =
       [sql|
       SELECT
@@ -80,28 +80,28 @@ deployedSchemas = do
       types <- deployedTypes schema
       return
         Schema
-        { schemaName = schema
-        , schemaDescription = description
-        , schemaDependencies = Nothing
-        , _schemaFunctions = presetEmpty functions
-        , schemaFunctionTemplates = Nothing
-        , _schemaTables = presetEmpty tables
-        , schemaTableTemplates = Nothing
-        , schemaRoles = Nothing
-        , _schemaSequences = presetEmpty sequences
-        , schemaPrivUsage = Nothing
-        , schemaPrivSelectAll = Nothing
-        , schemaPrivInsertAll = Nothing
-        , schemaPrivUpdateAll = Nothing
-        , schemaPrivDeleteAll = Nothing
-        , schemaPrivSequenceAll = Nothing
-        , schemaPrivExecuteAll = Nothing
-        , schemaPrivAllAll = Nothing
-        , _schemaDomains = presetEmpty domains
-        , _schemaTypes = presetEmpty types
-        , schemaExecPostInstall = Nothing
-        , schemaExecPostInstallAndUpgrade = Nothing
-        }
+          { schemaName = schema
+          , schemaDescription = description
+          , schemaDependencies = Nothing
+          , _schemaFunctions = presetEmpty functions
+          , schemaFunctionTemplates = Nothing
+          , _schemaTables = presetEmpty tables
+          , schemaTableTemplates = Nothing
+          , schemaRoles = Nothing
+          , _schemaSequences = presetEmpty sequences
+          , schemaPrivUsage = Nothing
+          , schemaPrivSelectAll = Nothing
+          , schemaPrivInsertAll = Nothing
+          , schemaPrivUpdateAll = Nothing
+          , schemaPrivDeleteAll = Nothing
+          , schemaPrivSequenceAll = Nothing
+          , schemaPrivExecuteAll = Nothing
+          , schemaPrivAllAll = Nothing
+          , _schemaDomains = presetEmpty domains
+          , _schemaTypes = presetEmpty types
+          , schemaExecPostInstall = Nothing
+          , schemaExecPostInstallAndUpgrade = Nothing
+          }
     qry =
       [sql|
       SELECT
@@ -128,21 +128,21 @@ deployedTables schema = do
       trs <- deployedTriggers (schema, table)
       return
         Table
-        { tableName = table
-        , tableDescription = fromMaybe "" description
-        , _tableColumns = columns
-        , tablePrimaryKey = pk
-        , tableUnique = presetEmpty uniques
-        , tableForeignKeys = presetEmpty fks
-        , tableChecks = presetEmpty checks
-        , tableInherits = Nothing
-        , tablePrivSelect = Nothing
-        , tablePrivInsert = Nothing
-        , tablePrivUpdate = Nothing
-        , tablePrivDelete = Nothing
-        , tableTemplates = Nothing
-        , tableTriggers = presetEmpty trs
-        }
+          { tableName = table
+          , tableDescription = fromMaybe "" description
+          , _tableColumns = columns
+          , tablePrimaryKey = pk
+          , tableUnique = presetEmpty uniques
+          , tableForeignKeys = presetEmpty fks
+          , tableChecks = presetEmpty checks
+          , tableInherits = Nothing
+          , tablePrivSelect = Nothing
+          , tablePrivInsert = Nothing
+          , tablePrivUpdate = Nothing
+          , tablePrivDelete = Nothing
+          , tableTemplates = Nothing
+          , tableTriggers = presetEmpty trs
+          }
     qry =
       [sql|
         SELECT
@@ -160,17 +160,17 @@ deployedColumns tbl = map toColumn <$> psqlQry qry (Only $ toSqlCode tbl)
   where
     toColumn (sname, dataType, columnDefault', isNullable, description) =
       Column
-      { columnName = sname
-      , _columnType = dataType
-      , columnDescription = fromMaybe "" description
-      , columnDefault = columnDefault'
-      , columnNull = preset False isNullable
-      , columnReferences = Nothing
-      , columnOnRefDelete = Nothing
-      , columnOnRefUpdate = Nothing
-      , columnUnique = Nothing
-      , columnChecks = Nothing
-      }
+        { columnName = sname
+        , _columnType = dataType
+        , columnDescription = fromMaybe "" description
+        , columnDefault = columnDefault'
+        , columnNull = preset False isNullable
+        , columnReferences = Nothing
+        , columnOnRefDelete = Nothing
+        , columnOnRefUpdate = Nothing
+        , columnUnique = Nothing
+        , columnChecks = Nothing
+        }
     qry =
       [sql|
         SELECT
@@ -196,16 +196,16 @@ deployedTriggers tbl = do
   where
     toTrigger (trname, trdesc, trevents, trcond, trorient, trtiming, trcall, cols) =
       Trigger
-      { triggerName = trname
-      , triggerDescription = fromMaybe "" trdesc
-      , triggerMoment = trtiming
-      , triggerEvents =
-          map (fixUpd (fromPGArray <$> cols)) $ fromPGArray trevents
-      , triggerForEach = trorient
-      , triggerCondition = trcond
-      , triggerExecute =
-          fromMaybe trcall $ stripPrefix "EXECUTE PROCEDURE " trcall
-      }
+        { triggerName = trname
+        , triggerDescription = fromMaybe "" trdesc
+        , triggerMoment = trtiming
+        , triggerEvents =
+            map (fixUpd (fromPGArray <$> cols)) $ fromPGArray trevents
+        , triggerForEach = trorient
+        , triggerCondition = trcond
+        , triggerExecute =
+            fromMaybe trcall $ stripPrefix "EXECUTE PROCEDURE " trcall
+        }
     fixUpd :: Maybe [Text] -> Text -> Text
     fixUpd (Just ys) x
       | x == "UPDATE" = x <> " OF " <> intercalate ", " ys
@@ -246,10 +246,10 @@ deployedTableChecks tbl = do
   where
     toCheck (coname, codesc, cocheck) =
       Check
-      { checkName = coname
-      , checkDescription = fromMaybe "" codesc
-      , checkCheck = cocheck
-      }
+        { checkName = coname
+        , checkDescription = fromMaybe "" codesc
+        , checkCheck = cocheck
+        }
     qry =
       [sql|
         SELECT
@@ -285,14 +285,14 @@ deployedUniqueConstraints tbl@(_, table) = do
     toUniqueConstraint (keyName, keys') =
       let keys = fromPGArray keys'
           idx = recoverIndexName (unsafeInternalName table) keys keyName "key"
-      in case idx of
-           Nothing -> ShortForm $ map SqlName keys
-           index ->
-             LongForm
-               UniqueConstraint
-               { uniqueconstraintName = index
-               , uniqueconstraintColumns = map SqlName keys
-               }
+       in case idx of
+            Nothing -> ShortForm $ map SqlName keys
+            index ->
+              LongForm
+                UniqueConstraint
+                  { uniqueconstraintName = index
+                  , uniqueconstraintColumns = map SqlName keys
+                  }
 
 deployedForeignKeys :: (SqlName, SqlName) -> SqlT [ForeignKey]
 deployedForeignKeys tbl@(_, table) = do
@@ -302,18 +302,18 @@ deployedForeignKeys tbl@(_, table) = do
     toForeignKey (keyName, cols', fTbl, fCols') =
       let cols = fromPGArray cols'
           fCols = fromPGArray fCols'
-      in ForeignKey
-         { foreignkeyName =
-             recoverIndexName (unsafeInternalName table) cols keyName "fkey"
-         , foreignkeyColumns = map SqlName cols
-         , foreignkeyRefTable = SqlName fTbl
-         , foreignkeyRefColumns =
-             if map SqlName cols == fCols
-               then Nothing
-               else Just fCols
-         , foreignkeyOnDelete = Nothing
-         , foreignkeyOnUpdate = Nothing
-         }
+       in ForeignKey
+            { foreignkeyName =
+                recoverIndexName (unsafeInternalName table) cols keyName "fkey"
+            , foreignkeyColumns = map SqlName cols
+            , foreignkeyRefTable = SqlName fTbl
+            , foreignkeyRefColumns =
+                if map SqlName cols == fCols
+                  then Nothing
+                  else Just fCols
+            , foreignkeyOnDelete = Nothing
+            , foreignkeyOnUpdate = Nothing
+            }
     qry =
       [sql|
         SELECT
@@ -364,37 +364,37 @@ deployedFunctions schema = do
   where
     toFunction ((proname, description, prorettype, proretset, owner, language, prosecdef, source) :. args) =
       Function
-      { functionName = proname
-      , functionDescription = fromMaybe "" description
-      , _functionReturns = rettype prorettype proretset args
-      , _functionParameters =
-          presetEmpty $ filter ((/= Just "t") . variableMode) $ params args
-      , functionTemplates = Nothing
-      , functionTemplateData = Nothing
-      , functionVariables = Nothing
-      , functionPrivExecute = Nothing
-      , functionSecurityDefiner = preset False prosecdef
-      , functionOwner = owner
-      , functionLanguage = Just language
-      , functionBody = source
-      }
+        { functionName = proname
+        , functionDescription = fromMaybe "" description
+        , _functionReturns = rettype prorettype proretset args
+        , _functionParameters =
+            presetEmpty $ filter ((/= Just "t") . variableMode) $ params args
+        , functionTemplates = Nothing
+        , functionTemplateData = Nothing
+        , functionVariables = Nothing
+        , functionPrivExecute = Nothing
+        , functionSecurityDefiner = preset False prosecdef
+        , functionOwner = owner
+        , functionLanguage = Just language
+        , functionBody = source
+        }
     params (proargnames, proargtypes, proargmodes, proargdefaults) =
       let n = length $ fromPGArray proargtypes
           def v (Just xs) = xs ++ (replicate (n - length xs) v)
           def v Nothing = replicate n v
-      in zipWith4
-           toVariable
-           (fromPGArray proargtypes)
-           (def Nothing $ fromPGArray <$> proargnames)
-           (def Nothing $ fromPGArray <$> proargdefaults)
-           (def 'i' $ fromPGArray <$> proargmodes)
+       in zipWith4
+            toVariable
+            (fromPGArray proargtypes)
+            (def Nothing $ fromPGArray <$> proargnames)
+            (def Nothing $ fromPGArray <$> proargdefaults)
+            (def 'i' $ fromPGArray <$> proargmodes)
     rettype prorettype proretset args =
       let tParams = filter ((== Just "t") . variableMode) $ params args
-      in if null tParams
-           then if proretset
-                  then ReturnTypeSetof prorettype
-                  else ReturnType prorettype
-           else ReturnTypeTable $ map variableToParameter tParams
+       in if null tParams
+            then if proretset
+                   then ReturnTypeSetof prorettype
+                   else ReturnType prorettype
+            else ReturnTypeTable $ map variableToParameter tParams
     qry =
       [sql|
         SELECT
@@ -432,20 +432,20 @@ deployedFunctions schema = do
 variableToParameter :: Variable -> Parameter
 variableToParameter v =
   Parameter
-  { parameterName = variableName v
-  , _parameterType = _variableType v
-  , parameterDescription = Nothing
-  }
+    { parameterName = variableName v
+    , _parameterType = _variableType v
+    , parameterDescription = Nothing
+    }
 
 toVariable :: SqlType -> Maybe SqlName -> Maybe Text -> Char -> Variable
 toVariable varType varName varDefault varMode =
   Variable
-  { variableName = fromMaybe undefined varName
-  , variableDescription = Nothing
-  , _variableType = varType
-  , variableDefault = varDefault
-  , variableMode = preset "IN" $ toMode varMode
-  }
+    { variableName = fromMaybe undefined varName
+    , variableDescription = Nothing
+    , _variableType = varType
+    , variableDefault = varDefault
+    , variableMode = preset "IN" $ toMode varMode
+    }
   where
     toMode 'i' = "IN"
     toMode 'o' = "OUT"
@@ -463,12 +463,12 @@ deployedDomains schema = do
       constraints <- deployedDomainConstraints (schema, domname)
       return
         Domain
-        { domainName = domname
-        , domainDescription = fromMaybe "" domdesc
-        , _domainType = domtype
-        , domainDefault = domdefault
-        , domainChecks = presetEmpty constraints
-        }
+          { domainName = domname
+          , domainDescription = fromMaybe "" domdesc
+          , _domainType = domtype
+          , domainDefault = domdefault
+          , domainChecks = presetEmpty constraints
+          }
     qry =
       [sql|
         SELECT
@@ -490,10 +490,10 @@ deployedDomainConstraints dom = do
   where
     toCheck (coname, codesc, cocheck) =
       Check
-      { checkName = coname
-      , checkDescription = fromMaybe "" codesc
-      , checkCheck = cocheck
-      }
+        { checkName = coname
+        , checkDescription = fromMaybe "" codesc
+        , checkCheck = cocheck
+        }
     qry =
       [sql|
         SELECT
@@ -514,32 +514,32 @@ deployedSequences schema = do
   where
     toSequence (seqname, seqstartvalue, seqincrementby, seqmaxvalue, seqminvalue, seqcachevalue, seqiscycled, seqdesc, ownedby) =
       let positive = seqincrementby > 0
-      in Sequence
-         { sequenceName = seqname
-         , sequenceDescription = fromMaybe "" seqdesc
-         , sequenceIncrement = preset 1 seqincrementby
-         , sequenceMinValue =
-             preset
-               (if positive
-                  then 1
-                  else -9223372036854775807)
-               seqminvalue
-         , sequenceMaxValue =
-             preset
-               (if positive
-                  then 9223372036854775807
-                  else -1)
-               seqmaxvalue
-         , sequenceStartValue =
-             preset
-               (if positive
-                  then seqminvalue
-                  else seqmaxvalue)
-               seqstartvalue
-         , sequenceCache = preset 1 seqcachevalue
-         , sequenceCycle = preset False seqiscycled
-         , sequenceOwnedByColumn = ownedby
-         }
+       in Sequence
+            { sequenceName = seqname
+            , sequenceDescription = fromMaybe "" seqdesc
+            , sequenceIncrement = preset 1 seqincrementby
+            , sequenceMinValue =
+                preset
+                  (if positive
+                     then 1
+                     else -9223372036854775807)
+                  seqminvalue
+            , sequenceMaxValue =
+                preset
+                  (if positive
+                     then 9223372036854775807
+                     else -1)
+                  seqmaxvalue
+            , sequenceStartValue =
+                preset
+                  (if positive
+                     then seqminvalue
+                     else seqmaxvalue)
+                  seqstartvalue
+            , sequenceCache = preset 1 seqcachevalue
+            , sequenceCycle = preset False seqiscycled
+            , sequenceOwnedByColumn = ownedby
+            }
     qry =
       [sql|
         SELECT
@@ -578,13 +578,13 @@ deployedTypes schema = do
       elements <- map toElement <$> deployedColumns (schema, typname)
       return
         Type
-        { typeName = typname
-        , typeDescription = fromMaybe "" typdesc
-        , _typeElements = elements
-        }
+          { typeName = typname
+          , typeDescription = fromMaybe "" typdesc
+          , _typeElements = elements
+          }
     toElement x =
       TypeElement
-      {typeelementName = columnName x, _typeelementType = _columnType x}
+        {typeelementName = columnName x, _typeelementType = _columnType x}
     qry =
       [sql|
         SELECT

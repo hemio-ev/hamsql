@@ -6,11 +6,13 @@ module Database.YamSql.Internal.Obj.Check where
 
 import Database.YamSql.Internal.Basic
 
-data Check = Check
-  { checkName :: SqlName
-  , checkDescription :: Text
-  , checkCheck :: Text
-  } deriving (Generic, Show, Data)
+data Check =
+  Check
+    { checkName :: SqlName
+    , checkDescription :: Text
+    , checkCheck :: Text
+    }
+  deriving (Generic, Show, Data)
 
 instance FromJSON Check where
   parseJSON = parseYamSql

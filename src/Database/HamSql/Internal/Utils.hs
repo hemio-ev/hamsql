@@ -88,9 +88,8 @@ selectUniqueReason msgt [] =
   err $ "No element found while trying to find exactly one: " <> msgt
 selectUniqueReason msgt xs =
   err $
-  "More then one element (" <> tshow (length xs) <>
-  ") found while trying to extrac one: " <>
-  msgt
+  "More then one element (" <>
+  tshow (length xs) <> ") found while trying to extrac one: " <> msgt
 
 showCode :: Text -> Text
 showCode = T.replace "\n" "\n  " . T.cons '\n'

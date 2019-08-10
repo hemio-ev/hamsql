@@ -18,9 +18,10 @@ import Database.HamSql.Internal.Utils
 import Database.YamSql
 import Database.YamSql.Parser
 
-data SetupContext = SetupContext
-  { setupContextSetup :: Setup
-  }
+data SetupContext =
+  SetupContext
+    { setupContextSetup :: Setup
+    }
 
 data SetupElement where
   SetupElement :: (ToSqlStmts a) => a -> SetupElement
@@ -34,15 +35,17 @@ class Typeable a =>
   toSqlStmts :: SetupContext -> a -> [Maybe SqlStmt]
 
 -- | Setup
-data Setup = Setup
-  { setupSchemas :: [SqlName]
-  , setupSchemaDirs :: Maybe [FilePath]
-  , setupRolePrefix :: Maybe Text
-  , setupPreCode :: Maybe Text
-  , setupPostCode :: Maybe Text
-  , _setupSchemaData :: Maybe [Schema]
-  , setupRoles :: Maybe [Role]
-  } deriving (Generic, Show, Data)
+data Setup =
+  Setup
+    { setupSchemas :: [SqlName]
+    , setupSchemaDirs :: Maybe [FilePath]
+    , setupRolePrefix :: Maybe Text
+    , setupPreCode :: Maybe Text
+    , setupPostCode :: Maybe Text
+    , _setupSchemaData :: Maybe [Schema]
+    , setupRoles :: Maybe [Role]
+    }
+  deriving (Generic, Show, Data)
 
 makeLenses ''Setup
 
@@ -57,8 +60,7 @@ setupRolePrefix' setup = fromMaybe "yamsql_" (setupRolePrefix setup)
 
 -- | Template handling and applyTemplate
 data WithSchema a =
-  WithSchema Schema
-             a
+  WithSchema Schema a
   deriving (Show)
 
 class WithName a where
@@ -114,13 +116,13 @@ applyTpl :: Setup -> Setup
 applyTpl s =
   s
   -- TODO: possible overwrite here!
-  {_setupSchemaData = map applySchema <$> _setupSchemaData s}
+    {_setupSchemaData = map applySchema <$> _setupSchemaData s}
   where
     applySchema m =
       m
-      { _schemaTables = map applyTableTemplates <$> _schemaTables m
-      , _schemaFunctions = map applyFunctionTemplates <$> _schemaFunctions m
-      }
+        { _schemaTables = map applyTableTemplates <$> _schemaTables m
+        , _schemaFunctions = map applyFunctionTemplates <$> _schemaFunctions m
+        }
     applyTableTemplates :: Table -> Table
     applyTableTemplates t = foldr applyTableTpl t (tableTpls t)
     tableTpls :: Table -> [TableTpl]

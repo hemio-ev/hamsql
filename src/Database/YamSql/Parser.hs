@@ -64,10 +64,10 @@ snakeify (x:xs)
 myOpt :: Options
 myOpt =
   defaultOptions
-  { fieldLabelModifier = snakeify . removeFirstPart
-  , constructorTagModifier = drop 1 . snakeify
-  , sumEncoding = UntaggedValue
-  }
+    { fieldLabelModifier = snakeify . removeFirstPart
+    , constructorTagModifier = drop 1 . snakeify
+    , sumEncoding = UntaggedValue
+    }
 
 outJson :: ToJSON a => a -> String
 outJson s = show $ toJSON s
@@ -97,8 +97,8 @@ parseYamSql v = do
     keysOfValue _ = []
     explainMissing :: [String] -> [String] -> String -> Text
     explainMissing known used x =
-      "\n - " <> tshow x <> " (did you mean " <> tshow (closestString x ls) <>
-      "?)"
+      "\n - " <>
+      tshow x <> " (did you mean " <> tshow (closestString x ls) <> "?)"
       where
         ls = filter (/= "tag") (known \\ used)
 

@@ -11,13 +11,15 @@ import Data.Aeson.Types (Value(Object))
 
 import Database.YamSql.Internal.Basic
 
-data Variable = Variable
-  { variableName :: SqlName
-  , variableDescription :: Maybe Text
-  , _variableType :: SqlType
-  , variableDefault :: Maybe Text
-  , variableMode :: Maybe Text
-  } deriving (Generic, Show, Data)
+data Variable =
+  Variable
+    { variableName :: SqlName
+    , variableDescription :: Maybe Text
+    , _variableType :: SqlType
+    , variableDefault :: Maybe Text
+    , variableMode :: Maybe Text
+    }
+  deriving (Generic, Show, Data)
 
 instance FromJSON Variable where
   parseJSON = parseYamSql

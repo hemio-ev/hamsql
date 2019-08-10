@@ -22,13 +22,17 @@ instance ToSqlStmts (SqlContext (Schema, Table, Trigger)) where
     where
       triggerComment =
         newSqlStmt SqlComment obj $
-        "COMMENT ON TRIGGER " <> toSqlCode (triggerName t) <> " ON " <>
+        "COMMENT ON TRIGGER " <>
+        toSqlCode (triggerName t) <>
+        " ON " <>
         sqlIdCode (SqlContext (s, tabl)) <>
-        " IS " <>
-        toSqlCodeString (triggerDescription t)
+        " IS " <> toSqlCodeString (triggerDescription t)
       triggerStmt =
         newSqlStmt SqlCreateTrigger obj $
-        "CREATE TRIGGER " <> toSqlCode (triggerName t) <> " " <> triggerMoment t <>
+        "CREATE TRIGGER " <>
+        toSqlCode (triggerName t) <>
+        " " <>
+        triggerMoment t <>
         " " <>
         T.intercalate " OR " (triggerEvents t) <>
         " ON " <>
@@ -36,7 +40,6 @@ instance ToSqlStmts (SqlContext (Schema, Table, Trigger)) where
         " FOR EACH " <>
         triggerForEach t <>
         condition (triggerCondition t) <>
-        " EXECUTE PROCEDURE " <>
-        triggerExecute t
+        " EXECUTE PROCEDURE " <> triggerExecute t
       condition Nothing = ""
       condition (Just x) = " WHEN (" <> x <> ") "

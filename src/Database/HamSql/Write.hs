@@ -20,9 +20,9 @@ import Database.YamSql
 setupToDirTree :: FilePath -> Setup -> DirTree B.ByteString
 setupToDirTree d s =
   let setupFile = File "setup.yml" (toYml s {_setupSchemaData = Nothing})
-  in Dir
-       d
-       (setupFile : (map schemaToDirTree $ fromMaybe [] $ _setupSchemaData s))
+   in Dir
+        d
+        (setupFile : (map schemaToDirTree $ fromMaybe [] $ _setupSchemaData s))
 
 schemaToDirTree :: Schema -> DirTree B.ByteString
 schemaToDirTree schema =
@@ -30,24 +30,24 @@ schemaToDirTree schema =
         File
           "schema.yml"
           (toYml schema {_schemaTables = Nothing, _schemaFunctions = Nothing})
-  in Dir
-       (filePath $ schemaName schema)
-       (schemaFile :
-        catMaybes
-          [ Dir "domains.d" . map (toYamlFile domainName) <$>
-            _schemaDomains schema
-          , Dir "sequences.d" . map (toYamlFile sequenceName) <$>
-            _schemaSequences schema
-          , Dir "types.d" . map (toYamlFile typeName) <$> _schemaTypes schema
-          , Dir "functions.d" .
-            map
-              (\x ->
-                 toFrontmatterFile
-                   functionName
-                   (x {functionBody = Nothing})
-                   (functionBody x)) <$>
-            _schemaFunctions schema
-          ])
+   in Dir
+        (filePath $ schemaName schema)
+        (schemaFile :
+         catMaybes
+           [ Dir "domains.d" . map (toYamlFile domainName) <$>
+             _schemaDomains schema
+           , Dir "sequences.d" . map (toYamlFile sequenceName) <$>
+             _schemaSequences schema
+           , Dir "types.d" . map (toYamlFile typeName) <$> _schemaTypes schema
+           , Dir "functions.d" .
+             map
+               (\x ->
+                  toFrontmatterFile
+                    functionName
+                    (x {functionBody = Nothing})
+                    (functionBody x)) <$>
+             _schemaFunctions schema
+           ])
   where
     toYamlFile getName obj = File (filePath (getName obj) <> ".yml") (toYml obj)
     toFrontmatterFile getName obj src =
