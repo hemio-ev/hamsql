@@ -1,11 +1,15 @@
-build-hamsql:
+stack-setup:
     script:
-        - cabal update
-        - cabal sandbox init
-        - cabal install --dependencies-only --enable-tests --disable-optimization
-        - cabal configure --enable-tests --enable-coverage --disable-optimization
-        - cabal test
-        - tail -n 2 dist/hpc/vanilla/html/hamsql-tests/hpc_index.html
+        - stack setup
+
+build:
+    script:
+        - stack update
+        - stack build
+
+test:
+    script:
+        - stack build --test --coverage
 
 hamsql-binary:
     only:

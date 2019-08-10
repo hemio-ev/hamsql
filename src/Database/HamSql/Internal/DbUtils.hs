@@ -130,7 +130,7 @@ pgsqlHandleErr stmt conn e = do
         xs :: [(SqlName, SqlName, Text)] <-
           query_
             conn
-            "SELECT datname, usename, application_name FROM pg_stat_activity WHERE pid <> pg_backend_pid()"
+            "SELECT datname, usename, application_name FROM pg_stat_activity WHERE pid <> pg_backend_pid() AND datname IS NOT NULL AND usename IS NOT NULL"
         return $
           "The following existing connection(s) might have caused the error:" <\>
           T.intercalate

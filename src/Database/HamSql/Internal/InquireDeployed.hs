@@ -152,6 +152,7 @@ deployedTables schema = do
         WHERE
           relkind = 'r'
           AND relnamespace = ?::regnamespace::oid
+        ORDER BY relname
       |]
 
 deployedColumns :: (SqlName, SqlName) -> SqlT [Column]
@@ -508,11 +509,9 @@ deployedDomainConstraints dom = do
 -- *** Sequences
 deployedSequences :: SqlName -> SqlT [Sequence]
 deployedSequences schema = do
-  seqs <- psqlQry qry1 (Only $ toSqlCode schema)
-  (map toSequence . head) . sequence <$> mapM doQry2 seqs
+  seqs <- psqlQry qry (Only $ toSqlCode schema)
+  return $ map toSequence seqs
   where
-    doQry2 (n, desc, ownedby) =
-      psqlQry (qry2 (n :: Text)) (desc :: Maybe Text, ownedby :: Maybe Text)
     toSequence (seqname, seqstartvalue, seqincrementby, seqmaxvalue, seqminvalue, seqcachevalue, seqiscycled, seqdesc, ownedby) =
       let positive = seqincrementby > 0
       in Sequence
@@ -541,11 +540,17 @@ deployedSequences schema = do
          , sequenceCycle = preset False seqiscycled
          , sequenceOwnedByColumn = ownedby
          }
-    qry1 =
+    qry =
       [sql|
         SELECT
-          oid::regclass::text,
-          pg_catalog.obj_description(oid, 'pg_class')::text AS seqdesc,
+          c.relname,
+          s.seqstart,
+          s.seqincrement,
+          s.seqmax,
+          s.seqmin,
+          s.seqcache,
+          s.seqcycle,
+          pg_catalog.obj_description(c.oid, 'pg_class')::text AS seqdesc,
           (
             SELECT d.refobjid::regclass::text || '."' || a.attname || '"'
             FROM pg_depend d
@@ -553,19 +558,15 @@ deployedSequences schema = do
               ON a.attrelid = d.refobjid AND a.attnum = d.refobjsubid
             WHERE
               d.classid = 'pg_class'::regclass
-              AND d.objid = pg_class.oid
+              AND d.objid = c.oid
           )
           AS ownedby
-        FROM pg_class
+        FROM pg_sequence s
+        LEFT JOIN pg_class c 
+          ON c.oid = s.seqrelid
         WHERE
-          relkind = 'S'
-          AND relnamespace = ?::regnamespace::oid
+          c.relnamespace = ?::regnamespace::oid
       |]
-    qry2 n =
-      toQry $
-      "SELECT sequence_name, start_value, increment_by, max_value," <\>
-      "min_value, cache_value, is_cycled::bool, ?::text AS desc, ?::text AS ownedby FROM " <>
-      n
 
 -- *** Types
 deployedTypes :: SqlName -> SqlT [Type]
