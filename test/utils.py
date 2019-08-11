@@ -10,7 +10,7 @@ def run(cmd, setup, delete_db=False, capture=False, invalid_connection=False, ar
     global dburl
 
     settings = {}
-    path = os.path.dirname(__file__) + '/../dist/build/hamsql/hamsql'
+    path = 'hamsql'
     params = [path, cmd, '-s', 'setups/' + setup]
     
     if invalid_connection:

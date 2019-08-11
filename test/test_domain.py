@@ -5,13 +5,12 @@ def test_domains():
     xs = {
      'domains':
      [
-      ('hamsql-test', 'dep', 'domain-dependency', 'int4', None, None) ,
       ('hamsql-test', 'A1', 'domain-install', 'int4', None, None) ,
       ('hamsql-test', 'A2', 'domain-install', 'A1', None, None) ,
-      ('hamsql-test', 'B1', 'domain-install', 'int4', None, None) ,
-      ('hamsql-test', 'L1', 'domain-install', 'varchar', 25, None) ,
+      ('hamsql-test', 'B1', 'domain-install', 'B2', None, None) ,
+      ('hamsql-test', 'C1', 'domain-install', 'varchar', 25, None) ,
       ('hamsql-test', 'D1', 'domain-install', 'varchar', None, None) ,
-      ('hamsql-test', 'B2', 'domain-install', 'B1', None, None) ,
+      ('hamsql-test', 'B2', 'domain-install', 'int4', None, None) ,
      ],
 
      'tables':
@@ -48,11 +47,10 @@ def test_domains():
       [
        ('hamsql-test', 'A1', 'domain-install', 'int4', None, None) ,
        ('hamsql-test', 'A2', 'domain-install', 'A1', None, None) ,
-       ('hamsql-test', 'B1', 'domain-install', 'int4', None, None) ,
-       ('hamsql-test', 'B2', 'domain-install', 'B1', None, None) ,
+       ('hamsql-test', 'B1', 'domain-install', 'B2', None, None) ,
+       ('hamsql-test', 'B2', 'domain-install', 'int4', None, None) ,
+       ('hamsql-test', 'C1', 'domain-install', 'varchar', 25, None) ,
        ('hamsql-test', 'D2', 'domain-install', 'varchar', None, None) ,
-       ('hamsql-test', 'L1', 'domain-install', 'varchar', 25, None) ,
-       ('hamsql-test', 'dep', 'domain-dependency', 'int4', None, None) ,
       ]
     })
 
