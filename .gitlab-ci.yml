@@ -5,18 +5,18 @@ stack-setup:
 build:
     script:
         - stack update
-        - stack build
+        - stack build --fast
 
 test:
     script:
-        - stack build --test --coverage
+        - stack test --fast --coverage
 
 hamsql-binary:
     only:
         - tags
     script:
-        - make
-        - cp dist/build/hamsql/hamsql ./
+        - stack build
+        - cp `stack path --dist-dir`/build/hamsql/hamsql ./
     artifacts:
         paths:
             - hamsql
