@@ -38,18 +38,6 @@ data SQL_TABLE =
 instance ToSqlCode SQL_TABLE where
   toSqlCode = const "TABLE"
 
-data Xx =
-  Xx
-    { xxRole :: Text
-    }
-  deriving (Data, Generic, Show)
-
-instance FromJSON Xx where
-  parseJSON = parseYamSql
-
-instance ToJSON Xx where
-  toJSON = toYamSqlJson
-
 data Grant =
   Grant
     { grantRole :: [SqlName]

@@ -275,8 +275,7 @@ instance ToSqlStmts (SqlContext (Schema, Table)) where
           obj
           ("GRANT " <>
            right <>
-           " ON TABLE " <>
-           toSqlCode (tableName t) <> " TO " <> prefixedRole setup role)
+           " ON TABLE " <> sqlIdCode obj <> " TO " <> prefixedRole setup role)
       sqlAddInheritance :: SqlName -> Maybe SqlStmt
       sqlAddInheritance n =
         newSqlStmt SqlAlterTable obj $

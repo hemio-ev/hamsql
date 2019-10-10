@@ -18,8 +18,7 @@ stmtsDropAllPrivileges ::
      Setup -> [SqlName] -> SqlObj SQL_ROLE SqlName -> [Maybe SqlStmt]
 stmtsDropAllPrivileges setup schemas x@(SqlObj _ n)
   | null schemas = [Nothing]
-  | otherwise = [Nothing]
-  {-- 
+  | otherwise =
     [ newSqlStmt SqlRevokePrivilege x $
     "REVOKE ALL PRIVILEGES ON ALL" <-> objType <-> "IN SCHEMA" <->
     T.intercalate ", " (map toSqlCode schemas) <->
@@ -27,7 +26,6 @@ stmtsDropAllPrivileges setup schemas x@(SqlObj _ n)
     prefixedRole setup n
     | objType <- ["TABLES", "SEQUENCES", "FUNCTIONS"]
     ]
---}
 
 stmtRevokeMembership ::
      Setup -> SqlObj SQL_ROLE_MEMBERSHIP (SqlName, SqlName) -> [Maybe SqlStmt]

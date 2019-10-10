@@ -10,7 +10,6 @@ import Database.PostgreSQL.Simple
 import Database.PostgreSQL.Simple.FromField
 import Database.PostgreSQL.Simple.SqlQQ
 import Database.PostgreSQL.Simple.Types (PGArray(..), fromPGArray)
-import Debug.Trace
 
 import Database.HamSql.Internal.DbUtils
 import Database.HamSql.Internal.Utils
@@ -22,7 +21,7 @@ inquireSetup ::
      Maybe Text -- ^ Role prefix
   -> SqlT Setup
 inquireSetup rolePrefix = do
-  schemas <- deployedSchemas
+  schemas <- deployedSchemas rolePrefix
   roles <- inquireRoles rolePrefix
   return
     Setup
@@ -69,13 +68,13 @@ inquireRoles prfx = do
     |]
 
 -- ** Schemas
-deployedSchemas :: SqlT [Schema]
-deployedSchemas = do
+deployedSchemas :: Maybe Text -> SqlT [Schema]
+deployedSchemas prefix = do
   schemas <- psqlQry_ qry
   mapM toSchema schemas
   where
     toSchema (schema, description) = do
-      tables <- deployedTables schema
+      tables <- deployedTables prefix schema
       sequences <- deployedSequences schema
       functions <- deployedFunctions schema
       domains <- deployedDomains schema
@@ -116,53 +115,49 @@ deployedSchemas = do
     |]
 
 -- *** Tables
-deployedTables :: SqlName -> SqlT [Table]
-deployedTables schema = do
-  tbls <- psqlQry qry (Only $ toSqlCode schema)
+deployedTables :: Maybe Text -> SqlName -> SqlT [Table]
+deployedTables prefix schema = do
+  tbls <- psqlQry qry (prefix, prefix, toSqlCode schema)
   mapM toTable tbls
   where
-    toTable (table, description, privileges, x) = do
+    toTable (table, description, privileges) = do
       columns <- deployedColumns (schema, table)
       pk <- deployedPrimaryKey (schema, table)
       fks <- deployedForeignKeys (schema, table)
       uniques <- deployedUniqueConstraints (schema, table)
       checks <- deployedTableChecks (schema, table)
       trs <- deployedTriggers (schema, table)
-      --error $ show (((fromPGArray <$>) `map` fromPGArray privileges) :: [(SqlName, [SqlName])])
-      --error $ show ((fromPGArray privileges) :: [Maybe Grant])
-      trace (show ((fromPGArray x) :: [String])) $
-        return
-          Table
-            { tableName = table
-            , tableDescription = fromMaybe "" description
-            , _tableColumns = columns
-            , tablePrimaryKey = pk
-            , tableUnique = presetEmpty uniques
-            , tableForeignKeys = presetEmpty fks
-            , tableChecks = presetEmpty checks
-            , tableInherits = Nothing
-            , tablePrivSelect = Nothing
-            , tablePrivInsert = Nothing
-            , tablePrivUpdate = Nothing
-            , tablePrivDelete = Nothing
-            , tableTemplates = Nothing -- Just privileges
-          -- FIXME: Load priv
-            , tableGrant = presetEmpty $ fromPGArray privileges
-            , tableTriggers = presetEmpty trs
-            }
+      return
+        Table
+          { tableName = table
+          , tableDescription = fromMaybe "" description
+          , _tableColumns = columns
+          , tablePrimaryKey = pk
+          , tableUnique = presetEmpty uniques
+          , tableForeignKeys = presetEmpty fks
+          , tableChecks = presetEmpty checks
+          , tableInherits = Nothing
+          , tablePrivSelect = Nothing
+          , tablePrivInsert = Nothing
+          , tablePrivUpdate = Nothing
+          , tablePrivDelete = Nothing
+          , tableTemplates = Nothing
+          , tableGrant = presetEmpty $ fromPGArray privileges
+          , tableTriggers = presetEmpty trs
+          }
     qry =
       [sql|
         SELECT
           relname,
           pg_catalog.obj_description(oid, 'pg_class') AS desc,
           ARRAY(
-            SELECT jsonb_build_object('role', ARRAY[grantee::regrole], 'privilege', array_agg(privilege_type))
-              FROM aclexplode(relacl) GROUP BY grantee
-          )::jsonb[] AS privileges,
-          ARRAY(
-            SELECT grantee::regrole
-              FROM aclexplode(relacl) GROUP BY grantee
-          )::text[] AS xx
+            SELECT jsonb_build_object(
+                'role', ARRAY[right(pg_get_userbyid(grantee), -char_length(?))],
+                'privilege', array_agg(privilege_type))
+              FROM aclexplode(relacl)
+              WHERE  starts_with(pg_get_userbyid(grantee), ?)
+              GROUP BY grantee
+          )::jsonb[] AS privileges
         FROM pg_catalog.pg_class
         WHERE
           relkind = 'r'
@@ -171,9 +166,6 @@ deployedTables schema = do
       |]
 
 instance FromField Grant where
-  fromField = fromJSONField
-
-instance FromField Xx where
   fromField = fromJSONField
 
 deployedColumns :: (SqlName, SqlName) -> SqlT [Column]
