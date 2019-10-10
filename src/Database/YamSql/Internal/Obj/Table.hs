@@ -15,10 +15,6 @@ data Table =
     , tableForeignKeys :: Maybe [ForeignKey]
     , tableChecks :: Maybe [Check]
     , tableInherits :: Maybe [SqlName]
-    , tablePrivSelect :: Maybe [SqlName]
-    , tablePrivInsert :: Maybe [SqlName]
-    , tablePrivUpdate :: Maybe [SqlName]
-    , tablePrivDelete :: Maybe [SqlName]
     , tableGrant :: Maybe [Grant]
     , tableTriggers :: Maybe [Trigger]
     , tableTemplates :: Maybe [SqlName]
@@ -59,10 +55,7 @@ data TableTpl =
     , tabletplInherits :: Maybe [SqlName]
     , tabletplColumns :: Maybe [Column]
     , tabletplChecks :: Maybe [Check]
-    , tabletplPrivSelect :: Maybe [SqlName]
-    , tabletplPrivInsert :: Maybe [SqlName]
-    , tabletplPrivUpdate :: Maybe [SqlName]
-    , tabletplPrivDelete :: Maybe [SqlName]
+    , tabletplGrant :: Maybe [Grant]
     }
   deriving (Generic, Show, Data)
 
@@ -107,10 +100,7 @@ applyTableTpl tpl t =
     , tableForeignKeys = tabletplForeignKeys tpl <> tableForeignKeys t
     , tableInherits = tabletplInherits tpl <> tableInherits t
     , tableChecks = tabletplChecks tpl <> tableChecks t
-    , tablePrivSelect = tabletplPrivSelect tpl <> tablePrivSelect t
-    , tablePrivInsert = tabletplPrivInsert tpl <> tablePrivInsert t
-    , tablePrivUpdate = tabletplPrivUpdate tpl <> tablePrivUpdate t
-    , tablePrivDelete = tabletplPrivDelete tpl <> tablePrivDelete t
+    , tableGrant = tabletplGrant tpl <> tableGrant t
     }
 
 data IndexName

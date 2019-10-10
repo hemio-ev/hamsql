@@ -187,10 +187,6 @@ instance ToSqlStmts (SqlContext (Schema, Table)) where
     ] ++
     concat (maybeMap (stmtCheck (s, t)) (tableChecks t)) ++
     -- grant rights to roles
-    maybeMap (sqlGrant "SELECT") (tablePrivSelect t) ++
-    maybeMap (sqlGrant "UPDATE") (tablePrivUpdate t) ++
-    maybeMap (sqlGrant "INSERT") (tablePrivInsert t) ++
-    maybeMap (sqlGrant "DELETE") (tablePrivDelete t) ++
     [ sqlGrant p r
     | g <- fromMaybe [] (tableGrant t)
     , r <- grantRole g

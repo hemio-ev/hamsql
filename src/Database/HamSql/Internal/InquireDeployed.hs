@@ -7,7 +7,7 @@ module Database.HamSql.Internal.InquireDeployed where
 import Data.List (zipWith4)
 import Data.Text (intercalate, singleton, stripPrefix, stripSuffix)
 import Database.PostgreSQL.Simple
-import Database.PostgreSQL.Simple.FromField
+import Database.PostgreSQL.Simple.FromField (FromField(..), fromJSONField)
 import Database.PostgreSQL.Simple.SqlQQ
 import Database.PostgreSQL.Simple.Types (PGArray(..), fromPGArray)
 
@@ -137,10 +137,6 @@ deployedTables prefix schema = do
           , tableForeignKeys = presetEmpty fks
           , tableChecks = presetEmpty checks
           , tableInherits = Nothing
-          , tablePrivSelect = Nothing
-          , tablePrivInsert = Nothing
-          , tablePrivUpdate = Nothing
-          , tablePrivDelete = Nothing
           , tableTemplates = Nothing
           , tableGrant = presetEmpty $ fromPGArray privileges
           , tableTriggers = presetEmpty trs
