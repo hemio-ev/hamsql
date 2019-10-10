@@ -5,7 +5,6 @@
 module Database.HamSql.Internal.Option where
 
 import Control.Monad.Trans.Reader
-import Data.Monoid
 import Options.Applicative
 import Options.Applicative.Builder.Internal (HasMetavar, HasValue)
 import Options.Applicative.Types

@@ -19,6 +19,7 @@ data Table =
     , tablePrivInsert :: Maybe [SqlName]
     , tablePrivUpdate :: Maybe [SqlName]
     , tablePrivDelete :: Maybe [SqlName]
+    , tableGrant :: Maybe [Grant]
     , tableTriggers :: Maybe [Trigger]
     , tableTemplates :: Maybe [SqlName]
     }
@@ -37,7 +38,29 @@ data SQL_TABLE =
 instance ToSqlCode SQL_TABLE where
   toSqlCode = const "TABLE"
 
-instance (ToJSON a, ToJSON b) => ToJSON (Abbr a b) where
+data Xx =
+  Xx
+    { xxRole :: Text
+    }
+  deriving (Data, Generic, Show)
+
+instance FromJSON Xx where
+  parseJSON = parseYamSql
+
+instance ToJSON Xx where
+  toJSON = toYamSqlJson
+
+data Grant =
+  Grant
+    { grantRole :: [SqlName]
+    , grantPrivilege :: [Text]
+    }
+  deriving (Data, Generic, Show)
+
+instance FromJSON Grant where
+  parseJSON = parseYamSql
+
+instance ToJSON Grant where
   toJSON = toYamSqlJson
 
 data TableTpl =

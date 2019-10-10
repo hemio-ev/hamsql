@@ -191,6 +191,11 @@ instance ToSqlStmts (SqlContext (Schema, Table)) where
     maybeMap (sqlGrant "UPDATE") (tablePrivUpdate t) ++
     maybeMap (sqlGrant "INSERT") (tablePrivInsert t) ++
     maybeMap (sqlGrant "DELETE") (tablePrivDelete t) ++
+    [ sqlGrant p r
+    | g <- fromMaybe [] (tableGrant t)
+    , r <- grantRole g
+    , p <- grantPrivilege g
+    ] ++
     -- primary key
     [sqlAddPrimaryKey (tablePrimaryKey t)] ++
     -- mult column unique

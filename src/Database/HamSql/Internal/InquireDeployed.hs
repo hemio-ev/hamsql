@@ -7,8 +7,10 @@ module Database.HamSql.Internal.InquireDeployed where
 import Data.List (zipWith4)
 import Data.Text (intercalate, singleton, stripPrefix, stripSuffix)
 import Database.PostgreSQL.Simple
+import Database.PostgreSQL.Simple.FromField
 import Database.PostgreSQL.Simple.SqlQQ
 import Database.PostgreSQL.Simple.Types (PGArray(..), fromPGArray)
+import Debug.Trace
 
 import Database.HamSql.Internal.DbUtils
 import Database.HamSql.Internal.Utils
@@ -119,41 +121,60 @@ deployedTables schema = do
   tbls <- psqlQry qry (Only $ toSqlCode schema)
   mapM toTable tbls
   where
-    toTable (table, description) = do
+    toTable (table, description, privileges, x) = do
       columns <- deployedColumns (schema, table)
       pk <- deployedPrimaryKey (schema, table)
       fks <- deployedForeignKeys (schema, table)
       uniques <- deployedUniqueConstraints (schema, table)
       checks <- deployedTableChecks (schema, table)
       trs <- deployedTriggers (schema, table)
-      return
-        Table
-          { tableName = table
-          , tableDescription = fromMaybe "" description
-          , _tableColumns = columns
-          , tablePrimaryKey = pk
-          , tableUnique = presetEmpty uniques
-          , tableForeignKeys = presetEmpty fks
-          , tableChecks = presetEmpty checks
-          , tableInherits = Nothing
-          , tablePrivSelect = Nothing
-          , tablePrivInsert = Nothing
-          , tablePrivUpdate = Nothing
-          , tablePrivDelete = Nothing
-          , tableTemplates = Nothing
-          , tableTriggers = presetEmpty trs
-          }
+      --error $ show (((fromPGArray <$>) `map` fromPGArray privileges) :: [(SqlName, [SqlName])])
+      --error $ show ((fromPGArray privileges) :: [Maybe Grant])
+      trace (show ((fromPGArray x) :: [String])) $
+        return
+          Table
+            { tableName = table
+            , tableDescription = fromMaybe "" description
+            , _tableColumns = columns
+            , tablePrimaryKey = pk
+            , tableUnique = presetEmpty uniques
+            , tableForeignKeys = presetEmpty fks
+            , tableChecks = presetEmpty checks
+            , tableInherits = Nothing
+            , tablePrivSelect = Nothing
+            , tablePrivInsert = Nothing
+            , tablePrivUpdate = Nothing
+            , tablePrivDelete = Nothing
+            , tableTemplates = Nothing -- Just privileges
+          -- FIXME: Load priv
+            , tableGrant = presetEmpty $ fromPGArray privileges
+            , tableTriggers = presetEmpty trs
+            }
     qry =
       [sql|
         SELECT
           relname,
-          pg_catalog.obj_description(oid, 'pg_class') AS desc
+          pg_catalog.obj_description(oid, 'pg_class') AS desc,
+          ARRAY(
+            SELECT jsonb_build_object('role', ARRAY[grantee::regrole], 'privilege', array_agg(privilege_type))
+              FROM aclexplode(relacl) GROUP BY grantee
+          )::jsonb[] AS privileges,
+          ARRAY(
+            SELECT grantee::regrole
+              FROM aclexplode(relacl) GROUP BY grantee
+          )::text[] AS xx
         FROM pg_catalog.pg_class
         WHERE
           relkind = 'r'
           AND relnamespace = ?::regnamespace::oid
         ORDER BY relname
       |]
+
+instance FromField Grant where
+  fromField = fromJSONField
+
+instance FromField Xx where
+  fromField = fromJSONField
 
 deployedColumns :: (SqlName, SqlName) -> SqlT [Column]
 deployedColumns tbl = map toColumn <$> psqlQry qry (Only $ toSqlCode tbl)

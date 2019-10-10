@@ -39,6 +39,8 @@ schemaToDirTree schema =
            , Dir "sequences.d" . map (toYamlFile sequenceName) <$>
              _schemaSequences schema
            , Dir "types.d" . map (toYamlFile typeName) <$> _schemaTypes schema
+           , Dir "tables.d" . map (toYamlFile tableName) <$>
+             _schemaTables schema
            , Dir "functions.d" .
              map
                (\x ->

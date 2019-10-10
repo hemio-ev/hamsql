@@ -22,3 +22,10 @@ checks:
  - name: trivial
    description: This check is trivial.
    check: "true"
+
+#priv_insert: [user1]
+#priv_update: [user1]
+
+grant:
+ - role: [user1]
+   privilege: ["INSERT", "UPDATE"]
