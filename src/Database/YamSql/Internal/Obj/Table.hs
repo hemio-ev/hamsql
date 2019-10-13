@@ -15,7 +15,7 @@ data Table =
     , tableForeignKeys :: Maybe [ForeignKey]
     , tableChecks :: Maybe [Check]
     , tableInherits :: Maybe [SqlName]
-    , tableGrant :: Maybe [Grant]
+    , _tableGrant :: Maybe [Grant]
     , tableTriggers :: Maybe [Trigger]
     , tableTemplates :: Maybe [SqlName]
     }
@@ -100,7 +100,7 @@ applyTableTpl tpl t =
     , tableForeignKeys = tabletplForeignKeys tpl <> tableForeignKeys t
     , tableInherits = tabletplInherits tpl <> tableInherits t
     , tableChecks = tabletplChecks tpl <> tableChecks t
-    , tableGrant = tabletplGrant tpl <> tableGrant t
+    , _tableGrant = tabletplGrant tpl <> _tableGrant t
     }
 
 data IndexName

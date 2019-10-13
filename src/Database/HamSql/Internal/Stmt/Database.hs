@@ -5,7 +5,6 @@
 module Database.HamSql.Internal.Stmt.Database where
 
 import Database.HamSql.Internal.Stmt.Basic
-import Database.HamSql.Internal.Stmt.Schema
 
 data SQL_DATABASE =
   SQL_DATABASE

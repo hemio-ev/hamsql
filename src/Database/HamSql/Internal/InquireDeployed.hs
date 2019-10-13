@@ -4,6 +4,7 @@
 -- Some rights reserved. See COPYING, AUTHORS.
 module Database.HamSql.Internal.InquireDeployed where
 
+import Data.Functor.Identity
 import Data.List (zipWith4)
 import Data.Text (intercalate, singleton, stripPrefix, stripSuffix)
 import Database.PostgreSQL.Simple
@@ -21,9 +22,10 @@ inquireSetup ::
      Maybe Text -- ^ Role prefix
   -> SqlT Setup
 inquireSetup rolePrefix = do
-  schemas <- deployedSchemas rolePrefix
+  schemas <- deployedSchemas
   roles <- inquireRoles rolePrefix
-  return
+  return $
+    f (fromMaybe (error "x") rolePrefix) $
     Setup
       { setupSchemas = []
       , setupSchemaDirs = Nothing
@@ -33,6 +35,23 @@ inquireSetup rolePrefix = do
       , _setupSchemaData = Just schemas
       , setupRoles = presetEmpty roles
       }
+
+f :: Text -> Setup -> Setup
+f prefix setup =
+  runIdentity $ do
+    x <-
+      traverseOf (path . _Just . each) (return . filterAndNormalizeRoles) setup
+    return x
+  where
+    path =
+      setupSchemaData . _Just . each . schemaTables . _Just . each . tableGrant
+    filterAndNormalizeRoles grant =
+      grant
+        { grantRole =
+            mapMaybe
+              ((SqlName <$>) . stripPrefix prefix . unsafeInternalName)
+              (grantRole grant)
+        }
 
 -- ** Roles
 inquireRoles :: Maybe Text -> SqlT [Role]
@@ -68,13 +87,13 @@ inquireRoles prfx = do
     |]
 
 -- ** Schemas
-deployedSchemas :: Maybe Text -> SqlT [Schema]
-deployedSchemas prefix = do
+deployedSchemas :: SqlT [Schema]
+deployedSchemas = do
   schemas <- psqlQry_ qry
   mapM toSchema schemas
   where
     toSchema (schema, description) = do
-      tables <- deployedTables prefix schema
+      tables <- deployedTables schema
       sequences <- deployedSequences schema
       functions <- deployedFunctions schema
       domains <- deployedDomains schema
@@ -115,9 +134,9 @@ deployedSchemas prefix = do
     |]
 
 -- *** Tables
-deployedTables :: Maybe Text -> SqlName -> SqlT [Table]
-deployedTables prefix schema = do
-  tbls <- psqlQry qry (prefix, prefix, toSqlCode schema)
+deployedTables :: SqlName -> SqlT [Table]
+deployedTables schema = do
+  tbls <- psqlQry qry (Only $ toSqlCode schema)
   mapM toTable tbls
   where
     toTable (table, description, privileges) = do
@@ -138,7 +157,7 @@ deployedTables prefix schema = do
           , tableChecks = presetEmpty checks
           , tableInherits = Nothing
           , tableTemplates = Nothing
-          , tableGrant = presetEmpty $ fromPGArray privileges
+          , _tableGrant = presetEmpty $ fromPGArray privileges
           , tableTriggers = presetEmpty trs
           }
     qry =
@@ -148,12 +167,11 @@ deployedTables prefix schema = do
           pg_catalog.obj_description(oid, 'pg_class') AS desc,
           ARRAY(
             SELECT jsonb_build_object(
-                'role', ARRAY[right(pg_get_userbyid(grantee), -char_length(?))],
+                'role', ARRAY[pg_get_userbyid(grantee)],
                 'privilege', array_agg(privilege_type))
               FROM aclexplode(relacl)
-              WHERE  starts_with(pg_get_userbyid(grantee), ?)
               GROUP BY grantee
-          )::jsonb[] AS privileges
+          ) AS privileges
         FROM pg_catalog.pg_class
         WHERE
           relkind = 'r'
