@@ -25,7 +25,8 @@ inquireSetup rolePrefix = do
   schemas <- deployedSchemas
   roles <- inquireRoles rolePrefix
   return $
-    f (fromMaybe (error "x") rolePrefix) $
+    -- FIXME: How to work without role prefix?
+    normalizeGrants (fromMaybe (error "How to handle?") rolePrefix) $
     Setup
       { setupSchemas = []
       , setupSchemaDirs = Nothing
@@ -36,12 +37,12 @@ inquireSetup rolePrefix = do
       , setupRoles = presetEmpty roles
       }
 
-f :: Text -> Setup -> Setup
-f prefix setup =
+normalizeGrants :: Text -> Setup -> Setup
+normalizeGrants prefix setup =
   runIdentity $ do
     x <-
       traverseOf (path . _Just . each) (return . filterAndNormalizeRoles) setup
-    return x
+    traverseOf path (return . filterAndNormalizeGrants) x
   where
     path =
       setupSchemaData . _Just . each . schemaTables . _Just . each . tableGrant
@@ -52,6 +53,9 @@ f prefix setup =
               ((SqlName <$>) . stripPrefix prefix . unsafeInternalName)
               (grantRole grant)
         }
+    filterAndNormalizeGrants :: Maybe [Grant] -> Maybe [Grant]
+    filterAndNormalizeGrants grants =
+      presetEmpty =<< filter ((/= []) . grantRole) <$> grants
 
 -- ** Roles
 inquireRoles :: Maybe Text -> SqlT [Role]
