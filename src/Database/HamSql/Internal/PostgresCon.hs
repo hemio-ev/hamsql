@@ -151,35 +151,35 @@ dropStmt setup (SqlStmt (SqlStmtId t i) _) =
 normalizeOnline :: Setup -> SqlT Setup
 normalizeOnline set = applyColumnTypes set >>= applyFunctionTypes
   where
-    applyColumnTypes s =
-      foldM (\x y -> traverseOf y normalizeColumnTypeOnline x) s lensColumTypes
-    applyFunctionTypes s =
-      foldM
-        (\x y -> traverseOf y normalizeFunctionTypeOnline x)
-        s
-        lensFunctionTypes
+    applyColumnTypes = traverseOf lensColumTypes normalizeColumnTypeOnline
+    applyFunctionTypes =
+      traverseOf lensFunctionTypes normalizeFunctionTypeOnline
 
-lensFunctionTypes :: Applicative m => [LensLike' m Setup SqlType]
+lensFunctionTypes :: LensLike' SqlT Setup SqlType
 lensFunctionTypes =
-  [ eachFunction . functionParameters . _Just . each . variableType
-  , eachFunction . functionReturns . _ReturnType
-  , eachFunction . functionReturns . _ReturnTypeSetof
-  , eachFunction . functionReturns . _ReturnTypeTable . each . parameterType
-  ]
+  foldr1
+    (~&~)
+    [ setupFunctions . functionParameters . _Just . each . variableType
+    , setupFunctions . functionReturns . _ReturnType
+    , setupFunctions . functionReturns . _ReturnTypeSetof
+    , setupFunctions . functionReturns . _ReturnTypeTable . each . parameterType
+    ]
   where
-    eachFunction =
+    setupFunctions =
       setupSchemaData . _Just . each . schemaFunctions . _Just . each
 
-lensColumTypes :: Applicative m => [LensLike' m Setup SqlType]
+lensColumTypes :: LensLike' SqlT Setup SqlType
 lensColumTypes =
-  [ setupSchemaData . _Just . each . schemaDomains . _Just . each . domainType
-  , setupSchemaData .
-    _Just .
-    each . schemaTypes . _Just . each . typeElements . each . typeelementType
-  , setupSchemaData .
-    _Just .
-    each . schemaTables . _Just . each . tableColumns . each . columnType
-  ]
+  foldr1
+    (~&~)
+    [ setupDomains . _Just . each . domainType
+    , setupTypes . _Just . each . typeElements . each . typeelementType
+    , setupTables . _Just . each . tableColumns . each . columnType
+    ]
+  where
+    setupDomains = setupSchemaData . _Just . each . schemaDomains
+    setupTypes = setupSchemaData . _Just . each . schemaTypes
+    setupTables = setupSchemaData . _Just . each . schemaTables
 
 normalizeTypeOnline :: SqlType -> SqlT SqlType
 normalizeTypeOnline t

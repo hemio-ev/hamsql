@@ -6,12 +6,12 @@ module Database.HamSql.Internal.Utils
   ( module Data.Maybe
   , module Database.HamSql.Internal.Utils
   , module Database.YamSql.Internal.Utils
-  , traverseOf
-  , _Just
-  , each
+  , module Control.Lens
   ) where
 
-import Control.Lens (_Just, each, traverseOf)
+import Control.Applicative
+import Control.Lens (Traversal', _Just, each, over, traverseOf)
+import Control.Monad
 import Data.List (group, intercalate, sort)
 import Data.Maybe
 import qualified Data.Text as T
@@ -69,6 +69,10 @@ debug opts xs
 
 removeDuplicates :: (Ord a) => [a] -> [a]
 removeDuplicates = map head . group . sort
+
+(~&~) ::
+     (Monad m, Applicative f) => f (a -> m b) -> f (b -> m c) -> f (a -> m c)
+(~&~) = liftA2 (>=>)
 
 --- Maybe Utils
 maybeMap :: (a -> b) -> Maybe [a] -> [b]

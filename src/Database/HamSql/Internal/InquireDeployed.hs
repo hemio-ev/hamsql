@@ -4,7 +4,6 @@
 -- Some rights reserved. See COPYING, AUTHORS.
 module Database.HamSql.Internal.InquireDeployed where
 
-import Data.Functor.Identity
 import Data.List (zipWith4)
 import Data.Text (intercalate, singleton, stripPrefix, stripSuffix)
 import Database.PostgreSQL.Simple
@@ -39,12 +38,10 @@ inquireSetup rolePrefix = do
 
 normalizeGrants :: Text -> Setup -> Setup
 normalizeGrants prefix setup =
-  runIdentity $ do
-    x <-
-      traverseOf (path . _Just . each) (return . filterAndNormalizeRoles) setup
-    traverseOf path (return . filterAndNormalizeGrants) x
+  over setupGrants filterAndNormalizeGrants $
+  over (setupGrants . _Just . each) filterAndNormalizeRoles setup
   where
-    path =
+    setupGrants =
       setupSchemaData . _Just . each . schemaTables . _Just . each . tableGrant
     filterAndNormalizeRoles grant =
       grant
