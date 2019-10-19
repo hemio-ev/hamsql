@@ -34,19 +34,6 @@ data SQL_TABLE =
 instance ToSqlCode SQL_TABLE where
   toSqlCode = const "TABLE"
 
-data Grant =
-  Grant
-    { grantRole :: [SqlName]
-    , grantPrivilege :: [Text]
-    }
-  deriving (Data, Generic, Show)
-
-instance FromJSON Grant where
-  parseJSON = parseYamSql
-
-instance ToJSON Grant where
-  toJSON = toYamSqlJson
-
 data TableTpl =
   TableTpl
     { tabletplTemplate :: SqlName

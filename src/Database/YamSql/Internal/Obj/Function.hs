@@ -25,9 +25,8 @@ data Function =
     -- | variables that are defined (ignored if language is given)
     , functionVariables :: Maybe [Variable]
     -- | Role that has the privilege to execute the function
-    , functionPrivExecute :: Maybe [SqlName]
-    -- | If true, the function is executed with the privileges of the owner!
-    -- | Owner has to be given, if this is true (not implemented yet!)
+    , _functionGrant :: Maybe [Grant]
+    -- | If true, the function is executed with the privileges of the owner
     , functionSecurityDefiner :: Maybe Bool
     -- | owner of the function
     , functionOwner :: Maybe SqlName
@@ -97,7 +96,7 @@ data FunctionTpl =
     -- variables are appended to the functions variables
     , functiontplVariables :: Maybe [Variable]
     -- defines priv_execute, can be overwritten by function definition
-    , functiontplPrivExecute :: Maybe [SqlName]
+    , functiontplGrant :: Maybe [Grant]
     -- defines security_definer, can be overwritten by function definition
     , functiontplSecurityDefiner :: Maybe Bool
     -- defines owner, can be overwritten by function definition
@@ -118,8 +117,7 @@ instance ToJSON FunctionTpl where
 applyFunctionTpl :: FunctionTpl -> Function -> Function
 applyFunctionTpl t f =
   f
-    { functionPrivExecute =
-        asum [functionPrivExecute f, functiontplPrivExecute t]
+    { _functionGrant = asum [_functionGrant f, functiontplGrant t]
     , functionSecurityDefiner =
         asum [functionSecurityDefiner f, functiontplSecurityDefiner t]
     , functionOwner = asum [functionOwner f, functiontplOwner t]

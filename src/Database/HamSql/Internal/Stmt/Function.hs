@@ -22,13 +22,20 @@ instance ToSqlStmts (SqlContext (Schema, Function)) where
   toSqlStmts SetupContext {setupContextSetup = setup} obj@(SqlContext (s, f)) =
     stmtCreateFunction :
     sqlSetOwner (functionOwner f) :
-    stmtComment : maybeMap sqlStmtGrantExecute (functionPrivExecute f)
+    stmtComment :
+    [ sqlStmtGrant p r
+    | g <- fromMaybe [] (_functionGrant f)
+    , r <- grantRole g
+    , p <- grantPrivilege g
+    ]
+     --maybeMap sqlStmtGrantExecute (functionPrivExecute f)
   --name = schemaName m <.> functionName f
     where
-      sqlStmtGrantExecute u = newSqlStmt SqlPriv obj $ sqlGrantExecute u
-      sqlGrantExecute u =
-        "GRANT EXECUTE ON FUNCTION \n" <>
-        sqlIdCode obj <> "\nTO " <> prefixedRole setup u
+      sqlStmtGrant p r = newSqlStmt SqlPriv obj $ sqlGrant p r
+      sqlGrant p r =
+        "GRANT " <>
+        p <>
+        " ON FUNCTION \n" <> sqlIdCode obj <> "\nTO " <> prefixedRole setup r
       stmtCreateFunction =
         newSqlStmt SqlCreateFunction obj $
         --(maybeMap _variableType (_functionParameters f)) $

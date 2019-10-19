@@ -42,7 +42,13 @@ normalizeGrants prefix setup =
   over (setupGrants . _Just . each) filterAndNormalizeRoles setup
   where
     setupGrants =
-      setupSchemaData . _Just . each . schemaTables . _Just . each . tableGrant
+      foldr1
+        (~&~)
+        [ setupSchemaData .
+          _Just . each . schemaTables . _Just . each . tableGrant
+        , setupSchemaData .
+          _Just . each . schemaFunctions . _Just . each . functionGrant
+        ]
     filterAndNormalizeRoles grant =
       grant
         { grantRole =
@@ -170,8 +176,8 @@ deployedTables schema = do
             SELECT jsonb_build_object(
                 'role', ARRAY[pg_get_userbyid(grantee)],
                 'privilege', array_agg(privilege_type))
-              FROM aclexplode(relacl)
-              GROUP BY grantee
+            FROM aclexplode(relacl)
+            GROUP BY grantee
           ) AS privileges
         FROM pg_catalog.pg_class
         WHERE
@@ -390,7 +396,7 @@ deployedFunctions schema = do
   funs <- psqlQry qry (Only $ toSqlCode schema)
   return $ map toFunction funs
   where
-    toFunction ((proname, description, prorettype, proretset, owner, language, prosecdef, source) :. args) =
+    toFunction ((proname, description, prorettype, proretset, owner, language, prosecdef, source, privileges) :. args) =
       Function
         { functionName = proname
         , functionDescription = fromMaybe "" description
@@ -400,7 +406,7 @@ deployedFunctions schema = do
         , functionTemplates = Nothing
         , functionTemplateData = Nothing
         , functionVariables = Nothing
-        , functionPrivExecute = Nothing
+        , _functionGrant = presetEmpty $ fromPGArray privileges
         , functionSecurityDefiner = preset False prosecdef
         , functionOwner = owner
         , functionLanguage = Just language
@@ -435,6 +441,14 @@ deployedFunctions schema = do
           lanname,
           prosecdef,
           prosrc,
+          -- grant
+          ARRAY(
+            SELECT jsonb_build_object(
+                'role', ARRAY[pg_get_userbyid(grantee)],
+                'privilege', array_agg(privilege_type))
+            FROM aclexplode(proacl)
+            GROUP BY grantee
+          ) AS privileges,
           -- function arguments
           proargnames,
           COALESCE(
